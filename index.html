@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบจัดการอะไหล่ (Spare Part Management)</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --text:#1a1d21; --muted:#6b7280;
+  --border:#e3e6ea; --accent:#2563eb; --accent-fg:#ffffff;
+  --danger:#dc2626; --danger-bg:#fee2e2; --ok:#059669; --ok-bg:#d1fae5;
+  --warn:#d97706; --warn-bg:#fef3c7;
+  --danger-dark:#7f1d1d; --danger-dark-bg:#fecaca;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111317; --card:#1a1d21; --text:#e8e9eb; --muted:#9aa1ab;
+    --border:#2a2d33; --danger-bg:#3a1414; --ok-bg:#0f2c22; --warn-bg:#3a2a0c;
+    --danger-dark:#ff4d4d; --danger-dark-bg:#4a1010;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111317; --card:#1a1d21; --text:#e8e9eb; --muted:#9aa1ab;
+  --border:#2a2d33; --danger-bg:#3a1414; --ok-bg:#0f2c22; --warn-bg:#3a2a0c;
+  --danger-dark:#ff4d4d; --danger-dark-bg:#4a1010;
+}
+html{scroll-padding-top: env(safe-area-inset-top, 0px); height:100%;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,'Noto Sans Thai',sans-serif;height:100%;}
+.userbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+.userbox .who{color:var(--text);font-weight:600;}
+.userbox .dept{background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:10px;font-size:11px;}
+.logout{border:1px solid var(--border);background:var(--bg);color:var(--text);padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer;}
+.layout{display:flex;min-height:100vh;align-items:stretch;}
+.sidebar{width:220px;flex-shrink:0;position:sticky;top:0;height:100vh;align-self:flex-start;padding-top:env(safe-area-inset-top,0px);}
+.sidebar-inner{display:flex;flex-direction:column;height:100%;width:220px;background:var(--card);border-right:1px solid var(--border);}
+.sidebar-brand{display:flex;align-items:center;gap:8px;padding:16px 14px;font-weight:700;font-size:15px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;}
+.sidebar-nav{display:flex;flex-direction:column;gap:2px;padding:10px;flex:1;overflow-y:auto;overflow-x:hidden;}
+.sidebar-nav button{display:flex;align-items:center;gap:10px;border:none;background:transparent;color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;width:100%;}
+.sidebar-nav button.active{background:var(--accent);color:var(--accent-fg);}
+.sidebar-nav button:hover:not(.active){background:var(--bg);}
+.nav-icon{font-size:16px;flex-shrink:0;}
+.main-area{flex:1;display:flex;flex-direction:column;min-width:0;}
+.topbar{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;z-index:10;}
+.topbar-title{font-size:16px;font-weight:700;}
+main{max-width:900px;margin:0 auto;padding:16px;width:100%;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
+.card h2{margin:0 0 12px;font-size:15px;}
+summary{cursor:pointer;list-style:none;}
+summary::-webkit-details-marker{display:none;}
+summary h2{display:flex;align-items:center;gap:6px;}
+summary h2::before{content:'▸';display:inline-block;transition:transform .2s;color:var(--muted);font-size:12px;}
+details[open] summary h2::before{transform:rotate(90deg);}
+details form{margin-top:8px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
+.stat{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.stat .icon{font-size:18px;margin-bottom:4px;}
+.stat .n{font-size:22px;font-weight:700;}
+.stat .l{font-size:12px;color:var(--muted);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl-wrap{overflow-x:auto;}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap;}
+th{color:var(--muted);font-weight:600;font-size:12px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.badge.low{background:var(--warn-bg);color:var(--warn);}
+.badge.ok{background:var(--ok-bg);color:var(--ok);}
+.badge.out{background:var(--danger-dark-bg);color:var(--danger-dark);animation:blink 1s step-start infinite;}
+@keyframes blink{50%{opacity:.35;}}
+.badge.owner{background:var(--bg);color:var(--accent);border:1px solid var(--border);}
+.part-thumb{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;cursor:zoom-in;transition:transform .25s ease, box-shadow .25s ease;transform-origin:center;}
+.part-thumb-img{object-fit:cover;background:var(--bg);border:1px solid var(--border);}
+.part-thumb:hover{transform:scale(2.6);box-shadow:0 10px 24px rgba(0,0,0,.35);position:relative;z-index:20;}
+.tbl-wrap{overflow-y:visible;}
+form{display:grid;gap:10px;grid-template-columns:1fr 1fr;}
+form .full{grid-column:1/-1;}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;}
+button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);border:none;padding:10px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:600;}
+.msg{grid-column:1/-1;font-size:13px;padding:8px 10px;border-radius:8px;display:none;}
+.msg.show{display:block;}
+.msg.err{background:var(--danger-bg);color:var(--danger);}
+.msg.ok{background:var(--ok-bg);color:var(--ok);}
+.hidden{display:none !important;}
+.tag-in{color:var(--ok);} .tag-out{color:var(--danger);}
+.empty{color:var(--muted);font-size:13px;padding:8px 0;}
+/* chart */
+.chart-row{display:flex;gap:20px;flex-wrap:wrap;align-items:center;}
+.donut{width:140px;height:140px;border-radius:50%;flex-shrink:0;}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:13px;}
+.legend .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;}
+.bar-item{margin-bottom:10px;}
+.bar-item .bh{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:var(--muted);}
+.bar-track{position:relative;height:14px;background:var(--bg);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:7px 0 0 7px;}
+.bar-min{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--text);opacity:.5;}
+/* alerts */
+.alert-card{border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:var(--warn-bg);}
+.alert-card.out{border-left-color:var(--danger-dark);background:var(--danger-dark-bg);animation:blink 1s step-start infinite;}
+.alert-card .row1{display:flex;justify-content:space-between;font-weight:700;font-size:13px;}
+.alert-card .details{font-size:12px;color:var(--text);opacity:.85;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;}
+/* login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;}
+.modal-overlay.hidden{display:none;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-box h2{margin:0 0 14px;font-size:16px;}
+.modal-box form{grid-template-columns:1fr 1fr;}
+.edit-btn{border:1px solid var(--border);background:var(--bg);color:var(--accent);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;}
+.pin-btn{border:none;background:transparent;font-size:16px;cursor:pointer;padding:2px;}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px 24px;max-width:360px;width:100%;}
+.login-card h1{font-size:18px;margin:0 0 4px;text-align:center;}
+.login-card p{font-size:12px;color:var(--muted);text-align:center;margin:0 0 18px;}
+.login-card form{grid-template-columns:1fr;}
+.demo-hint{font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-top:6px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ======== ตั้งค่า API ========
+// วาง URL ของ Google Apps Script Web App ที่ Deploy แล้ว (ลงท้ายด้วย /exec) ตรงนี้
+const API_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+function callApi(action, payload){
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'}, // text/plain หลีกเลี่ยง CORS preflight
+    body: JSON.stringify({action, payload: payload || {}}),
+  }).then(r=>{
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  });
+}
+
+// ---------- State ----------
+let currentUser = null;
+try{ const saved = localStorage.getItem('spm_user'); if(saved) currentUser = JSON.parse(saved); }catch(e){}
+
+let OWNERS = ["ME","MFG","PE"];
+let OWNER_LABEL = {ME:"ME – ซ่อมบำรุง", MFG:"MFG – ฝ่ายผลิต", PE:"PE – วิศวกรรมกระบวนการ"};
+let parts = [];
+let tx = [];
+let USERS = [];
+
+function fmtDate(d){ return d.toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}); }
+function partByCode(c){ return parts.find(p=>p.code===c); }
+function statusOf(p){ if(p.stock===0) return 'out'; if(p.stock<p.min) return 'low'; return 'ok'; }
+function filteredParts(){
+  return parts.filter(p=>{
+    if(partFilter.search){
+      const q = partFilter.search.toLowerCase();
+      if(!p.code.toLowerCase().includes(q) && !p.name.toLowerCase().includes(q)) return false;
+    }
+    if(partFilter.category && !(p.category||'').toLowerCase().includes(partFilter.category.toLowerCase())) return false;
+    if(partFilter.owner && p.owner !== partFilter.owner) return false;
+    if(partFilter.status && statusOf(p) !== partFilter.status) return false;
+    return true;
+  }).sort((a,b)=> (b.pinned?1:0) - (a.pinned?1:0));
+}
+
+// ---------- Sheet row <-> client object mapping ----------
+function mapPart(raw){
+  return {
+    code: raw['รหัส'], name: raw['ชื่อ'], category: raw['หมวดหมู่'], owner: raw['เจ้าของ'],
+    stock: Number(raw['คงเหลือ'])||0, min: Number(raw['ขั้นต่ำ'])||0, unit: raw['หน่วยนับ'],
+    image: raw['รูปภาพ'] || '',
+  };
+}
+function mapHistoryRow(raw){
+  return {
+    date: new Date(raw['วันที่']), type: raw['ประเภท']==='เบิกออก' ? 'withdraw' : 'replenish',
+    code: raw['รหัส'], name: raw['ชื่ออะไหล่'], qty: Number(raw['จำนวน'])||0, person: raw['โดย'], note: raw['หมายเหตุ']||'',
+  };
+}
+function mapUser(raw){
+  return { user: raw['Username'], name: raw['ชื่อ-นามสกุล'], dept: raw['แผนก'] };
+}
+
+// ---------- Nav ----------
+const tabs = [
+  {id:'dashboard', label:'ภาพรวม', icon:'📊'},
+  {id:'parts', label:'คลังอะไหล่', icon:'📦'},
+  {id:'withdraw', label:'เบิกอะไหล่', icon:'📤'},
+  {id:'replenish', label:'เติมสต็อก', icon:'📥'},
+  {id:'history', label:'ประวัติ', icon:'📜'},
+  {id:'report', label:'รายงาน', icon:'📈'},
+  {id:'users', label:'จัดการผู้ใช้', icon:'👤', adminOnly:true},
+  {id:'settings', label:'ข้อมูล Google Sheet', icon:'⚙️', adminOnly:true},
+];
+let active = 'dashboard';
+let partFilter = {search:'', owner:'', status:'', category:''};
+let reportPeriod = 'week';
+
+// ---------- Login screen ----------
+function renderLogin(){
+  document.getElementById('app').innerHTML = `
+  <div class="login-wrap">
+    <div class="login-card">
+      <h1>🔧 ระบบจัดการอะไหล่</h1>
+      <p>กรุณาเข้าสู่ระบบเพื่อใช้งาน</p>
+      <form id="loginForm">
+        <div><label>Username</label><input name="user" required autocomplete="username"></div>
+        <div><label>Password</label><input name="pass" type="password" required autocomplete="current-password"></div>
+        <div class="msg" id="loginMsg"></div>
+        <button class="submit" type="submit">เข้าสู่ระบบ</button>
+      </form>
+      <div class="demo-hint">Demo accounts: admin/1234, me01/1234, mfg01/1234, pe01/1234</div>
+    </div>
+  </div>`;
+  document.getElementById('loginForm').onsubmit = e=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const btn = e.target.querySelector('button');
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...';
+    callApi('login', {username: f.get('user').trim(), password: f.get('pass')})
+      .then(res=>{
+        btn.disabled = false; btn.textContent = orig;
+        if(!res.ok){
+          const m = document.getElementById('loginMsg');
+          m.textContent = res.message; m.className = 'msg show err';
+          return;
+        }
+        currentUser = res.user;
+        try{ localStorage.setItem('spm_user', JSON.stringify(currentUser)); }catch(err){}
+        bootApp();
+      })
+      .catch(err=>{
+        btn.disabled = false; btn.textContent = orig;
+        const m = document.getElementById('loginMsg');
+        m.textContent = 'เกิดข้อผิดพลาด: '+err.message; m.className = 'msg show err';
+      });
+  };
+}
+
+function bootApp(){
+  callApi('getOwnersConfig').then(cfg=>{
+    OWNERS = cfg.owners; OWNER_LABEL = cfg.labels;
+    renderApp();
+  }).catch(err=>{ alert('เชื่อมต่อ API ไม่ได้: '+err.message); renderLogin(); });
+}
+
+function logout(){
+  currentUser = null;
+  try{ localStorage.removeItem('spm_user'); }catch(e){}
+  active = 'dashboard';
+  renderLogin();
+}
+
+// ---------- App shell ----------
+function renderApp(){
+  document.getElementById('app').innerHTML = `
+  <div class="layout">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-inner">
+        <div class="sidebar-brand">
+          <span class="brand-icon">🔧</span>
+          <span class="brand-text">SPM</span>
+        </div>
+        <nav id="nav" class="sidebar-nav"></nav>
+      </div>
+    </aside>
+    <div class="main-area">
+      <div class="topbar">
+        <div class="topbar-title" id="topbarTitle"></div>
+        <div class="userbox">
+          <span class="who">${currentUser.name}</span>
+          <span class="dept">${currentUser.dept}</span>
+          <button class="logout" id="logoutBtn">ออกจากระบบ</button>
+        </div>
+      </div>
+      <main id="main"><div class="empty">กำลังโหลดข้อมูล...</div></main>
+    </div>
+  </div>
+  <div id="editModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;">แก้ไขอะไหล่</h2>
+        <button type="button" id="editCloseBtn" title="ปิด" style="border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);">×</button>
+      </div>
+      <form id="editPartForm">
+        <div class="full"><label>ค้นหาอะไหล่</label><input type="text" id="editPartSearchBox" placeholder="พิมพ์รหัสหรือชื่อเพื่อค้นหา..."></div>
+        <div class="full"><label>เลือกอะไหล่ที่ต้องการแก้ไข</label>
+          <select id="editPartSelect"><option value="">-- เลือกอะไหล่ --</option></select>
+        </div>
+        <div id="editPartFields" class="hidden" style="display:contents;">
+        <div><label>รหัสอะไหล่</label><input name="code" disabled></div>
+        <div><label>ชื่ออะไหล่</label><input name="name" required></div>
+        <div><label>หมวดหมู่</label><input name="category"></div>
+        <div><label>หน่วยนับ</label><input name="unit" required></div>
+        <div><label>คงเหลือ (แก้ไขผ่านเบิก/เติมสต็อกเท่านั้น)</label><input name="stock" disabled></div>
+        <div><label>สต็อกขั้นต่ำ</label><input name="min" type="number" min="0" required></div>
+        <div class="full"><label>เจ้าของอะไหล่ (Owner)</label>
+          <select name="owner" required>${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}</select>
+        </div>
+        <div class="full"><label>เปลี่ยนรูปภาพ (ไม่บังคับ)</label><input type="file" name="image" accept="image/*"></div>
+        <div class="msg" id="editPartMsg"></div>
+        <div class="full" style="display:flex;gap:8px;">
+          <button class="submit" type="submit" style="flex:1">บันทึกการแก้ไข</button>
+          <button type="button" id="editCancelBtn" style="flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;">ยกเลิก</button>
+        </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="addModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2>เพิ่มอะไหล่ใหม่</h2>
+      <form id="addPartForm">
+        <div><label>รหัสอะไหล่</label><input name="code" required placeholder="เช่น SP-005"></div>
+        <div><label>ชื่ออะไหล่</label><input name="name" required></div>
+        <div><label>หมวดหมู่</label><input name="category"></div>
+        <div><label>หน่วยนับ</label><input name="unit" required placeholder="ชิ้น / เส้น / กล่อง"></div>
+        <div><label>จำนวนเริ่มต้น</label><input name="stock" type="number" min="0" value="0" required></div>
+        <div><label>สต็อกขั้นต่ำ</label><input name="min" type="number" min="0" value="0" required></div>
+        <div class="full"><label>เจ้าของอะไหล่ (Owner)</label>
+          <select name="owner" required>${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}</select>
+        </div>
+        <div class="full"><label>รูปภาพอะไหล่ (อัปโหลด)</label><input type="file" name="image" accept="image/*"></div>
+        <div class="msg" id="addPartMsg"></div>
+        <div class="full" style="display:flex;gap:8px;">
+          <button class="submit" type="submit" style="flex:1">+ เพิ่มอะไหล่</button>
+          <button type="button" id="addCancelBtn" style="flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>`;
+  document.getElementById('logoutBtn').onclick = logout;
+  refreshAllData();
+}
+
+function refreshAllData(){
+  Promise.all([callApi('getPartsList'), callApi('getHistory')])
+    .then(([list, hist])=>{
+      parts = list.map(mapPart);
+      tx = hist.map(mapHistoryRow);
+      render();
+    })
+    .catch(err=>{ document.getElementById('main').innerHTML = `<div class="card"><div class="empty">โหลดข้อมูลไม่สำเร็จ: ${err.message}</div></div>`; });
+}
+
+function openAddModal(){
+  document.getElementById('addPartForm').reset();
+  document.getElementById('addPartMsg').className = 'msg';
+  document.getElementById('addModal').classList.remove('hidden');
+}
+function closeAddModal(){
+  document.getElementById('addModal').classList.add('hidden');
+}
+let editingCode = null;
+function editSelectOptions(query){
+  const q = (query||'').trim().toLowerCase();
+  const list = q ? parts.filter(p=>p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)) : parts;
+  if(!list.length) return `<option value="" disabled>ไม่พบอะไหล่ที่ตรงกับคำค้นหา</option>`;
+  return `<option value="">-- เลือกอะไหล่ --</option>` + list.map(p=>`<option value="${p.code}">${p.code} — ${p.name}</option>`).join('');
+}
+function openEditModal(code){
+  editingCode = null;
+  const modal = document.getElementById('editModal');
+  document.getElementById('editPartSearchBox').value = '';
+  document.getElementById('editPartSelect').innerHTML = editSelectOptions();
+  document.getElementById('editPartFields').classList.add('hidden');
+  document.getElementById('editPartForm').reset();
+  document.getElementById('editPartMsg').className = 'msg';
+  modal.classList.remove('hidden');
+  if(code){ document.getElementById('editPartSelect').value = code; populateEditFields(code); }
+}
+function populateEditFields(code){
+  const p = partByCode(code);
+  if(!p){ document.getElementById('editPartFields').classList.add('hidden'); editingCode = null; return; }
+  editingCode = code;
+  const form = document.getElementById('editPartForm');
+  form.code.value = p.code;
+  form.name.value = p.name;
+  form.category.value = p.category || '';
+  form.unit.value = p.unit;
+  form.stock.value = p.stock + ' ' + p.unit;
+  form.min.value = p.min;
+  form.owner.value = p.owner || '';
+  document.getElementById('editPartFields').classList.remove('hidden');
+}
+function closeEditModal(){
+  editingCode = null;
+  document.getElementById('editModal').classList.add('hidden');
+}
+
+function renderNav(){
+  const nav = document.getElementById('nav');
+  const visibleTabs = tabs.filter(t=>!t.adminOnly || currentUser.dept==='Admin');
+  nav.innerHTML = visibleTabs.map(t=>`<button data-tab="${t.id}" class="${active===t.id?'active':''}" title="${t.label}"><span class="nav-icon">${t.icon}</span><span class="nav-label">${t.label}</span></button>`).join('');
+  nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.tab; render();});
+  const topbarTitle = document.getElementById('topbarTitle');
+  if(topbarTitle){
+    const cur = tabs.find(t=>t.id===active);
+    topbarTitle.textContent = cur ? `${cur.icon} ${cur.label}` : '';
+  }
+}
+
+function stockBadge(p){
+  const s = statusOf(p);
+  if(s==='out') return `<span class="badge out">หมด</span>`;
+  if(s==='low') return `<span class="badge low">ต่ำกว่าขั้นต่ำ</span>`;
+  return `<span class="badge ok">ปกติ</span>`;
+}
+function ownerBadge(p){ return `<span class="badge owner">${p.owner||'-'}</span>`; }
+function partThumb(p){
+  if(p.image){
+    return `<img class="part-thumb part-thumb-img" src="${p.image}" title="${p.name}" alt="${p.name}">`;
+  }
+  const colors = {ME:'#2563eb', MFG:'#059669', PE:'#d97706'};
+  const color = colors[p.owner] || '#6b7280';
+  const letter = (p.category || p.name || p.code || '?').trim().charAt(0).toUpperCase();
+  return `<div class="part-thumb" style="background:${color}" title="${p.name}"><span>${letter}</span></div>`;
+}
+
+// ---------- Charts (pure CSS/SVG, no libs) ----------
+function statusChart(){
+  const ok = parts.filter(p=>statusOf(p)==='ok').length;
+  const low = parts.filter(p=>statusOf(p)==='low').length;
+  const out = parts.filter(p=>statusOf(p)==='out').length;
+  const totalReal = parts.length;
+  const total = totalReal || 1;
+  const pct = n => totalReal ? Math.round(n/totalReal*100) : 0;
+  const pOk = ok/total*360, pLow = low/total*360;
+  const c1 = pOk, c2 = pOk+pLow;
+  const gradient = `conic-gradient(var(--ok) 0deg ${c1}deg, var(--warn) ${c1}deg ${c2}deg, var(--danger-dark) ${c2}deg 360deg)`;
+  return `
+  <div class="chart-row">
+    <div class="donut" style="background:${gradient}"></div>
+    <div class="legend">
+      <div><span class="dot" style="background:var(--ok)"></span>ปกติ — ${ok} รายการ (${pct(ok)}%)</div>
+      <div><span class="dot" style="background:var(--warn)"></span>ต่ำกว่าขั้นต่ำ — ${low} รายการ (${pct(low)}%)</div>
+      <div><span class="dot" style="background:var(--danger-dark)"></span>หมดสต็อก — ${out} รายการ (${pct(out)}%)</div>
+      <div style="color:var(--muted)">รวมทั้งหมด ${totalReal} รายการ</div>
+    </div>
+  </div>`;
+}
+
+// ---------- Views ----------
+function renderDashboard(){
+  const total = parts.length;
+  const low = parts.filter(p=>statusOf(p)==='low').length;
+  const out = parts.filter(p=>statusOf(p)==='out').length;
+  const alertList = parts.filter(p=>statusOf(p)!=='ok');
+  return `
+  ${alertList.length ? `
+  <div class="card">
+    <h2>🚨 Alert — อะไหล่ต่ำกว่าขั้นต่ำ / หมดสต็อก</h2>
+    ${alertList.map(p=>`
+      <div class="alert-card ${statusOf(p)==='out'?'out':''}">
+        <div class="row1"><span>${p.code} — ${p.name}</span>${stockBadge(p)}</div>
+        <div class="details">
+          <span>เจ้าของ: <b>${OWNER_LABEL[p.owner]||p.owner||'-'}</b></span>
+          <span>หมวดหมู่: ${p.category||'-'}</span>
+          <span>คงเหลือ: <b>${p.stock} ${p.unit}</b></span>
+          <span>ขั้นต่ำ: ${p.min} ${p.unit}</span>
+          <span>ขาดอีก: <b>${Math.max(0,p.min-p.stock)} ${p.unit}</b></span>
+        </div>
+      </div>`).join('')}
+  </div>` : ''}
+  <div class="card">
+    <h2>สรุปภาพรวม</h2>
+    <div class="grid">
+      <div class="stat"><div class="icon">📦</div><div class="n">${total}</div><div class="l">รายการอะไหล่ทั้งหมด</div></div>
+      <div class="stat"><div class="icon">⚠️</div><div class="n" style="color:var(--warn)">${low}</div><div class="l">ใกล้หมด / ต่ำกว่าขั้นต่ำ</div></div>
+      <div class="stat"><div class="icon">🚫</div><div class="n" style="color:var(--danger-dark)">${out}</div><div class="l">หมดสต็อก</div></div>
+      <div class="stat"><div class="icon">🔄</div><div class="n">${tx.length}</div><div class="l">รายการเคลื่อนไหวทั้งหมด</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>จำนวนอะไหล่แยกตาม Owner</h2>
+    <div class="grid">
+      ${OWNERS.map(o=>{
+        const list = parts.filter(p=>p.owner===o);
+        const qty = list.reduce((s,p)=>s+p.stock,0);
+        return `<div class="stat">
+          <div class="n">${list.length} <span style="font-size:12px;font-weight:400;color:var(--muted)">รายการ</span></div>
+          <div class="l">${OWNER_LABEL[o]}</div>
+          <div class="l" style="margin-top:4px">คงเหลือรวม ${qty} หน่วย</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <h2>สถานะ Stock ทั้งหมด</h2>
+    ${statusChart()}
+  </div>
+  <div class="card">
+    <h2>รายการล่าสุด</h2>
+    ${renderTxTable(tx.slice(-5).reverse())}
+  </div>`;
+}
+
+function renderParts(){
+  return `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2 id="partsCount" style="margin:0;">รายการอะไหล่ในคลัง (${filteredParts().length}/${parts.length})</h2>
+      <div style="display:flex;gap:8px;">
+        <button id="openEditPartBtn" title="แก้ไขอะไหล่" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--accent);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✏️</button>
+        <button id="openAddPartBtn" title="เพิ่มอะไหล่ใหม่" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--accent);color:var(--accent-fg);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+      </div>
+    </div>
+    <form id="partFilterForm" style="margin:14px 0;">
+      <div><label>ค้นหา (รหัส/ชื่อ)</label><input name="search" value="${partFilter.search}" placeholder="พิมพ์เพื่อค้นหา..."></div>
+      <div><label>หมวดหมู่</label><input name="category" value="${partFilter.category}" placeholder="เช่น Bearing"></div>
+      <div><label>เจ้าของ</label>
+        <select name="owner">
+          <option value="">ทั้งหมด</option>
+          ${OWNERS.map(o=>`<option value="${o}" ${partFilter.owner===o?'selected':''}>${OWNER_LABEL[o]}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>สถานะ</label>
+        <select name="status">
+          <option value="">ทั้งหมด</option>
+          <option value="ok" ${partFilter.status==='ok'?'selected':''}>ปกติ</option>
+          <option value="low" ${partFilter.status==='low'?'selected':''}>ต่ำกว่าขั้นต่ำ</option>
+          <option value="out" ${partFilter.status==='out'?'selected':''}>หมด</option>
+        </select>
+      </div>
+    </form>
+    <div class="tbl-wrap" id="partsTableWrap"><table><thead><tr><th>📌</th><th>รหัส</th><th>รูป</th><th>ชื่อ</th><th>หมวดหมู่</th><th>เจ้าของ</th><th>คงเหลือ</th><th>ขั้นต่ำ</th><th>สถานะ</th></tr></thead><tbody>
+      ${filteredParts().map(p=>`<tr><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="ปักหมุด">${p.pinned?"📌":"📍"}</button></td><td>${p.code}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td>${p.stock} ${p.unit}</td><td>${p.min} ${p.unit}</td><td>${stockBadge(p)}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">ไม่พบรายการที่ตรงกับตัวกรอง</td></tr>'}
+    </tbody></table></div>
+  </div>`;
+}
+
+function partOptions(query){
+  const q = (query||'').trim().toLowerCase();
+  const list = q ? parts.filter(p=>p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)) : parts;
+  if(!list.length) return `<option value="" disabled>ไม่พบอะไหล่ที่ตรงกับคำค้นหา</option>`;
+  return list.map(p=>`<option value="${p.code}">${p.code} — ${p.name} (คงเหลือ ${p.stock} ${p.unit})</option>`).join('');
+}
+
+function partPreviewHTML(code){
+  const p = partByCode(code);
+  if(!p) return `<div class="empty">ยังไม่ได้เลือกอะไหล่</div>`;
+  return `<div style="display:flex;gap:12px;align-items:center;">
+    ${partThumb(p)}
+    <div style="font-size:13px;line-height:1.7;">
+      <div><b>${p.code}</b> — ${p.name}</div>
+      <div style="color:var(--muted)">หมวดหมู่: ${p.category||'-'}</div>
+      <div>${ownerBadge(p)} ${stockBadge(p)}</div>
+      <div>คงเหลือ: <b>${p.stock} ${p.unit}</b></div>
+    </div>
+  </div>`;
+}
+function renderWithdraw(){
+  return `
+  <div class="card">
+    <h2>📤 บันทึกการเบิกอะไหล่</h2>
+    <form id="withdrawForm">
+      <div class="full"><label>ค้นหาอะไหล่</label><input type="text" id="withdrawSearchBox" placeholder="พิมพ์รหัสหรือชื่อเพื่อค้นหา..."></div>
+      <div class="full"><label>เลือกอะไหล่</label><select name="code" id="withdrawSelect" required><option value="">-- เลือก --</option>${partOptions()}</select></div>
+      <div class="full" id="withdrawPartPreview">${partPreviewHTML('')}</div>
+      <div><label>จำนวนที่เบิก</label><input name="qty" type="number" min="1" required></div>
+      <div><label>ผู้เบิก</label><input name="person" required value="${currentUser.name}"></div>
+      <div class="full"><label>หมายเหตุ / ใช้งานกับ</label><input name="note" placeholder="เช่น ซ่อมสายพานไลน์ 2"></div>
+      <div class="msg" id="withdrawMsg"></div>
+      <button class="submit" type="submit">บันทึกการเบิก</button>
+    </form>
+  </div>`;
+}
+
+function renderReplenish(){
+  return `
+  <div class="card">
+    <h2>📥 บันทึกการเติมสต็อก</h2>
+    <form id="replenishForm">
+      <div class="full"><label>ค้นหาอะไหล่</label><input type="text" id="replenishSearchBox" placeholder="พิมพ์รหัสหรือชื่อเพื่อค้นหา..."></div>
+      <div class="full"><label>เลือกอะไหล่</label><select name="code" id="replenishSelect" required><option value="">-- เลือก --</option>${partOptions()}</select></div>
+      <div class="full" id="replenishPartPreview">${partPreviewHTML('')}</div>
+      <div><label>จำนวนที่รับเข้า</label><input name="qty" type="number" min="1" required></div>
+      <div><label>ผู้บันทึก / ผู้ส่งมอบ</label><input name="person" required value="${currentUser.name}"></div>
+      <div class="full"><label>หมายเหตุ / อ้างอิง PO</label><input name="note" placeholder="เช่น PO-2026-0912"></div>
+      <div class="msg" id="replenishMsg"></div>
+      <button class="submit" type="submit">บันทึกการเติมสต็อก</button>
+    </form>
+  </div>`;
+}
+
+function renderTxTable(list){
+  if(!list.length) return `<div class="empty">ยังไม่มีรายการ</div>`;
+  return `<div class="tbl-wrap"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>รหัส</th><th>ชื่ออะไหล่</th><th>จำนวน</th><th>โดย</th><th>หมายเหตุ</th></tr></thead><tbody>
+    ${list.map(t=>`<tr>
+      <td>${fmtDate(t.date)}</td>
+      <td class="${t.type==='withdraw'?'tag-out':'tag-in'}">${t.type==='withdraw'?'เบิกออก':'เติมเข้า'}</td>
+      <td>${t.code}</td><td>${t.name}</td>
+      <td>${t.type==='withdraw'?'-':'+'}${t.qty}</td>
+      <td>${t.person}</td><td>${t.note||'-'}</td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function renderHistory(){
+  return `<div class="card"><h2>ประวัติการเคลื่อนไหวทั้งหมด (${tx.length})</h2>${renderTxTable([...tx].reverse())}</div>`;
+}
+
+function periodCutoff(){
+  const d = new Date();
+  d.setDate(d.getDate() - (reportPeriod==='week' ? 7 : 30));
+  return d;
+}
+function aggregateTx(type){
+  const cutoff = periodCutoff();
+  const map = {};
+  tx.filter(t=>t.type===type && t.date>=cutoff).forEach(t=>{
+    if(!map[t.code]) map[t.code] = {code:t.code, name:t.name, qty:0};
+    map[t.code].qty += t.qty;
+  });
+  return Object.values(map).sort((a,b)=>b.qty-a.qty).slice(0,5);
+}
+function rankBars(list, color){
+  if(!list.length) return `<div class="empty">ไม่มีข้อมูลในช่วงเวลานี้</div>`;
+  const max = Math.max(...list.map(i=>i.qty));
+  return list.map(i=>`<div class="bar-item">
+    <div class="bh"><span>${i.code} — ${i.name}</span><span>${i.qty} หน่วย</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${(i.qty/max*100)}%;background:${color}"></div></div>
+  </div>`).join('');
+}
+function renderReport(){
+  const topOut = aggregateTx('withdraw');
+  const topIn = aggregateTx('replenish');
+  const label = reportPeriod==='week' ? 'รายสัปดาห์ (7 วันล่าสุด)' : 'รายเดือน (30 วันล่าสุด)';
+  return `
+  <div class="card">
+    <h2>รายงานสรุป — ${label}</h2>
+    <div style="display:flex;gap:8px;">
+      <button class="period-btn" data-period="week" style="border:1px solid var(--border);background:${reportPeriod==='week'?'var(--accent)':'var(--bg)'};color:${reportPeriod==='week'?'var(--accent-fg)':'var(--text)'};padding:6px 14px;border-radius:16px;font-size:13px;cursor:pointer;">รายสัปดาห์</button>
+      <button class="period-btn" data-period="month" style="border:1px solid var(--border);background:${reportPeriod==='month'?'var(--accent)':'var(--bg)'};color:${reportPeriod==='month'?'var(--accent-fg)':'var(--text)'};padding:6px 14px;border-radius:16px;font-size:13px;cursor:pointer;">รายเดือน</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>📤 อะไหล่ที่เบิกออกมากที่สุด</h2>
+    ${rankBars(topOut, 'var(--danger)')}
+  </div>
+  <div class="card">
+    <h2>📥 อะไหล่ที่เติมเข้ามากที่สุด</h2>
+    ${rankBars(topIn, 'var(--ok)')}
+  </div>`;
+}
+
+function renderUsers(){
+  return `
+  <div class="card">
+    <h2>สร้างผู้ใช้งานใหม่</h2>
+    <form id="createUserForm">
+      <div><label>Username</label><input name="user" required></div>
+      <div><label>Password</label><input name="pass" type="password" required></div>
+      <div class="full"><label>ชื่อ-นามสกุล</label><input name="name" required></div>
+      <div class="full"><label>แผนก</label>
+        <select name="dept" required>
+          <option value="Admin">Admin</option>
+          ${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}
+        </select>
+      </div>
+      <div class="msg" id="createUserMsg"></div>
+      <button class="submit" type="submit">+ สร้างผู้ใช้</button>
+    </form>
+  </div>
+  <div class="card">
+    <h2>ผู้ใช้งานทั้งหมด</h2>
+    <div class="tbl-wrap" id="usersTableWrap"><div class="empty">กำลังโหลด...</div></div>
+  </div>`;
+}
+function loadUsersTable(){
+  callApi('getUsers').then(list=>{
+    USERS = list.map(mapUser);
+    document.getElementById('usersTableWrap').innerHTML =
+      `<table><thead><tr><th>Username</th><th>ชื่อ</th><th>แผนก</th></tr></thead><tbody>
+        ${USERS.map(u=>`<tr><td>${u.user}</td><td>${u.name}</td><td><span class="badge owner">${u.dept}</span></td></tr>`).join('')}
+      </tbody></table>`;
+  }).catch(err=>{
+    document.getElementById('usersTableWrap').innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${err.message}</div>`;
+  });
+}
+
+function csvEscape(v){
+  const s = String(v==null?'':v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+function downloadText(filename, text){
+  const blob = new Blob([text], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function partsToCSV(){
+  const rows = [['รหัส','ชื่อ','หมวดหมู่','เจ้าของ','คงเหลือ','ขั้นต่ำ','หน่วยนับ','สถานะ']];
+  parts.forEach(p=>rows.push([p.code,p.name,p.category||'',p.owner||'',p.stock,p.min,p.unit,
+    statusOf(p)==='out'?'หมด':statusOf(p)==='low'?'ต่ำกว่าขั้นต่ำ':'ปกติ']));
+  return rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+}
+function txToCSV(){
+  const rows = [['วันที่','ประเภท','รหัส','ชื่ออะไหล่','จำนวน','โดย','หมายเหตุ']];
+  tx.forEach(t=>rows.push([t.date.toISOString(),t.type==='withdraw'?'เบิกออก':'เติมเข้า',t.code,t.name,t.qty,t.person,t.note||'']));
+  return rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+}
+
+function renderSettings(){
+  return `
+  <div class="card">
+    <h2>ฐานข้อมูล Google Sheet ที่เชื่อมต่ออยู่</h2>
+    <p style="font-size:13px;color:var(--muted);margin-top:-4px;line-height:1.7;">
+      หน้านี้โฮสต์อยู่บน GitHub Pages และเรียก API ไปยัง Google Apps Script Web App เพื่ออ่าน/เขียนข้อมูลลง Google Sheet
+      โดยตรงแบบ Real-time
+    </p>
+    <div id="sheetInfoBox" class="empty">กำลังโหลดข้อมูลไฟล์...</div>
+  </div>
+  <div class="card">
+    <h2>สำรองข้อมูลเป็น CSV</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button type="button" class="export-btn" data-export="parts" style="border:1px solid var(--border);background:var(--ok-bg);color:var(--ok);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;">📦 Export Spare Part List (CSV)</button>
+      <button type="button" class="export-btn" data-export="history" style="border:1px solid var(--border);background:var(--ok-bg);color:var(--ok);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;">📜 Export History (CSV)</button>
+      <button type="button" class="export-btn" data-export="login" style="border:1px solid var(--border);background:var(--ok-bg);color:var(--ok);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;">🔐 Export Login Record (CSV)</button>
+    </div>
+    <div class="msg" id="settingsMsg"></div>
+  </div>`;
+}
+function loadSheetInfo(){
+  callApi('getSpreadsheetInfo').then(info=>{
+    document.getElementById('sheetInfoBox').innerHTML =
+      `<div style="font-size:13px;line-height:1.8;">
+        <div>ชื่อไฟล์: <b>${info.name}</b></div>
+        <div>ลิงก์: <a href="${info.url}" target="_blank" rel="noopener">${info.url}</a></div>
+      </div>`;
+  }).catch(err=>{
+    document.getElementById('sheetInfoBox').innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${err.message}</div>`;
+  });
+}
+
+function render(){
+  if((active==='users'||active==='settings') && currentUser.dept!=='Admin') active = 'dashboard';
+  renderNav();
+  const main = document.getElementById('main');
+  if(active==='dashboard') main.innerHTML = renderDashboard();
+  else if(active==='parts') main.innerHTML = renderParts();
+  else if(active==='withdraw') main.innerHTML = renderWithdraw();
+  else if(active==='replenish') main.innerHTML = renderReplenish();
+  else if(active==='history') main.innerHTML = renderHistory();
+  else if(active==='report') main.innerHTML = renderReport();
+  else if(active==='users') main.innerHTML = renderUsers();
+  else if(active==='settings') main.innerHTML = renderSettings();
+  attachHandlers();
+  if(active==='users') loadUsersTable();
+  if(active==='settings') loadSheetInfo();
+}
+
+function showMsg(id, text, ok){
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg show ' + (ok?'ok':'err');
+}
+function fileToBase64(file, cb){
+  const reader = new FileReader();
+  reader.onload = ()=>{ cb(reader.result.split(',')[1], file.type); };
+  reader.readAsDataURL(file);
+}
+
+function attachHandlers(){
+  document.querySelectorAll('.pin-btn').forEach(b=>{
+    b.onclick = ()=>{
+      const p = partByCode(b.dataset.pin);
+      if(p) p.pinned = !p.pinned;
+      render();
+    };
+  });
+  const withdrawSelect = document.getElementById('withdrawSelect');
+  if(withdrawSelect){
+    withdrawSelect.onchange = ()=>{
+      document.getElementById('withdrawPartPreview').innerHTML = partPreviewHTML(withdrawSelect.value);
+    };
+  }
+  const replenishSelect = document.getElementById('replenishSelect');
+  if(replenishSelect){
+    replenishSelect.onchange = ()=>{
+      document.getElementById('replenishPartPreview').innerHTML = partPreviewHTML(replenishSelect.value);
+    };
+  }
+  document.querySelectorAll('.export-btn').forEach(b=>{
+    b.onclick = ()=>{
+      const key = b.dataset.export;
+      if(key==='parts') downloadText('SparePartList.csv', partsToCSV());
+      else if(key==='history') downloadText('History.csv', txToCSV());
+      else if(key==='login'){
+        callApi('getLoginRecords').then(records=>{
+          const rows = [['วันที่-เวลา','Username','ชื่อ-นามสกุล','แผนก','ผลลัพธ์']];
+          records.forEach(r=>rows.push([r['วันที่-เวลา'],r['Username'],r['ชื่อ-นามสกุล'],r['แผนก'],r['ผลลัพธ์']]));
+          downloadText('LoginRecord.csv', rows.map(r=>r.map(csvEscape).join(',')).join('\n'));
+        }).catch(err=>{ showMsg('settingsMsg','เกิดข้อผิดพลาด: '+err.message,false); });
+      }
+    };
+  });
+  const withdrawSearchBox = document.getElementById('withdrawSearchBox');
+  if(withdrawSearchBox){
+    withdrawSearchBox.oninput = ()=>{
+      document.getElementById('withdrawSelect').innerHTML = `<option value="">-- เลือก --</option>${partOptions(withdrawSearchBox.value)}`;
+    };
+  }
+  const replenishSearchBox = document.getElementById('replenishSearchBox');
+  if(replenishSearchBox){
+    replenishSearchBox.oninput = ()=>{
+      document.getElementById('replenishSelect').innerHTML = `<option value="">-- เลือก --</option>${partOptions(replenishSearchBox.value)}`;
+    };
+  }
+  document.querySelectorAll('.period-btn').forEach(b=>{
+    b.onclick = ()=>{ reportPeriod = b.dataset.period; render(); };
+  });
+
+  // --- create user ---
+  const createUserForm = document.getElementById('createUserForm');
+  if(createUserForm){
+    createUserForm.onsubmit = e=>{
+      e.preventDefault();
+      const f = new FormData(createUserForm);
+      const u = {user:f.get('user').trim(), pass:f.get('pass'), name:f.get('name').trim(), dept:f.get('dept')};
+      callApi('createUser', u).then(res=>{
+        if(!res.ok){ showMsg('createUserMsg', res.message, false); return; }
+        showMsg('createUserMsg','สร้างผู้ใช้งานเรียบร้อย', true);
+        createUserForm.reset();
+        loadUsersTable();
+      }).catch(err=>{
+        showMsg('createUserMsg', 'เกิดข้อผิดพลาด: '+err.message, false);
+      });
+    };
+  }
+
+  // --- edit part (modal) ---
+  const openEditPartBtn = document.getElementById('openEditPartBtn');
+  if(openEditPartBtn) openEditPartBtn.onclick = ()=>openEditModal();
+  const editPartSelect = document.getElementById('editPartSelect');
+  if(editPartSelect) editPartSelect.onchange = ()=>populateEditFields(editPartSelect.value);
+  const editPartSearchBox = document.getElementById('editPartSearchBox');
+  if(editPartSearchBox){
+    editPartSearchBox.oninput = ()=>{
+      document.getElementById('editPartSelect').innerHTML = editSelectOptions(editPartSearchBox.value);
+    };
+  }
+  const editPartForm = document.getElementById('editPartForm');
+  if(editPartForm){
+    editPartForm.onsubmit = e=>{
+      e.preventDefault();
+      if(!editingCode){ showMsg('editPartMsg','กรุณาเลือกอะไหล่ก่อนบันทึก', false); return; }
+      const f = new FormData(editPartForm);
+      const part = {code:editingCode, name:f.get('name').trim(), category:f.get('category').trim(),
+        unit:f.get('unit').trim(), min:f.get('min'), owner:f.get('owner')};
+      const submit = ()=>{
+        callApi('updatePart', part).then(res=>{
+          if(!res.ok){ showMsg('editPartMsg', res.message, false); return; }
+          closeEditModal();
+          refreshAllData();
+        }).catch(err=>{
+          showMsg('editPartMsg', 'เกิดข้อผิดพลาด: '+err.message, false);
+        });
+      };
+      const file = f.get('image');
+      if(file && file.size > 0){
+        fileToBase64(file, (base64, mime)=>{ part.imageBase64 = base64; part.imageMimeType = mime; submit(); });
+      } else submit();
+    };
+  }
+  const editCloseBtn = document.getElementById('editCloseBtn');
+  if(editCloseBtn) editCloseBtn.onclick = closeEditModal;
+  const editCancelBtn = document.getElementById('editCancelBtn');
+  if(editCancelBtn) editCancelBtn.onclick = closeEditModal;
+
+  // --- part filter (client-side on already-fetched data) ---
+  const partFilterForm = document.getElementById('partFilterForm');
+  if(partFilterForm){
+    const refresh = ()=>{
+      const f = new FormData(partFilterForm);
+      partFilter = {search:f.get('search')||'', category:f.get('category')||'', owner:f.get('owner')||'', status:f.get('status')||''};
+      document.getElementById('partsCount').textContent = `รายการอะไหล่ในคลัง (${filteredParts().length}/${parts.length})`;
+      const list = filteredParts();
+      document.getElementById('partsTableWrap').innerHTML = `<table><thead><tr><th>📌</th><th>รหัส</th><th>รูป</th><th>ชื่อ</th><th>หมวดหมู่</th><th>เจ้าของ</th><th>คงเหลือ</th><th>ขั้นต่ำ</th><th>สถานะ</th></tr></thead><tbody>
+        ${list.map(p=>`<tr><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="ปักหมุด">${p.pinned?"📌":"📍"}</button></td><td>${p.code}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td>${p.stock} ${p.unit}</td><td>${p.min} ${p.unit}</td><td>${stockBadge(p)}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">ไม่พบรายการที่ตรงกับตัวกรอง</td></tr>'}
+      </tbody></table>`;
+      document.querySelectorAll('.pin-btn').forEach(b=>{
+        b.onclick = ()=>{
+          const p = partByCode(b.dataset.pin);
+          if(p) p.pinned = !p.pinned;
+          render();
+        };
+      });
+    };
+    partFilterForm.querySelectorAll('input').forEach(el=>el.oninput = refresh);
+    partFilterForm.querySelectorAll('select').forEach(el=>el.onchange = refresh);
+  }
+
+  // --- add part (modal) ---
+  const openAddPartBtn = document.getElementById('openAddPartBtn');
+  if(openAddPartBtn) openAddPartBtn.onclick = openAddModal;
+  const addCancelBtn = document.getElementById('addCancelBtn');
+  if(addCancelBtn) addCancelBtn.onclick = closeAddModal;
+  const addPartForm = document.getElementById('addPartForm');
+  if(addPartForm){
+    addPartForm.onsubmit = e=>{
+      e.preventDefault();
+      const f = new FormData(addPartForm);
+      const part = {code:f.get('code').trim(), name:f.get('name').trim(), category:f.get('category').trim(),
+        unit:f.get('unit').trim(), stock:f.get('stock'), min:f.get('min'), owner:f.get('owner')};
+      const submit = ()=>{
+        callApi('addPart', part).then(res=>{
+          if(!res.ok){ showMsg('addPartMsg', res.message, false); return; }
+          closeAddModal();
+          refreshAllData();
+        }).catch(err=>{
+          showMsg('addPartMsg', 'เกิดข้อผิดพลาด: '+err.message, false);
+        });
+      };
+      const file = f.get('image');
+      if(file && file.size > 0){
+        fileToBase64(file, (base64, mime)=>{ part.imageBase64 = base64; part.imageMimeType = mime; submit(); });
+      } else submit();
+    };
+  }
+
+  // --- withdraw ---
+  const withdrawForm = document.getElementById('withdrawForm');
+  if(withdrawForm){
+    withdrawForm.onsubmit = e=>{
+      e.preventDefault();
+      const f = new FormData(withdrawForm);
+      const code = f.get('code');
+      if(!code){ showMsg('withdrawMsg','กรุณาเลือกอะไหล่',false); return; }
+      const txn = {type:'withdraw', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      callApi('recordTransaction', txn).then(res=>{
+        if(!res.ok){ showMsg('withdrawMsg', res.message, false); return; }
+        showMsg('withdrawMsg', `บันทึกการเบิกสำเร็จ — คงเหลือ ${res.newStock}`, true);
+        withdrawForm.reset();
+        refreshAllData();
+      }).catch(err=>{
+        showMsg('withdrawMsg', 'เกิดข้อผิดพลาด: '+err.message, false);
+      });
+    };
+  }
+
+  // --- replenish ---
+  const replenishForm = document.getElementById('replenishForm');
+  if(replenishForm){
+    replenishForm.onsubmit = e=>{
+      e.preventDefault();
+      const f = new FormData(replenishForm);
+      const code = f.get('code');
+      if(!code){ showMsg('replenishMsg','กรุณาเลือกอะไหล่',false); return; }
+      const txn = {type:'replenish', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      callApi('recordTransaction', txn).then(res=>{
+        if(!res.ok){ showMsg('replenishMsg', res.message, false); return; }
+        showMsg('replenishMsg', `บันทึกการเติมสต็อกสำเร็จ — คงเหลือ ${res.newStock}`, true);
+        replenishForm.reset();
+        refreshAllData();
+      }).catch(err=>{
+        showMsg('replenishMsg', 'เกิดข้อผิดพลาด: '+err.message, false);
+      });
+    };
+  }
+}
+
+// ---------- Boot ----------
+if(API_URL.indexOf('PASTE_YOUR') === 0){
+  document.getElementById('app').innerHTML = '<div class="login-wrap"><div class="login-card"><h1>⚠️ ยังไม่ได้ตั้งค่า API_URL</h1><p>เปิดไฟล์ index.html แล้วแก้ค่า API_URL ที่ด้านบนของ &lt;script&gt; ให้เป็นลิงก์ Web App ของ Apps Script ที่ Deploy แล้ว</p></div></div>';
+} else if(currentUser){ bootApp(); } else { renderLogin(); }
+</script>
+</body>
+</html>
