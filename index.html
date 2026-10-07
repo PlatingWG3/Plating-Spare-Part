@@ -108,7 +108,6 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 .login-card p{font-size:12px;color:var(--muted);text-align:center;margin:0 0 18px;}
 .login-card form{grid-template-columns:1fr;}
 .login-lang-row{display:flex;justify-content:flex-end;margin-bottom:10px;}
-.demo-hint{font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-top:6px;line-height:1.6;}
 </style>
 </head>
 <body>
@@ -135,9 +134,8 @@ try{ const saved = localStorage.getItem('spm_lang'); if(saved==='th'||saved==='e
 
 const I18N = {
   th: {
-    appTitle:'ระบบจัดการอะไหล่', loginSubtitle:'กรุณาเข้าสู่ระบบเพื่อใช้งาน',
-    username:'Username', password:'Password', loginBtn:'เข้าสู่ระบบ', loggingIn:'กำลังตรวจสอบ...',
-    demoAccounts:'Demo accounts: admin/1234, me01/1234, mfg01/1234, pe01/1234',
+    appTitle:'WG3 Plating Spare Part Management', loginSubtitle:'กรุณาเข้าสู่ระบบ',
+    username:'Username', password:'Password', loginBtn:'เข้าสู่ระบบ', loggingIn:'กำลังตรวจสอบ...',    
     errorPrefix:'เกิดข้อผิดพลาด: ', connectFail:'เชื่อมต่อ API ไม่ได้: ',
     logout:'ออกจากระบบ', loadingData:'กำลังโหลดข้อมูล...', loadFail:'โหลดข้อมูลไม่สำเร็จ: ',
     tabDashboard:'ภาพรวม', tabParts:'คลังอะไหล่', tabWithdraw:'เบิกอะไหล่', tabReplenish:'เติมสต็อก',
@@ -189,9 +187,8 @@ const I18N = {
     csvLogin:['วันที่-เวลา','Username','ชื่อ-นามสกุล','แผนก','ผลลัพธ์'],
   },
   en: {
-    appTitle:'Spare Part Management', loginSubtitle:'Please sign in to continue',
-    username:'Username', password:'Password', loginBtn:'Sign In', loggingIn:'Checking...',
-    demoAccounts:'Demo accounts: admin/1234, me01/1234, mfg01/1234, pe01/1234',
+    appTitle:'WG3 Plating Spare Part Management', loginSubtitle:'Please sign in',
+    username:'Username', password:'Password', loginBtn:'Sign In', loggingIn:'Checking...',    
     errorPrefix:'Error: ', connectFail:'Could not connect to API: ',
     logout:'Log out', loadingData:'Loading data...', loadFail:'Failed to load data: ',
     tabDashboard:'Overview', tabParts:'Inventory', tabWithdraw:'Withdraw', tabReplenish:'Replenish',
@@ -336,16 +333,14 @@ function renderLogin(){
   document.getElementById('app').innerHTML = `
   <div class="login-wrap">
     <div class="login-card">
-      <div class="login-lang-row">${langToggleHTML('login')}</div>
-      <h1>🔧 ${t('appTitle')}</h1>
+      <div class="login-lang-row">${langToggleHTML('login')}</div>      
       <p>${t('loginSubtitle')}</p>
       <form id="loginForm">
         <div><label>${t('username')}</label><input name="user" required autocomplete="username"></div>
         <div><label>${t('password')}</label><input name="pass" type="password" required autocomplete="current-password"></div>
         <div class="msg" id="loginMsg"></div>
         <button class="submit" type="submit">${t('loginBtn')}</button>
-      </form>
-      <div class="demo-hint">${t('demoAccounts')}</div>
+      </form>      
     </div>
   </div>`;
   document.getElementById('langToggleBtn').onclick = ()=>switchLang(lang==='th'?'en':'th');
@@ -396,7 +391,7 @@ function renderApp(){
     <aside id="sidebar" class="sidebar">
       <div class="sidebar-inner">
         <div class="sidebar-brand">
-          <div class="sidebar-brand-left"><span class="brand-icon">🔧</span><span class="brand-text">SPM</span></div>
+          <div class="sidebar-brand-left"><span class="brand-icon">🔧</span><span class="brand-text">SPARE PART SYSTEM</span></div>
           ${langToggleHTML('sidebar')}
         </div>
         <nav id="nav" class="sidebar-nav"></nav>
