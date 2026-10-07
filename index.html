@@ -114,7 +114,6 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 .login-card h1{font-size:18px;margin:0 0 4px;text-align:center;}
 .login-card p{font-size:12px;color:var(--muted);text-align:center;margin:0 0 18px;}
 .login-card form{grid-template-columns:1fr;}
-.demo-hint{font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-top:6px;line-height:1.6;}
 </style>
 </head>
 <body>
@@ -181,14 +180,14 @@ function mapUser(raw){
 
 // ---------- Nav ----------
 const tabs = [
-  {id:'dashboard', label:'ภาพรวม', icon:'📊'},
-  {id:'parts', label:'คลังอะไหล่', icon:'📦'},
-  {id:'withdraw', label:'เบิกอะไหล่', icon:'📤'},
-  {id:'replenish', label:'เติมสต็อก', icon:'📥'},
-  {id:'history', label:'ประวัติ', icon:'📜'},
-  {id:'report', label:'รายงาน', icon:'📈'},
-  {id:'users', label:'จัดการผู้ใช้', icon:'👤', adminOnly:true},
-  {id:'settings', label:'ข้อมูล Google Sheet', icon:'⚙️', adminOnly:true},
+  {id:'dashboard', label:'Overview ภาพรวม', icon:'📊'},
+  {id:'parts', label:'Warehouse คลังอะไหล่', icon:'📦'},
+  {id:'withdraw', label:'Withdraw เบิกอะไหล่', icon:'📤'},
+  {id:'replenish', label:'Add Stock เติมสต็อก', icon:'📥'},
+  {id:'history', label:'Hitory ประวัติ', icon:'📜'},
+  {id:'report', label:'Report รายงาน', icon:'📈'},
+  {id:'users', label:'User Management จัดการผู้ใช้', icon:'👤', adminOnly:true},
+  {id:'settings', label:'Setting ตั้งค่า', icon:'⚙️', adminOnly:true},
 ];
 let active = 'dashboard';
 let partFilter = {search:'', owner:'', status:'', category:''};
@@ -199,7 +198,7 @@ function renderLogin(){
   document.getElementById('app').innerHTML = `
   <div class="login-wrap">
     <div class="login-card">
-      <h1>Plating Spare Part Managenent</h1>
+      <h1>Plating Spare Part Management</h1>
       <p>กรุณาเข้าสู่ระบบ</p>
       <p>Please Log In</p>
       <form id="loginForm">
@@ -207,8 +206,7 @@ function renderLogin(){
         <div><label>Password</label><input name="pass" type="password" required autocomplete="current-password"></div>
         <div class="msg" id="loginMsg"></div>
         <button class="submit" type="submit">เข้าสู่ระบบ</button>
-      </form>
-      <div class="demo-hint">Demo accounts: admin/1234, me01/1234, mfg01/1234, pe01/1234</div>
+      </form>      
     </div>
   </div>`;
   document.getElementById('loginForm').onsubmit = e=>{
@@ -259,7 +257,7 @@ function renderApp(){
       <div class="sidebar-inner">
         <div class="sidebar-brand">
           <span class="brand-icon">🔧</span>
-          <span class="brand-text">SPM</span>
+          <span class="brand-text">Plating WG3 Spare Part Management System</span>
         </div>
         <nav id="nav" class="sidebar-nav"></nav>
       </div>
