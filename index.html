@@ -40,6 +40,8 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',syst
 .sidebar-inner{display:flex;flex-direction:column;height:100%;width:220px;background:var(--card);border-right:1px solid var(--border);}
 .sidebar-brand{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px 14px;font-weight:700;font-size:15px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;}
 .sidebar-brand-left{display:flex;align-items:center;gap:8px;overflow:hidden;}
+.brand-stack{display:flex;flex-direction:column;line-height:1.25;min-width:0;}
+.brand-sub{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
 .sidebar-nav{display:flex;flex-direction:column;gap:2px;padding:10px;flex:1;overflow-y:auto;overflow-x:hidden;}
 .sidebar-nav button{display:flex;align-items:center;gap:10px;border:none;background:transparent;color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;width:100%;}
 .sidebar-nav button.active{background:var(--accent);color:var(--accent-fg);}
@@ -65,6 +67,23 @@ th{color:var(--muted);font-weight:600;font-size:12px;}
 .badge.ok{background:var(--ok-bg);color:var(--ok);}
 .badge.out{background:var(--danger-dark-bg);color:var(--danger-dark);animation:blink 1s step-start infinite;}
 @keyframes blink{50%{opacity:.35;}}
+.brand-icon{display:flex;align-items:center;justify-content:center;}
+.brand-logo{width:30px;height:30px;object-fit:contain;border-radius:6px;display:block;}
+.logo-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.logo-preview{width:56px;height:56px;border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--bg);overflow:hidden;}
+.logo-preview img{width:100%;height:100%;object-fit:contain;}
+.kind-group{display:flex;gap:8px;flex-wrap:wrap;}
+.kind-opt{display:inline-flex;align-items:center;gap:6px;margin:0;padding:8px 16px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;background:var(--bg);}
+.kind-opt input{width:auto;margin:0;}
+.kind-opt:has(input:checked){border-color:var(--accent);color:var(--accent);font-weight:600;}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.subtab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);padding:6px 12px;border-radius:16px;font-size:13px;cursor:pointer;}
+.subtab:hover:not(.active){background:var(--card);}
+.subtab.active{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
+.subtab-n{font-size:11px;opacity:.75;}
+.col-toggle{border:1px solid var(--border);background:var(--bg);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+th.col-collapsed,td.col-collapsed{width:34px;min-width:34px;padding:8px 2px;text-align:center;}
+.qty-num{font-weight:600;}
 .badge.owner{background:var(--bg);color:var(--accent);border:1px solid var(--border);}
 .part-thumb{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;cursor:zoom-in;transition:transform .25s ease, box-shadow .25s ease;transform-origin:center;}
 .part-thumb-img{object-fit:cover;background:var(--bg);border:1px solid var(--border);}
@@ -117,7 +136,13 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 // วาง URL ของ Google Apps Script Web App ที่ Deploy แล้ว (ลงท้ายด้วย /exec) ตรงนี้
 const API_URL = "https://script.google.com/macros/s/AKfycbxTVMnJTpMgwp4L-Oa2ooJE3DNPhI0WfpK3VPvmOeXEzftTCRCQFebnC7kIguoCaMwN/exec";
 
+// ======== DEMO_MODE ========
+// true  = ใช้ข้อมูลจำลองในหน้าเว็บ (สำหรับ Published Artifact ที่เรียก Apps Script โดยตรงไม่ได้)
+// false = เรียก Google Apps Script จริงผ่าน API_URL (ใช้ตอนนำไปวางบน GitHub Pages)
+const DEMO_MODE = false;
+
 function callApi(action, payload){
+  if(DEMO_MODE) return mockApi(action, payload || {});
   return fetch(API_URL, {
     method: 'POST',
     headers: {'Content-Type': 'text/plain;charset=utf-8'}, // text/plain หลีกเลี่ยง CORS preflight
@@ -126,6 +151,90 @@ function callApi(action, payload){
     if(!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   });
+}
+
+// ---- Mock backend (ทำงานเหมือน Code.gs แต่เก็บข้อมูลในหน้าเว็บ) ----
+const _day = 86400000;
+function _ago(d){ return new Date(Date.now() - d*_day).toISOString(); }
+const MOCK = {
+  users: [
+    {u:'admin', p:'1234', n:'ผู้ดูแลระบบ', d:'Admin'},
+    {u:'me01', p:'1234', n:'ช่างซ่อมบำรุง (ME)', d:'ME'},
+    {u:'mfg01', p:'1234', n:'เจ้าหน้าที่ผลิต (MFG)', d:'MFG'},
+    {u:'pe01', p:'1234', n:'วิศวกรกระบวนการ (PE)', d:'PE'},
+  ],
+  parts: [
+    ['SP-001','สายพานลำเลียง 10mm','General','MFG',12,5,'เส้น',''],
+    ['SP-002','ตลับลูกปืน 6205','General','ME',3,10,'ชิ้น',''],
+    ['SP-003','ฟิลเตอร์ลมอัด','Consumable','PE',0,4,'ชิ้น',''],
+    ['SP-004','มอเตอร์ไฟฟ้า 1HP','General','ME',6,2,'ตัว',''],
+    ['SP-005','ซีลยางปั๊ม','Consumable','PE',25,10,'ชิ้น',''],
+    ['SP-006','โซลินอยด์วาล์ว 24V','General','MFG',2,3,'ตัว',''],
+    ['SP-007','ถุงมือยางกันสารเคมี','PPE','PE',40,20,'คู่',''],
+    ['SP-008','ปากกามาร์กเกอร์','Stationary','MFG',8,10,'ด้าม',''],
+  ].map(r=>({code:r[0],name:r[1],category:r[2],owner:r[3],stock:r[4],min:r[5],unit:r[6],image:r[7]})),
+  history: [
+    [_ago(12),'เบิกออก','SP-002','ตลับลูกปืน 6205',4,'ช่างซ่อมบำรุง (ME)','เปลี่ยนลูกปืนมอเตอร์ไลน์ 1'],
+    [_ago(9),'เติมเข้า','SP-005','ซีลยางปั๊ม',20,'ผู้ดูแลระบบ','PO-2026-0801'],
+    [_ago(6),'เบิกออก','SP-003','ฟิลเตอร์ลมอัด',4,'วิศวกรกระบวนการ (PE)','เปลี่ยนไส้กรองประจำสัปดาห์'],
+    [_ago(4),'เบิกออก','SP-001','สายพานลำเลียง 10mm',3,'เจ้าหน้าที่ผลิต (MFG)','ซ่อมสายพานไลน์ 2'],
+    [_ago(3),'เติมเข้า','SP-004','มอเตอร์ไฟฟ้า 1HP',2,'ผู้ดูแลระบบ','PO-2026-0815'],
+    [_ago(2),'คืน','SP-007','ถุงมือยางกันสารเคมี',5,'เจ้าหน้าที่ผลิต (MFG)','คืนของเหลือจากงานซ่อม'],
+    [_ago(1),'เบิกออก','SP-002','ตลับลูกปืน 6205',3,'ช่างซ่อมบำรุง (ME)','เปลี่ยนลูกปืนปั๊ม'],
+  ].map(r=>({'วันที่':r[0],'ประเภท':r[1],'รหัส':r[2],'ชื่ออะไหล่':r[3],'จำนวน':r[4],'โดย':r[5],'หมายเหตุ':r[6]})),
+  logins: [],
+};
+function _partRow(p){
+  return {'รหัส':p.code,'ชื่อ':p.name,'หมวดหมู่':p.category,'เจ้าของ':p.owner,'คงเหลือ':p.stock,'ขั้นต่ำ':p.min,'หน่วยนับ':p.unit,'รูปภาพ':p.image};
+}
+function mockApi(action, payload){
+  return new Promise(resolve=>setTimeout(()=>resolve(_mockHandle(action, payload)), 150));
+}
+function _mockHandle(action, p){
+  switch(action){
+    case 'login': {
+      const u = MOCK.users.find(x=>x.u===p.username && x.p===p.password);
+      MOCK.logins.push({'วันที่-เวลา':new Date().toISOString(),'Username':p.username,'ชื่อ-นามสกุล':u?u.n:'-','แผนก':u?u.d:'-','ผลลัพธ์':u?'สำเร็จ':'ไม่สำเร็จ'});
+      return u ? {ok:true, user:{user:u.u, name:u.n, dept:u.d}} : {ok:false, message:'Username หรือ Password ไม่ถูกต้อง'};
+    }
+    case 'getOwnersConfig':
+      return {owners:['ME','MFG','PE'], labels:{ME:'ME – ซ่อมบำรุง', MFG:'MFG – ฝ่ายผลิต', PE:'PE – วิศวกรรมกระบวนการ'}};
+    case 'getSpreadsheetInfo':
+      return {name:'Master Spare Part List (Demo)', url:'https://docs.google.com/spreadsheets'};
+    case 'getPartsList': return MOCK.parts.map(_partRow);
+    case 'getHistory': return MOCK.history.slice();
+    case 'getUsers': return MOCK.users.map(u=>({'Username':u.u,'ชื่อ-นามสกุล':u.n,'แผนก':u.d}));
+    case 'getLoginRecords': return MOCK.logins.slice();
+    case 'createUser':
+      if(MOCK.users.some(x=>x.u===p.user)) return {ok:false, message:'มี Username นี้อยู่แล้ว'};
+      MOCK.users.push({u:p.user, p:p.pass, n:p.name, d:p.dept}); return {ok:true};
+    case 'addPart': {
+      if(MOCK.parts.some(x=>x.code===p.code)) return {ok:false, message:'มีรหัสอะไหล่นี้อยู่แล้ว'};
+      MOCK.parts.push({code:p.code,name:p.name,category:p.category||'',owner:p.owner||'',stock:Number(p.stock)||0,min:Number(p.min)||0,unit:p.unit||'',
+        image:p.imageBase64?('data:'+(p.imageMimeType||'image/jpeg')+';base64,'+p.imageBase64):''});
+      return {ok:true};
+    }
+    case 'updatePart': {
+      const x = MOCK.parts.find(y=>y.code===p.code);
+      if(!x) return {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
+      Object.assign(x,{name:p.name,category:p.category||'',owner:p.owner||'',min:Number(p.min)||0,unit:p.unit||''});
+      if(p.imageBase64) x.image = 'data:'+(p.imageMimeType||'image/jpeg')+';base64,'+p.imageBase64;
+      return {ok:true};
+    }
+    case 'recordTransaction': {
+      const x = MOCK.parts.find(y=>y.code===p.code);
+      if(!x) return {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
+      const q = Number(p.qty)||0;
+      if(p.type==='withdraw'){
+        if(q > x.stock) return {ok:false, message:'จำนวนเบิกเกินสต็อกคงเหลือ (คงเหลือ '+x.stock+')'};
+        x.stock -= q;
+      } else if(p.type==='replenish'){ x.stock += q; }
+      else return {ok:false, message:'ประเภทรายการไม่ถูกต้อง'};
+      MOCK.history.push({'วันที่':new Date().toISOString(),'ประเภท':p.type==='withdraw'?'เบิกออก':(p.kind==='return'?'คืน':'เติมเข้า'),'รหัส':x.code,'ชื่ออะไหล่':x.name,'จำนวน':q,'โดย':p.person,'หมายเหตุ':p.note||''});
+      return {ok:true, newStock:x.stock};
+    }
+    default: return {ok:false, message:'Unknown action: '+action};
+  }
 }
 
 // ======== i18n ========
@@ -138,7 +247,7 @@ const I18N = {
     username:'Username', password:'Password', loginBtn:'เข้าสู่ระบบ', loggingIn:'กำลังตรวจสอบ...',    
     errorPrefix:'เกิดข้อผิดพลาด: ', connectFail:'เชื่อมต่อ API ไม่ได้: ',
     logout:'ออกจากระบบ', loadingData:'กำลังโหลดข้อมูล...', loadFail:'โหลดข้อมูลไม่สำเร็จ: ',
-    tabDashboard:'ภาพรวม', tabParts:'คลังอะไหล่', tabWithdraw:'เบิกอะไหล่', tabReplenish:'เติมสต็อก',
+    tabDashboard:'ภาพรวม', tabParts:'คลังอะไหล่', tabWithdraw:'เบิกอะไหล่', tabReplenish:'เติมสต็อก/คืน',
     tabHistory:'ประวัติ', tabReport:'รายงาน', tabUsers:'จัดการผู้ใช้', tabSettings:'ข้อมูล Google Sheet',
     editPartTitle:'แก้ไขอะไหล่', close:'ปิด', searchPart:'ค้นหาอะไหล่', searchPlaceholder:'พิมพ์รหัสหรือชื่อเพื่อค้นหา...',
     selectPartToEdit:'เลือกอะไหล่ที่ต้องการแก้ไข', selectPartPlaceholder:'-- เลือกอะไหล่ --',
@@ -157,20 +266,23 @@ const I18N = {
     statusOutShort:'หมด', totalAll:'รวมทั้งหมด', recentTx:'รายการล่าสุด',
     partsInStock:'รายการอะไหล่ในคลัง', editPartBtnTitle:'แก้ไขอะไหล่', addPartBtnTitle:'เพิ่มอะไหล่ใหม่',
     searchCodeName:'ค้นหา (รหัส/ชื่อ)', categoryPlaceholder:'เช่น Bearing', ownerFilter:'เจ้าของ',
+    collapseCol:'ยุบคอลัมน์', expandCol:'ขยายคอลัมน์',
+    logoTitle:'โลโก้ระบบ', logoHint:'อัปโหลดรูปไอคอน (PNG/JPG/SVG) เพื่อใช้แทนไอคอนที่มุมบนซ้าย ระบบจะย่อรูปให้อัตโนมัติ รูปจะถูกจำไว้ในเบราว์เซอร์เครื่องนี้', logoUpload:'อัปโหลดรูป', logoRemove:'ลบรูป (กลับเป็นไอคอนเดิม)', logoSaved:'บันทึกโลโก้แล้ว', logoFail:'อ่านไฟล์รูปไม่สำเร็จ',
+    txnKind:'ประเภทรายการ', kindAdd:'เติมสต็อก', kindReturn:'คืน', typeAddStock:'เติมสต็อก', typeReturn:'คืน',
     all:'ทั้งหมด', statusFilter:'สถานะ', colCode:'รหัส', colImage:'รูป', colName:'ชื่อ', colCategory:'หมวดหมู่',
     colOwner:'เจ้าของ', colStock:'คงเหลือ', colMin:'ขั้นต่ำ', colStatus:'สถานะ',
     noMatch:'ไม่พบรายการที่ตรงกับตัวกรอง', pinTitle:'ปักหมุด',
     withdrawTitle:'📤 บันทึกการเบิกอะไหล่', selectPart:'เลือกอะไหล่', qtyWithdraw:'จำนวนที่เบิก',
     withdrawnBy:'ผู้เบิก', noteUsedFor:'หมายเหตุ / ใช้งานกับ', notePlaceholderW:'เช่น ซ่อมสายพานไลน์ 2',
     saveWithdraw:'บันทึกการเบิก', pleaseSelectPart:'กรุณาเลือกอะไหล่', withdrawSuccess:'บันทึกการเบิกสำเร็จ — คงเหลือ ',
-    replenishTitle:'📥 บันทึกการเติมสต็อก', qtyReceived:'จำนวนที่รับเข้า', recordedBy:'ผู้บันทึก / ผู้ส่งมอบ',
-    notePO:'หมายเหตุ / อ้างอิง PO', notePlaceholderR:'เช่น PO-2026-0912', saveReplenish:'บันทึกการเติมสต็อก',
-    replenishSuccess:'บันทึกการเติมสต็อกสำเร็จ — คงเหลือ ', notSelected:'ยังไม่ได้เลือกอะไหล่',
+    replenishTitle:'📥 บันทึกการเติมสต็อก/คืน', qtyReceived:'จำนวนที่รับเข้า', recordedBy:'ผู้บันทึก / ผู้ส่งมอบ',
+    notePO:'หมายเหตุ / อ้างอิง PO', notePlaceholderR:'เช่น PO-2026-0912', saveReplenish:'บันทึกการเติมสต็อก/คืน',
+    replenishSuccess:'บันทึกการเติมสต็อก/คืนสำเร็จ — คงเหลือ ', notSelected:'ยังไม่ได้เลือกอะไหล่',
     allTxTitle:'ประวัติการเคลื่อนไหวทั้งหมด', noItemsYet:'ยังไม่มีรายการ', colDate:'วันที่', colType:'ประเภท',
-    colQty:'จำนวน', colBy:'โดย', colNote:'หมายเหตุ', typeWithdraw:'เบิกออก', typeReplenish:'เติมเข้า',
+    colQty:'จำนวน', colBy:'โดย', colNote:'หมายเหตุ', typeWithdraw:'เบิกออก', typeReplenish:'เติมสต็อก/คืน',
     reportTitle:'รายงานสรุป — ', weekly:'รายสัปดาห์ (7 วันล่าสุด)', monthly:'รายเดือน (30 วันล่าสุด)',
     weeklyBtn:'รายสัปดาห์', monthlyBtn:'รายเดือน', topWithdrawn:'📤 อะไหล่ที่เบิกออกมากที่สุด',
-    topReplenished:'📥 อะไหล่ที่เติมเข้ามากที่สุด', noDataPeriod:'ไม่มีข้อมูลในช่วงเวลานี้',
+    topReplenished:'📥 อะไหล่ที่เติม/คืนมากที่สุด', noDataPeriod:'ไม่มีข้อมูลในช่วงเวลานี้',
     createUserTitle:'สร้างผู้ใช้งานใหม่', fullName:'ชื่อ-นามสกุล', department:'แผนก',
     createUserBtn:'+ สร้างผู้ใช้', allUsersTitle:'ผู้ใช้งานทั้งหมด', loading:'กำลังโหลด...',
     userCreated:'สร้างผู้ใช้งานเรียบร้อย',
@@ -191,39 +303,42 @@ const I18N = {
     username:'Username', password:'Password', loginBtn:'Sign In', loggingIn:'Checking...',    
     errorPrefix:'Error: ', connectFail:'Could not connect to API: ',
     logout:'Log out', loadingData:'Loading data...', loadFail:'Failed to load data: ',
-    tabDashboard:'Overview', tabParts:'Inventory', tabWithdraw:'Withdraw', tabReplenish:'Replenish',
+    tabDashboard:'Overview', tabParts:'Inventory', tabWithdraw:'Withdraw', tabReplenish:'Add Stock/Return',
     tabHistory:'History', tabReport:'Reports', tabUsers:'User Management', tabSettings:'Google Sheet Info',
     editPartTitle:'Edit Part', close:'Close', searchPart:'Search part', searchPlaceholder:'Type code or name to search...',
     selectPartToEdit:'Select part to edit', selectPartPlaceholder:'-- Select part --',
     partCode:'Part code', partName:'Part name', category:'Category', unit:'Unit',
-    stockEditNote:'Stock (editable via Withdraw/Replenish only)', minStock:'Minimum stock', owner:'Owner',
+    stockEditNote:'Stock (editable via Withdraw/Replenish only)', minStock:'Safety Stock', owner:'Owner',
     changeImage:'Change image (optional)', saveEdit:'Save changes', cancel:'Cancel',
     selectPartFirst:'Please select a part first', noPartFound:'No matching parts found',
     addPartTitle:'Add New Part', initialStock:'Initial stock', uploadImage:'Part image (upload)',
     addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005', unitPlaceholder:'pcs / rolls / boxes',
-    alertTitle:'🚨 Alert — Low Stock / Out of Stock Parts', ownerLabel:'Owner: ', categoryLabel:'Category: ',
-    stockLabel:'Stock: ', minLabel:'Min: ', shortageLabel:'Shortage: ',
-    summaryTitle:'Summary', totalParts:'Total parts', lowStock:'Low / below minimum',
-    outStock:'Out of stock', totalTx:'Total transactions',
+    alertTitle:'🚨 Alert — Below Safety Stock / Out of Stock Parts', ownerLabel:'Owner: ', categoryLabel:'Category: ',
+    stockLabel:'Current Qty.: ', minLabel:'Safety Stock: ', shortageLabel:'Shortage: ',
+    summaryTitle:'Summary', totalParts:'Total parts', lowStock:'Low / below Safety Stock',
+    outStock:'Out of Stock', totalTx:'Total transactions',
     byOwnerTitle:'Parts by Owner', items:'items', totalStockLabel:'Total stock', units:'units',
-    statusChartTitle:'Overall Stock Status', statusOk:'Normal', statusLow:'Below minimum', statusOut:'Out of stock',
-    statusOutShort:'Out', totalAll:'Total', recentTx:'Recent Transactions',
+    statusChartTitle:'Overall Stock Status', statusOk:'Normal', statusLow:'Below Safety Stock', statusOut:'Out of Stock',
+    statusOutShort:'Out of Stock', totalAll:'Total', recentTx:'Recent Transactions',
     partsInStock:'Parts in Stock', editPartBtnTitle:'Edit part', addPartBtnTitle:'Add new part',
     searchCodeName:'Search (code/name)', categoryPlaceholder:'e.g. Bearing', ownerFilter:'Owner',
-    all:'All', statusFilter:'Status', colCode:'Code', colImage:'Image', colName:'Name', colCategory:'Category',
-    colOwner:'Owner', colStock:'Stock', colMin:'Min', colStatus:'Status',
+    collapseCol:'Collapse column', expandCol:'Expand column',
+    logoTitle:'System Logo', logoHint:'Upload an icon image (PNG/JPG/SVG) to replace the icon at the top-left. The image is resized automatically and remembered in this browser only.', logoUpload:'Upload image', logoRemove:'Remove image (back to default icon)', logoSaved:'Logo saved', logoFail:'Could not read the image file',
+    txnKind:'Transaction type', kindAdd:'Add Stock', kindReturn:'Return', typeAddStock:'Add Stock', typeReturn:'Return',
+    all:'All', statusFilter:'Status', colCode:'Part number', colImage:'Image', colName:'Description', colCategory:'Category',
+    colOwner:'Owner', colStock:'Current Qty.', colMin:'Safety Stock', colStatus:'Status',
     noMatch:'No items match the filter', pinTitle:'Pin',
     withdrawTitle:'📤 Record Withdrawal', selectPart:'Select part', qtyWithdraw:'Quantity to withdraw',
     withdrawnBy:'Withdrawn by', noteUsedFor:'Note / used for', notePlaceholderW:'e.g. repairing conveyor line 2',
     saveWithdraw:'Save withdrawal', pleaseSelectPart:'Please select a part', withdrawSuccess:'Withdrawal recorded — remaining ',
-    replenishTitle:'📥 Record Replenishment', qtyReceived:'Quantity received', recordedBy:'Recorded by / supplier',
-    notePO:'Note / PO reference', notePlaceholderR:'e.g. PO-2026-0912', saveReplenish:'Save replenishment',
-    replenishSuccess:'Replenishment recorded — remaining ', notSelected:'No part selected yet',
+    replenishTitle:'📥 Record Add Stock/Return', qtyReceived:'Quantity received', recordedBy:'Recorded by / supplier',
+    notePO:'Note / PO reference', notePlaceholderR:'e.g. PO-2026-0912', saveReplenish:'Save Add Stock/Return',
+    replenishSuccess:'Add Stock/Return recorded — remaining ', notSelected:'No part selected yet',
     allTxTitle:'All Transaction History', noItemsYet:'No records yet', colDate:'Date', colType:'Type',
-    colQty:'Qty', colBy:'By', colNote:'Note', typeWithdraw:'Withdraw', typeReplenish:'Replenish',
+    colQty:'Qty', colBy:'By', colNote:'Note', typeWithdraw:'Withdraw', typeReplenish:'Add Stock/Return',
     reportTitle:'Summary Report — ', weekly:'Weekly (last 7 days)', monthly:'Monthly (last 30 days)',
     weeklyBtn:'Weekly', monthlyBtn:'Monthly', topWithdrawn:'📤 Most Withdrawn Parts',
-    topReplenished:'📥 Most Replenished Parts', noDataPeriod:'No data for this period',
+    topReplenished:'📥 Most Added/Returned Parts', noDataPeriod:'No data for this period',
     createUserTitle:'Create New User', fullName:'Full name', department:'Department',
     createUserBtn:'+ Create User', allUsersTitle:'All Users', loading:'Loading...',
     userCreated:'User created successfully',
@@ -235,8 +350,8 @@ const I18N = {
     loadFailShort:'Failed to load: ',
     apiNotSetTitle:'⚠️ API_URL not configured',
     apiNotSetDesc:'Open index.html and set the API_URL constant at the top of &lt;script&gt; to your deployed Apps Script Web App link.',
-    csvParts:['Code','Name','Category','Owner','Stock','Min','Unit','Status'],
-    csvHistory:['Date','Type','Code','Name','Qty','By','Note'],
+    csvParts:['Part number','Description','Category','Owner','Current Qty.','Safety Stock','Unit','Status'],
+    csvHistory:['Date','Type','Part number','Description','Qty','By','Note'],
     csvLogin:['Timestamp','Username','Full Name','Department','Result'],
   },
 };
@@ -273,6 +388,51 @@ function langToggleHTML(variant){
 let currentUser = null;
 try{ const saved = localStorage.getItem('spm_user'); if(saved) currentUser = JSON.parse(saved); }catch(e){}
 
+const CATEGORIES = ['General','Consumable','PPE','Stationary'];
+let brandLogo = '';
+try{ brandLogo = localStorage.getItem('spm_logo') || ''; }catch(e){}
+function brandIconHTML(){
+  return brandLogo ? `<img class="brand-logo" src="${brandLogo}" alt="logo">` : '🏭';
+}
+function applyBrandLogo(){
+  document.querySelectorAll('.brand-icon').forEach(el=>{ el.innerHTML = brandIconHTML(); });
+}
+// ย่อรูปที่อัปโหลดให้ไม่เกิน 128px เพื่อให้เก็บได้เล็กและโหลดเร็ว
+function resizeImageToDataUrl(file, maxSize, cb, outType){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const ratio = Math.min(1, maxSize/Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.width*ratio));
+      c.height = Math.max(1, Math.round(img.height*ratio));
+      const ctx = c.getContext('2d');
+      if(outType === 'image/jpeg'){ ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height); } // JPEG ไม่มีความโปร่งใส
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL(outType || 'image/png', 0.85));
+    };
+    img.onerror = ()=>cb(null);
+    img.src = reader.result;
+  };
+  reader.onerror = ()=>cb(null);
+  reader.readAsDataURL(file);
+}
+function setBrandLogo(dataUrl){
+  brandLogo = dataUrl || '';
+  try{
+    if(brandLogo) localStorage.setItem('spm_logo', brandLogo); else localStorage.removeItem('spm_logo');
+  }catch(e){}
+  applyBrandLogo();
+}
+let invCategory = ''; // '' = แสดงทั้งหมด, ไม่เช่นนั้นคือแท็บย่อยของ Inventory ที่เลือกอยู่
+function categoryOptionsHTML(selected, withAll){
+  let list = CATEGORIES.slice();
+  if(selected && !list.includes(selected)) list.push(selected); // เผื่อข้อมูลเดิมที่ไม่ได้อยู่ในรายการ
+  return (withAll ? `<option value="">${t('all')}</option>` : '')
+    + list.map(c=>`<option value="${c}" ${c===selected?'selected':''}>${c}</option>`).join('');
+}
+
 let OWNERS = ["ME","MFG","PE"];
 let OWNER_LABEL = {ME:"ME – ซ่อมบำรุง", MFG:"MFG – ฝ่ายผลิต", PE:"PE – วิศวกรรมกระบวนการ"};
 let parts = [];
@@ -288,7 +448,7 @@ function filteredParts(){
       const q = partFilter.search.toLowerCase();
       if(!p.code.toLowerCase().includes(q) && !p.name.toLowerCase().includes(q)) return false;
     }
-    if(partFilter.category && !(p.category||'').toLowerCase().includes(partFilter.category.toLowerCase())) return false;
+    if(invCategory && (p.category||'') !== invCategory) return false;
     if(partFilter.owner && p.owner !== partFilter.owner) return false;
     if(partFilter.status && statusOf(p) !== partFilter.status) return false;
     return true;
@@ -296,16 +456,24 @@ function filteredParts(){
 }
 
 // ---------- Sheet row <-> client object mapping ----------
+// แปลงลิงก์ Google Drive ทุกรูปแบบ (รวมของเดิมที่เป็น uc?export=view) เป็นลิงก์ thumbnail ที่ฝังใน <img> ได้
+function driveImgUrl(u){
+  if(!u || String(u).indexOf('data:') === 0) return u || '';
+  const m = String(u).match(/drive\.google\.com\/(?:uc\?[^#]*?id=|file\/d\/|open\?id=|thumbnail\?id=)([\w-]{10,})/)
+         || String(u).match(/lh3\.googleusercontent\.com\/d\/([\w-]{10,})/);
+  return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w800' : String(u);
+}
 function mapPart(raw){
   return {
     code: raw['รหัส'], name: raw['ชื่อ'], category: raw['หมวดหมู่'], owner: raw['เจ้าของ'],
     stock: Number(raw['คงเหลือ'])||0, min: Number(raw['ขั้นต่ำ'])||0, unit: raw['หน่วยนับ'],
-    image: raw['รูปภาพ'] || '',
+    image: driveImgUrl(raw['รูปภาพ'] || ''),
   };
 }
 function mapHistoryRow(raw){
   return {
     date: new Date(raw['วันที่']), type: raw['ประเภท']==='เบิกออก' ? 'withdraw' : 'replenish',
+    kind: raw['ประเภท']==='คืน' ? 'return' : 'add',
     code: raw['รหัส'], name: raw['ชื่ออะไหล่'], qty: Number(raw['จำนวน'])||0, person: raw['โดย'], note: raw['หมายเหตุ']||'',
   };
 }
@@ -327,6 +495,7 @@ const tabs = [
 let active = 'dashboard';
 let partFilter = {search:'', owner:'', status:'', category:''};
 let reportPeriod = 'week';
+let showSafety = false; // คอลัมน์ Safety Stock: ค่าเริ่มต้นคือยุบ
 
 // ---------- Login screen ----------
 function renderLogin(){
@@ -340,7 +509,8 @@ function renderLogin(){
         <div><label>${t('password')}</label><input name="pass" type="password" required autocomplete="current-password"></div>
         <div class="msg" id="loginMsg"></div>
         <button class="submit" type="submit">${t('loginBtn')}</button>
-      </form>      
+      </form>
+      ${DEMO_MODE ? '<div style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.6;">DEMO: admin / 1234 · me01 / 1234 · mfg01 / 1234 · pe01 / 1234</div>' : ''}
     </div>
   </div>`;
   document.getElementById('langToggleBtn').onclick = ()=>switchLang(lang==='th'?'en':'th');
@@ -391,8 +561,7 @@ function renderApp(){
     <aside id="sidebar" class="sidebar">
       <div class="sidebar-inner">
         <div class="sidebar-brand">
-          <div class="sidebar-brand-left"><span class="brand-icon">🔧</span><span class="brand-text">SPARE PART SYSTEM</span></div>
-          ${langToggleHTML('sidebar')}
+          <div class="sidebar-brand-left"><span class="brand-icon">${brandIconHTML()}</span><div class="brand-stack"><span class="brand-text">SPARE PART SYSTEM</span><span class="brand-sub">WG3 Plating Line</span></div></div>
         </div>
         <nav id="nav" class="sidebar-nav"></nav>
       </div>
@@ -402,6 +571,7 @@ function renderApp(){
         <div class="topbar-title" id="topbarTitle"></div>
         <div class="userbox">
           <span class="who">${currentUser.name}</span>
+          ${langToggleHTML('topbar')}
           <span class="dept">${currentUser.dept}</span>
           <button class="logout" id="logoutBtn">${t('logout')}</button>
         </div>
@@ -423,7 +593,7 @@ function renderApp(){
         <div id="editPartFields" class="hidden" style="display:contents;">
         <div><label>${t('partCode')}</label><input name="code" disabled></div>
         <div><label>${t('partName')}</label><input name="name" required></div>
-        <div><label>${t('category')}</label><input name="category"></div>
+        <div><label>${t('category')}</label><select name="category">${categoryOptionsHTML('General', false)}</select></div>
         <div><label>${t('unit')}</label><input name="unit" required></div>
         <div><label>${t('stockEditNote')}</label><input name="stock" disabled></div>
         <div><label>${t('minStock')}</label><input name="min" type="number" min="0" required></div>
@@ -446,7 +616,7 @@ function renderApp(){
       <form id="addPartForm">
         <div><label>${t('partCode')}</label><input name="code" required placeholder="${t('codePlaceholder')}"></div>
         <div><label>${t('partName')}</label><input name="name" required></div>
-        <div><label>${t('category')}</label><input name="category"></div>
+        <div><label>${t('category')}</label><select name="category">${categoryOptionsHTML('General', false)}</select></div>
         <div><label>${t('unit')}</label><input name="unit" required placeholder="${t('unitPlaceholder')}"></div>
         <div><label>${t('initialStock')}</label><input name="stock" type="number" min="0" value="0" required></div>
         <div><label>${t('minStock')}</label><input name="min" type="number" min="0" value="0" required></div>
@@ -479,6 +649,7 @@ function refreshAllData(){
 
 function openAddModal(){
   document.getElementById('addPartForm').reset();
+  document.getElementById('addPartForm').elements.category.value = invCategory || 'General';
   document.getElementById('addPartMsg').className = 'msg';
   document.getElementById('addModal').classList.remove('hidden');
 }
@@ -508,13 +679,14 @@ function populateEditFields(code){
   if(!p){ document.getElementById('editPartFields').classList.add('hidden'); editingCode = null; return; }
   editingCode = code;
   const form = document.getElementById('editPartForm');
-  form.code.value = p.code;
-  form.name.value = p.name;
-  form.category.value = p.category || '';
-  form.unit.value = p.unit;
-  form.stock.value = p.stock + ' ' + p.unit;
-  form.min.value = p.min;
-  form.owner.value = p.owner || '';
+  form.elements.code.value = p.code;
+  form.elements.name.value = p.name;
+  form.elements.category.innerHTML = categoryOptionsHTML(p.category || 'General', false);
+  form.elements.category.value = p.category || 'General';
+  form.elements.unit.value = p.unit;
+  form.elements.stock.value = p.stock + ' ' + p.unit;
+  form.elements.min.value = p.min;
+  form.elements.owner.value = p.owner || '';
   document.getElementById('editPartFields').classList.remove('hidden');
 }
 function closeEditModal(){
@@ -541,14 +713,21 @@ function stockBadge(p){
   return `<span class="badge ok">${t('statusOk')}</span>`;
 }
 function ownerBadge(p){ return `<span class="badge owner">${p.owner||'-'}</span>`; }
-function partThumb(p){
-  if(p.image){
-    return `<img class="part-thumb part-thumb-img" src="${p.image}" title="${p.name}" alt="${p.name}">`;
-  }
+function partLetterHTML(p){
   const colors = {ME:'#2563eb', MFG:'#059669', PE:'#d97706'};
   const color = colors[p.owner] || '#6b7280';
   const letter = (p.category || p.name || p.code || '?').trim().charAt(0).toUpperCase();
   return `<div class="part-thumb" style="background:${color}" title="${p.name}"><span>${letter}</span></div>`;
+}
+function partImgFailed(img){
+  const p = partByCode(img.dataset.code);
+  if(p) img.outerHTML = partLetterHTML(p);
+}
+function partThumb(p){
+  if(p.image){
+    return `<img class="part-thumb part-thumb-img" src="${p.image}" data-code="${p.code}" referrerpolicy="no-referrer" loading="lazy" onerror="partImgFailed(this)" title="${p.name}" alt="${p.name}">`;
+  }
+  return partLetterHTML(p);
 }
 
 // ---------- Charts (pure CSS/SVG, no libs) ----------
@@ -629,6 +808,11 @@ function renderDashboard(){
   </div>`;
 }
 
+function invSubtabsHTML(){
+  const tabsList = [{v:'', label:t('all'), n:parts.length}].concat(CATEGORIES.map(c=>({v:c, label:c, n:parts.filter(p=>(p.category||'')===c).length})));
+  return tabsList.map(x=>`<button type="button" class="subtab ${invCategory===x.v?'active':''}" data-cat="${x.v}">${x.label}<span class="subtab-n">${x.n}</span></button>`).join('');
+}
+
 function renderParts(){
   return `
   <div class="card">
@@ -639,9 +823,9 @@ function renderParts(){
         <button id="openAddPartBtn" title="${t('addPartBtnTitle')}" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--accent);color:var(--accent-fg);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
       </div>
     </div>
+    <div class="subtabs" id="invSubtabs">${invSubtabsHTML()}</div>
     <form id="partFilterForm" style="margin:14px 0;">
-      <div><label>${t('searchCodeName')}</label><input name="search" value="${partFilter.search}" placeholder="${t('searchPlaceholder')}"></div>
-      <div><label>${t('category')}</label><input name="category" value="${partFilter.category}" placeholder="${t('categoryPlaceholder')}"></div>
+      <div class="full"><label>${t('searchCodeName')}</label><input name="search" value="${partFilter.search}" placeholder="${t('searchPlaceholder')}"></div>
       <div><label>${t('ownerFilter')}</label>
         <select name="owner">
           <option value="">${t('all')}</option>
@@ -661,15 +845,37 @@ function renderParts(){
   </div>`;
 }
 
+function safetyHeaderHTML(){
+  return showSafety
+    ? `<th><button type="button" class="col-toggle" id="toggleSafetyBtn" title="${t('collapseCol')}">${t('colMin')} ◂</button></th>`
+    : `<th class="col-collapsed"><button type="button" class="col-toggle" id="toggleSafetyBtn" title="${t('expandCol')}: ${t('colMin')}">▸</button></th>`;
+}
+
 function partsTableHTML(list){
-  return `<table><thead><tr><th>📌</th><th>${t('colCode')}</th><th>${t('colImage')}</th><th>${t('colName')}</th><th>${t('colCategory')}</th><th>${t('colOwner')}</th><th>${t('colStock')}</th><th>${t('colMin')}</th><th>${t('colStatus')}</th></tr></thead><tbody>
-    ${list.map(p=>`<tr><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${p.code}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td>${p.stock} ${p.unit}</td><td>${p.min} ${p.unit}</td><td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="9" class="empty">${t('noMatch')}</td></tr>`}
+  return `<table><thead><tr><th>📌</th><th>${t('colCode')}</th><th>${t('colImage')}</th><th>${t('colName')}</th><th>${t('colCategory')}</th><th>${t('colOwner')}</th><th>${t('colStock')}</th>${safetyHeaderHTML()}<th>${t('colStatus')}</th></tr></thead><tbody>
+    ${list.map(p=>`<tr><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${p.code}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.stock} ${p.unit}</span></td>${showSafety ? `<td>${p.min} ${p.unit}</td>` : `<td class="col-collapsed"></td>`}<td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="9" class="empty">${t('noMatch')}</td></tr>`}
   </tbody></table>`;
 }
 
-function partOptions(query){
+function partPickerFiltersHTML(prefix){
+  return `<div><label>${t('category')}</label><select id="${prefix}CatFilter">${categoryOptionsHTML('', true)}</select></div>
+      <div><label>${t('searchPart')}</label><input type="text" id="${prefix}SearchBox" placeholder="${t('searchPlaceholder')}"></div>`;
+}
+function refreshPartSelect(prefix){
+  const q = document.getElementById(prefix+'SearchBox').value;
+  const c = document.getElementById(prefix+'CatFilter').value;
+  document.getElementById(prefix+'Select').innerHTML = `<option value="">${t('selectPartPlaceholder')}</option>${partOptions(q, c)}`;
+  document.getElementById(prefix+'PartPreview').innerHTML = partPreviewHTML('');
+}
+function typeLabel(tr){
+  if(tr.type==='withdraw') return t('typeWithdraw');
+  return tr.kind==='return' ? t('typeReturn') : t('typeAddStock');
+}
+
+function partOptions(query, cat){
   const q = (query||'').trim().toLowerCase();
-  const list = q ? parts.filter(p=>p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)) : parts;
+  let list = q ? parts.filter(p=>p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)) : parts;
+  if(cat) list = list.filter(p=>(p.category||'')===cat);
   if(!list.length) return `<option value="" disabled>${t('noPartFound')}</option>`;
   return list.map(p=>`<option value="${p.code}">${p.code} — ${p.name} (${t('colStock')} ${p.stock} ${p.unit})</option>`).join('');
 }
@@ -692,7 +898,7 @@ function renderWithdraw(){
   <div class="card">
     <h2>${t('withdrawTitle')}</h2>
     <form id="withdrawForm">
-      <div class="full"><label>${t('searchPart')}</label><input type="text" id="withdrawSearchBox" placeholder="${t('searchPlaceholder')}"></div>
+      ${partPickerFiltersHTML('withdraw')}
       <div class="full"><label>${t('selectPart')}</label><select name="code" id="withdrawSelect" required><option value="">${t('selectPartPlaceholder')}</option>${partOptions()}</select></div>
       <div class="full" id="withdrawPartPreview">${partPreviewHTML('')}</div>
       <div><label>${t('qtyWithdraw')}</label><input name="qty" type="number" min="1" required></div>
@@ -709,7 +915,13 @@ function renderReplenish(){
   <div class="card">
     <h2>${t('replenishTitle')}</h2>
     <form id="replenishForm">
-      <div class="full"><label>${t('searchPart')}</label><input type="text" id="replenishSearchBox" placeholder="${t('searchPlaceholder')}"></div>
+      <div class="full"><label>${t('txnKind')}</label>
+        <div class="kind-group">
+          <label class="kind-opt"><input type="radio" name="kind" value="add" checked> ${t('kindAdd')}</label>
+          <label class="kind-opt"><input type="radio" name="kind" value="return"> ${t('kindReturn')}</label>
+        </div>
+      </div>
+      ${partPickerFiltersHTML('replenish')}
       <div class="full"><label>${t('selectPart')}</label><select name="code" id="replenishSelect" required><option value="">${t('selectPartPlaceholder')}</option>${partOptions()}</select></div>
       <div class="full" id="replenishPartPreview">${partPreviewHTML('')}</div>
       <div><label>${t('qtyReceived')}</label><input name="qty" type="number" min="1" required></div>
@@ -726,7 +938,7 @@ function renderTxTable(list){
   return `<div class="tbl-wrap"><table><thead><tr><th>${t('colDate')}</th><th>${t('colType')}</th><th>${t('colCode')}</th><th>${t('colName')}</th><th>${t('colQty')}</th><th>${t('colBy')}</th><th>${t('colNote')}</th></tr></thead><tbody>
     ${list.map(tr=>`<tr>
       <td>${fmtDate(tr.date)}</td>
-      <td class="${tr.type==='withdraw'?'tag-out':'tag-in'}">${tr.type==='withdraw'?t('typeWithdraw'):t('typeReplenish')}</td>
+      <td class="${tr.type==='withdraw'?'tag-out':'tag-in'}">${typeLabel(tr)}</td>
       <td>${tr.code}</td><td>${tr.name}</td>
       <td>${tr.type==='withdraw'?'-':'+'}${tr.qty}</td>
       <td>${tr.person}</td><td>${tr.note||'-'}</td>
@@ -809,7 +1021,7 @@ function loadUsersTable(){
   callApi('getUsers').then(list=>{
     USERS = list.map(mapUser);
     document.getElementById('usersTableWrap').innerHTML =
-      `<table><thead><tr><th>${t('username')}</th><th>${t('colName')}</th><th>${t('department')}</th></tr></thead><tbody>
+      `<table><thead><tr><th>${t('username')}</th><th>${t('fullName')}</th><th>${t('department')}</th></tr></thead><tbody>
         ${USERS.map(u=>`<tr><td>${u.user}</td><td>${u.name}</td><td><span class="badge owner">${u.dept}</span></td></tr>`).join('')}
       </tbody></table>`;
   }).catch(err=>{
@@ -836,7 +1048,7 @@ function partsToCSV(){
 }
 function txToCSV(){
   const rows = [t('csvHistory')];
-  tx.forEach(tr=>rows.push([tr.date.toISOString(),tr.type==='withdraw'?t('typeWithdraw'):t('typeReplenish'),tr.code,tr.name,tr.qty,tr.person,tr.note||'']));
+  tx.forEach(tr=>rows.push([tr.date.toISOString(),typeLabel(tr),tr.code,tr.name,tr.qty,tr.person,tr.note||'']));
   return rows.map(r=>r.map(csvEscape).join(',')).join('\n');
 }
 
@@ -846,6 +1058,16 @@ function renderSettings(){
     <h2>${t('connectedSheetTitle')}</h2>
     <p style="font-size:13px;color:var(--muted);margin-top:-4px;line-height:1.7;">${t('hostedNote')}</p>
     <div id="sheetInfoBox" class="empty">${t('loadingFileInfo')}</div>
+  </div>
+  <div class="card">
+    <h2>${t('logoTitle')}</h2>
+    <p style="font-size:13px;color:var(--muted);margin-top:-4px;line-height:1.7;">${t('logoHint')}</p>
+    <div class="logo-row">
+      <div class="logo-preview" id="logoPreview">${brandIconHTML()}</div>
+      <label class="kind-opt" style="margin:0;">${t('logoUpload')}<input type="file" id="logoFileInput" accept="image/*" style="display:none;"></label>
+      <button type="button" class="logout" id="logoRemoveBtn">${t('logoRemove')}</button>
+    </div>
+    <div class="msg" id="logoMsg" style="margin-top:10px;"></div>
   </div>
   <div class="card">
     <h2>${t('backupTitle')}</h2>
@@ -892,9 +1114,18 @@ function showMsg(id, text, ok){
   el.className = 'msg show ' + (ok?'ok':'err');
 }
 function fileToBase64(file, cb){
-  const reader = new FileReader();
-  reader.onload = ()=>{ cb(reader.result.split(',')[1], file.type); };
-  reader.readAsDataURL(file);
+  const sendOriginal = ()=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{ cb(reader.result.split(',')[1], file.type); };
+    reader.readAsDataURL(file);
+  };
+  try{
+    // ย่อรูปเหลือไม่เกิน 800px แบบ JPEG ก่อนส่ง (ลดขนาดข้อมูล/เวลาอัปโหลด) ถ้าย่อไม่ได้ส่งไฟล์เดิม
+    resizeImageToDataUrl(file, 800, dataUrl=>{
+      if(dataUrl && dataUrl.indexOf('data:image/jpeg') === 0) cb(dataUrl.split(',')[1], 'image/jpeg');
+      else sendOriginal();
+    }, 'image/jpeg');
+  }catch(e){ sendOriginal(); }
 }
 
 function attachHandlers(){
@@ -931,18 +1162,12 @@ function attachHandlers(){
       }
     };
   });
-  const withdrawSearchBox = document.getElementById('withdrawSearchBox');
-  if(withdrawSearchBox){
-    withdrawSearchBox.oninput = ()=>{
-      document.getElementById('withdrawSelect').innerHTML = `<option value="">${t('selectPartPlaceholder')}</option>${partOptions(withdrawSearchBox.value)}`;
-    };
-  }
-  const replenishSearchBox = document.getElementById('replenishSearchBox');
-  if(replenishSearchBox){
-    replenishSearchBox.oninput = ()=>{
-      document.getElementById('replenishSelect').innerHTML = `<option value="">${t('selectPartPlaceholder')}</option>${partOptions(replenishSearchBox.value)}`;
-    };
-  }
+  ['withdraw','replenish'].forEach(prefix=>{
+    const sb = document.getElementById(prefix+'SearchBox');
+    const cf = document.getElementById(prefix+'CatFilter');
+    if(sb) sb.oninput = ()=>refreshPartSelect(prefix);
+    if(cf) cf.onchange = ()=>refreshPartSelect(prefix);
+  });
   document.querySelectorAll('.period-btn').forEach(b=>{
     b.onclick = ()=>{ reportPeriod = b.dataset.period; render(); };
   });
@@ -1003,6 +1228,47 @@ function attachHandlers(){
   if(editCloseBtn) editCloseBtn.onclick = closeEditModal;
   const editCancelBtn = document.getElementById('editCancelBtn');
   if(editCancelBtn) editCancelBtn.onclick = closeEditModal;
+
+  // --- Inventory sub-tabs (category) ---
+  const invSubtabs = document.getElementById('invSubtabs');
+  if(invSubtabs){
+    invSubtabs.onclick = e=>{
+      const b = e.target.closest('.subtab');
+      if(b){ invCategory = b.dataset.cat; render(); }
+    };
+  }
+
+  // --- logo upload (Settings) ---
+  const logoFileInput = document.getElementById('logoFileInput');
+  if(logoFileInput){
+    logoFileInput.onchange = ()=>{
+      const file = logoFileInput.files[0];
+      if(!file) return;
+      resizeImageToDataUrl(file, 128, url=>{
+        if(!url){ showMsg('logoMsg', t('logoFail'), false); return; }
+        setBrandLogo(url);
+        document.getElementById('logoPreview').innerHTML = brandIconHTML();
+        showMsg('logoMsg', t('logoSaved'), true);
+        logoFileInput.value = '';
+      });
+    };
+  }
+  const logoRemoveBtn = document.getElementById('logoRemoveBtn');
+  if(logoRemoveBtn){
+    logoRemoveBtn.onclick = ()=>{
+      setBrandLogo('');
+      document.getElementById('logoPreview').innerHTML = brandIconHTML();
+      showMsg('logoMsg', t('logoSaved'), true);
+    };
+  }
+
+  // --- toggle Safety Stock column ---
+  const partsTableWrap = document.getElementById('partsTableWrap');
+  if(partsTableWrap){
+    partsTableWrap.onclick = e=>{
+      if(e.target.closest('#toggleSafetyBtn')){ showSafety = !showSafety; render(); }
+    };
+  }
 
   // --- part filter (client-side on already-fetched data) ---
   const partFilterForm = document.getElementById('partFilterForm');
@@ -1080,7 +1346,7 @@ function attachHandlers(){
       const f = new FormData(replenishForm);
       const code = f.get('code');
       if(!code){ showMsg('replenishMsg', t('pleaseSelectPart'), false); return; }
-      const txn = {type:'replenish', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      const txn = {type:'replenish', kind:f.get('kind')||'add', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
       callApi('recordTransaction', txn).then(res=>{
         if(!res.ok){ showMsg('replenishMsg', translateServerMsg(res.message), false); return; }
         showMsg('replenishMsg', `${t('replenishSuccess')}${res.newStock}`, true);
