@@ -67,6 +67,10 @@ th{color:var(--muted);font-weight:600;font-size:12px;}
 .badge.ok{background:var(--ok-bg);color:var(--ok);}
 .badge.out{background:var(--danger-dark-bg);color:var(--danger-dark);animation:blink 1s step-start infinite;}
 @keyframes blink{50%{opacity:.35;}}
+.field-hint{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;}
+/* ตรึงหัวตารางไว้เมื่อเลื่อนลง: ให้ตารางเลื่อนแยกในกรอบของตัวเอง แล้ว thead จะบังอยู่บนสุด */
+#partsTableWrap,#historyCard .tbl-wrap{max-height:calc(100vh - 170px);overflow:auto;}
+#partsTableWrap thead th,#historyCard thead th{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:none;box-shadow:inset 0 -1px 0 var(--border);}
 .brand-icon{display:flex;align-items:center;justify-content:center;}
 .brand-logo{width:30px;height:30px;object-fit:contain;border-radius:6px;display:block;}
 .logo-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
@@ -172,6 +176,7 @@ const MOCK = {
     ['SP-006','โซลินอยด์วาล์ว 24V','General','MFG',2,3,'ตัว',''],
     ['SP-007','ถุงมือยางกันสารเคมี','PPE','PE',40,20,'คู่',''],
     ['SP-008','ปากกามาร์กเกอร์','Stationary','MFG',8,10,'ด้าม',''],
+    ['SP-009,SP-109','ซีลกันน้ำมัน (2 เบอร์ทดแทนกัน)','Consumable','ME',14,6,'ชิ้น',''],
   ].map(r=>({code:r[0],name:r[1],category:r[2],owner:r[3],stock:r[4],min:r[5],unit:r[6],image:r[7]})),
   history: [
     [_ago(12),'เบิกออก','SP-002','ตลับลูกปืน 6205',4,'ช่างซ่อมบำรุง (ME)','เปลี่ยนลูกปืนมอเตอร์ไลน์ 1'],
@@ -209,7 +214,8 @@ function _mockHandle(action, p){
       if(MOCK.users.some(x=>x.u===p.user)) return {ok:false, message:'มี Username นี้อยู่แล้ว'};
       MOCK.users.push({u:p.user, p:p.pass, n:p.name, d:p.dept}); return {ok:true};
     case 'addPart': {
-      if(MOCK.parts.some(x=>x.code===p.code)) return {ok:false, message:'มีรหัสอะไหล่นี้อยู่แล้ว'};
+      const _tk = c=>String(c).split(',').map(z=>z.trim().toLowerCase()).filter(Boolean);
+      if(MOCK.parts.some(x=>_tk(x.code).some(k=>_tk(p.code).includes(k)))) return {ok:false, message:'มีรหัสอะไหล่นี้อยู่แล้ว'};
       MOCK.parts.push({code:p.code,name:p.name,category:p.category||'',owner:p.owner||'',stock:Number(p.stock)||0,min:Number(p.min)||0,unit:p.unit||'',
         image:p.imageBase64?('data:'+(p.imageMimeType||'image/jpeg')+';base64,'+p.imageBase64):''});
       return {ok:true};
@@ -256,21 +262,22 @@ const I18N = {
     changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
     selectPartFirst:'กรุณาเลือกอะไหล่ก่อนบันทึก', noPartFound:'ไม่พบอะไหล่ที่ตรงกับคำค้นหา',
     addPartTitle:'เพิ่มอะไหล่ใหม่', initialStock:'จำนวนเริ่มต้น', uploadImage:'รูปภาพอะไหล่ (อัปโหลด)',
-    addPartBtn:'+ เพิ่มอะไหล่', codePlaceholder:'เช่น SP-005', unitPlaceholder:'ชิ้น / เส้น / กล่อง',
+    addPartBtn:'+ เพิ่มอะไหล่', codePlaceholder:'เช่น SP-005 หรือ SP-005,SP-006', unitPlaceholder:'ชิ้น / เส้น / กล่อง',
     alertTitle:'🚨 Alert — อะไหล่ต่ำกว่าขั้นต่ำ / หมดสต็อก', ownerLabel:'เจ้าของ: ', categoryLabel:'หมวดหมู่: ',
     stockLabel:'คงเหลือ: ', minLabel:'ขั้นต่ำ: ', shortageLabel:'ขาดอีก: ',
     summaryTitle:'สรุปภาพรวม', totalParts:'รายการอะไหล่ทั้งหมด', lowStock:'ใกล้หมด / ต่ำกว่าขั้นต่ำ',
     outStock:'หมดสต็อก', totalTx:'รายการเคลื่อนไหวทั้งหมด',
-    byOwnerTitle:'จำนวนอะไหล่แยกตาม Owner', items:'รายการ', totalStockLabel:'คงเหลือรวม', units:'หน่วย',
+    byOwnerTitle:'จำนวนอะไหล่แยกตาม Category', items:'รายการ', totalStockLabel:'คงเหลือรวม', units:'หน่วย',
     statusChartTitle:'สถานะ Stock ทั้งหมด', statusOk:'ปกติ', statusLow:'ต่ำกว่าขั้นต่ำ', statusOut:'หมดสต็อก',
     statusOutShort:'หมด', totalAll:'รวมทั้งหมด', recentTx:'รายการล่าสุด',
     partsInStock:'รายการอะไหล่ในคลัง', editPartBtnTitle:'แก้ไขอะไหล่', addPartBtnTitle:'เพิ่มอะไหล่ใหม่',
     searchCodeName:'ค้นหา (รหัส/ชื่อ)', categoryPlaceholder:'เช่น Bearing', ownerFilter:'เจ้าของ',
     collapseCol:'ยุบคอลัมน์', expandCol:'ขยายคอลัมน์',
+    codeHint:'ถ้าอะไหล่มี 2 รหัส ให้ใส่รหัสแรก แล้วคั่นด้วยเครื่องหมาย , (Comma) ตามด้วยรหัสที่สอง', codeEmpty:'กรุณากรอกรหัสอะไหล่', codeTooMany:'ใส่รหัสอะไหล่ได้สูงสุด 2 รหัส (คั่นด้วย ,)', codeSame:'รหัสทั้งสองต้องไม่ซ้ำกัน', codeExists:'มีรหัสอะไหล่นี้อยู่แล้ว: ',
     logoTitle:'โลโก้ระบบ', logoHint:'อัปโหลดรูปไอคอน (PNG/JPG/SVG) เพื่อใช้แทนไอคอนที่มุมบนซ้าย ระบบจะย่อรูปให้อัตโนมัติ รูปจะถูกจำไว้ในเบราว์เซอร์เครื่องนี้', logoUpload:'อัปโหลดรูป', logoRemove:'ลบรูป (กลับเป็นไอคอนเดิม)', logoSaved:'บันทึกโลโก้แล้ว', logoFail:'อ่านไฟล์รูปไม่สำเร็จ',
     txnKind:'ประเภทรายการ', kindAdd:'เติมสต็อก', kindReturn:'คืน', typeAddStock:'เติมสต็อก', typeReturn:'คืน',
     all:'ทั้งหมด', statusFilter:'สถานะ', colCode:'รหัส', colImage:'รูป', colName:'ชื่อ', colCategory:'หมวดหมู่',
-    colOwner:'เจ้าของ', colStock:'คงเหลือ', colMin:'ขั้นต่ำ', colStatus:'สถานะ',
+    colOwner:'เจ้าของ', colStock:'คงเหลือ', colUnit:'หน่วย', colMin:'ขั้นต่ำ', colStatus:'สถานะ',
     noMatch:'ไม่พบรายการที่ตรงกับตัวกรอง', pinTitle:'ปักหมุด',
     withdrawTitle:'📤 บันทึกการเบิกอะไหล่', selectPart:'เลือกอะไหล่', qtyWithdraw:'จำนวนที่เบิก',
     withdrawnBy:'ผู้เบิก', noteUsedFor:'หมายเหตุ / ใช้งานกับ', notePlaceholderW:'เช่น ซ่อมสายพานไลน์ 2',
@@ -312,21 +319,22 @@ const I18N = {
     changeImage:'Change image (optional)', saveEdit:'Save changes', cancel:'Cancel',
     selectPartFirst:'Please select a part first', noPartFound:'No matching parts found',
     addPartTitle:'Add New Part', initialStock:'Initial stock', uploadImage:'Part image (upload)',
-    addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005', unitPlaceholder:'pcs / rolls / boxes',
+    addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005 or SP-005,SP-006', unitPlaceholder:'pcs / rolls / boxes',
     alertTitle:'🚨 Alert — Below Safety Stock / Out of Stock Parts', ownerLabel:'Owner: ', categoryLabel:'Category: ',
     stockLabel:'Current Qty.: ', minLabel:'Safety Stock: ', shortageLabel:'Shortage: ',
     summaryTitle:'Summary', totalParts:'Total parts', lowStock:'Low / below Safety Stock',
     outStock:'Out of Stock', totalTx:'Total transactions',
-    byOwnerTitle:'Parts by Owner', items:'items', totalStockLabel:'Total stock', units:'units',
+    byOwnerTitle:'Parts by Category', items:'items', totalStockLabel:'Total stock', units:'units',
     statusChartTitle:'Overall Stock Status', statusOk:'Normal', statusLow:'Below Safety Stock', statusOut:'Out of Stock',
     statusOutShort:'Out of Stock', totalAll:'Total', recentTx:'Recent Transactions',
     partsInStock:'Parts in Stock', editPartBtnTitle:'Edit part', addPartBtnTitle:'Add new part',
     searchCodeName:'Search (code/name)', categoryPlaceholder:'e.g. Bearing', ownerFilter:'Owner',
     collapseCol:'Collapse column', expandCol:'Expand column',
+    codeHint:'If the part has 2 codes, enter the first code, then a comma (,), then the second code', codeEmpty:'Please enter a part code', codeTooMany:'A part can have at most 2 codes (separated by a comma)', codeSame:'The two codes must be different', codeExists:'This part code already exists: ',
     logoTitle:'System Logo', logoHint:'Upload an icon image (PNG/JPG/SVG) to replace the icon at the top-left. The image is resized automatically and remembered in this browser only.', logoUpload:'Upload image', logoRemove:'Remove image (back to default icon)', logoSaved:'Logo saved', logoFail:'Could not read the image file',
     txnKind:'Transaction type', kindAdd:'Add Stock', kindReturn:'Return', typeAddStock:'Add Stock', typeReturn:'Return',
     all:'All', statusFilter:'Status', colCode:'Part number', colImage:'Image', colName:'Description', colCategory:'Category',
-    colOwner:'Owner', colStock:'Current Qty.', colMin:'Safety Stock', colStatus:'Status',
+    colOwner:'Owner', colStock:'Current Qty.', colUnit:'Unit', colMin:'Safety Stock', colStatus:'Status',
     noMatch:'No items match the filter', pinTitle:'Pin',
     withdrawTitle:'📤 Record Withdrawal', selectPart:'Select part', qtyWithdraw:'Quantity to withdraw',
     withdrawnBy:'Withdrawn by', noteUsedFor:'Note / used for', notePlaceholderW:'e.g. repairing conveyor line 2',
@@ -386,7 +394,8 @@ function langToggleHTML(variant){
 
 // ---------- State ----------
 let currentUser = null;
-try{ const saved = localStorage.getItem('spm_user'); if(saved) currentUser = JSON.parse(saved); }catch(e){}
+// ไม่จำสถานะล็อกอินข้ามการเปิดหน้าเว็บ: ต้อง Login ใหม่ทุกครั้งที่เปิดหน้านี้ (และล้างค่าเก่าที่เคยถูกจำไว้ก่อนหน้านี้)
+try{ localStorage.removeItem('spm_user'); }catch(e){}
 
 const CATEGORIES = ['General','Consumable','PPE','Stationary'];
 let brandLogo = '';
@@ -441,6 +450,23 @@ let USERS = [];
 
 function fmtDate(d){ return d.toLocaleString(lang==='th'?'th-TH':'en-US',{dateStyle:'short',timeStyle:'short'}); }
 function partByCode(c){ return parts.find(p=>p.code===c); }
+
+// ---- อะไหล่ที่มี 2 รหัส: เก็บเป็น "รหัสแรก,รหัสสอง" ในช่องเดียว ----
+function splitCodes(code){ return String(code||'').split(',').map(x=>x.trim()).filter(Boolean); }
+function escHTML(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function codeHTML(code){ return splitCodes(code).map(escHTML).join('<br>'); }   // แสดงในตาราง: คนละบรรทัด
+function codeLabel(code){ return splitCodes(code).join(' / '); }                // แสดงในข้อความ/Dropdown
+function normalizeCodes(raw){
+  const arr = splitCodes(raw);
+  if(!arr.length) return {ok:false, error:t('codeEmpty')};
+  if(arr.length > 2) return {ok:false, error:t('codeTooMany')};
+  if(arr.length === 2 && arr[0].toLowerCase() === arr[1].toLowerCase()) return {ok:false, error:t('codeSame')};
+  for(const tok of arr){
+    const hit = parts.find(x=>splitCodes(x.code).some(c=>c.toLowerCase()===tok.toLowerCase()));
+    if(hit) return {ok:false, error:t('codeExists')+tok};
+  }
+  return {ok:true, value:arr.join(',')};
+}
 function statusOf(p){ if(p.stock===0) return 'out'; if(p.stock<p.min) return 'low'; return 'ok'; }
 function filteredParts(){
   return parts.filter(p=>{
@@ -529,7 +555,7 @@ function renderLogin(){
           return;
         }
         currentUser = res.user;
-        try{ localStorage.setItem('spm_user', JSON.stringify(currentUser)); }catch(err){}
+        // (ไม่บันทึกสถานะล็อกอินลงเบราว์เซอร์ เพื่อให้ต้อง Login ใหม่ทุกครั้งที่เปิดหน้าเว็บ)
         bootApp();
       })
       .catch(err=>{
@@ -586,6 +612,8 @@ function renderApp(){
         <button type="button" id="editCloseBtn" title="${t('close')}" style="border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);">×</button>
       </div>
       <form id="editPartForm">
+        <div><label>${t('category')}</label><select id="editCatFilter">${categoryOptionsHTML('', true)}</select></div>
+        <div><label>${t('ownerFilter')}</label><select id="editOwnerFilter"><option value="">${t('all')}</option>${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}</select></div>
         <div class="full"><label>${t('searchPart')}</label><input type="text" id="editPartSearchBox" placeholder="${t('searchPlaceholder')}"></div>
         <div class="full"><label>${t('selectPartToEdit')}</label>
           <select id="editPartSelect"><option value="">${t('selectPartPlaceholder')}</option></select>
@@ -614,7 +642,7 @@ function renderApp(){
     <div class="modal-box">
       <h2>${t('addPartTitle')}</h2>
       <form id="addPartForm">
-        <div><label>${t('partCode')}</label><input name="code" required placeholder="${t('codePlaceholder')}"></div>
+        <div><label>${t('partCode')}</label><input name="code" required placeholder="${t('codePlaceholder')}"><div class="field-hint">${t('codeHint')}</div></div>
         <div><label>${t('partName')}</label><input name="name" required></div>
         <div><label>${t('category')}</label><select name="category">${categoryOptionsHTML('General', false)}</select></div>
         <div><label>${t('unit')}</label><input name="unit" required placeholder="${t('unitPlaceholder')}"></div>
@@ -657,16 +685,20 @@ function closeAddModal(){
   document.getElementById('addModal').classList.add('hidden');
 }
 let editingCode = null;
-function editSelectOptions(query){
+function editSelectOptions(query, cat, owner){
   const q = (query||'').trim().toLowerCase();
-  const list = q ? parts.filter(p=>p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)) : parts;
+  let list = q ? parts.filter(p=>p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)) : parts;
+  if(cat) list = list.filter(p=>(p.category||'') === cat);
+  if(owner) list = list.filter(p=>(p.owner||'') === owner);
   if(!list.length) return `<option value="" disabled>${t('noPartFound')}</option>`;
-  return `<option value="">${t('selectPartPlaceholder')}</option>` + list.map(p=>`<option value="${p.code}">${p.code} — ${p.name}</option>`).join('');
+  return `<option value="">${t('selectPartPlaceholder')}</option>` + list.map(p=>`<option value="${p.code}">${codeLabel(p.code)} — ${p.name}</option>`).join('');
 }
 function openEditModal(code){
   editingCode = null;
   const modal = document.getElementById('editModal');
   document.getElementById('editPartSearchBox').value = '';
+  document.getElementById('editCatFilter').value = '';
+  document.getElementById('editOwnerFilter').value = '';
   document.getElementById('editPartSelect').innerHTML = editSelectOptions();
   document.getElementById('editPartFields').classList.add('hidden');
   document.getElementById('editPartForm').reset();
@@ -765,7 +797,7 @@ function renderDashboard(){
     <h2>${t('alertTitle')}</h2>
     ${alertList.map(p=>`
       <div class="alert-card ${statusOf(p)==='out'?'out':''}">
-        <div class="row1"><span>${p.code} — ${p.name}</span>${stockBadge(p)}</div>
+        <div class="row1"><span>${codeLabel(p.code)} — ${p.name}</span>${stockBadge(p)}</div>
         <div class="details">
           <span>${t('ownerLabel')}<b>${OWNER_LABEL[p.owner]||p.owner||'-'}</b></span>
           <span>${t('categoryLabel')}${p.category||'-'}</span>
@@ -787,12 +819,12 @@ function renderDashboard(){
   <div class="card">
     <h2>${t('byOwnerTitle')}</h2>
     <div class="grid">
-      ${OWNERS.map(o=>{
-        const list = parts.filter(p=>p.owner===o);
+      ${CATEGORIES.concat([...new Set(parts.map(p=>p.category||'').filter(c=>c && !CATEGORIES.includes(c)))]).map(cat=>{
+        const list = parts.filter(p=>(p.category||'')===cat);
         const qty = list.reduce((s,p)=>s+p.stock,0);
         return `<div class="stat">
           <div class="n">${list.length} <span style="font-size:12px;font-weight:400;color:var(--muted)">${t('items')}</span></div>
-          <div class="l">${OWNER_LABEL[o]}</div>
+          <div class="l">${cat}</div>
           <div class="l" style="margin-top:4px">${t('totalStockLabel')} ${qty} ${t('units')}</div>
         </div>`;
       }).join('')}
@@ -852,8 +884,8 @@ function safetyHeaderHTML(){
 }
 
 function partsTableHTML(list){
-  return `<table><thead><tr><th>📌</th><th>${t('colCode')}</th><th>${t('colImage')}</th><th>${t('colName')}</th><th>${t('colCategory')}</th><th>${t('colOwner')}</th><th>${t('colStock')}</th>${safetyHeaderHTML()}<th>${t('colStatus')}</th></tr></thead><tbody>
-    ${list.map(p=>`<tr><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${p.code}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.stock} ${p.unit}</span></td>${showSafety ? `<td>${p.min} ${p.unit}</td>` : `<td class="col-collapsed"></td>`}<td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="9" class="empty">${t('noMatch')}</td></tr>`}
+  return `<table><thead><tr><th>📌</th><th>${t('colCode')}</th><th>${t('colImage')}</th><th>${t('colName')}</th><th>${t('colCategory')}</th><th>${t('colOwner')}</th><th>${t('colStock')}</th><th>${t('colUnit')}</th>${safetyHeaderHTML()}<th>${t('colStatus')}</th></tr></thead><tbody>
+    ${list.map(p=>`<tr><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${codeHTML(p.code)}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.stock}</span></td><td>${p.unit}</td>${showSafety ? `<td>${p.min} ${p.unit}</td>` : `<td class="col-collapsed"></td>`}<td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="10" class="empty">${t('noMatch')}</td></tr>`}
   </tbody></table>`;
 }
 
@@ -877,7 +909,7 @@ function partOptions(query, cat){
   let list = q ? parts.filter(p=>p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)) : parts;
   if(cat) list = list.filter(p=>(p.category||'')===cat);
   if(!list.length) return `<option value="" disabled>${t('noPartFound')}</option>`;
-  return list.map(p=>`<option value="${p.code}">${p.code} — ${p.name} (${t('colStock')} ${p.stock} ${p.unit})</option>`).join('');
+  return list.map(p=>`<option value="${p.code}">${codeLabel(p.code)} — ${p.name} (${t('colStock')} ${p.stock} ${p.unit})</option>`).join('');
 }
 
 function partPreviewHTML(code){
@@ -886,7 +918,7 @@ function partPreviewHTML(code){
   return `<div style="display:flex;gap:12px;align-items:center;">
     ${partThumb(p)}
     <div style="font-size:13px;line-height:1.7;">
-      <div><b>${p.code}</b> — ${p.name}</div>
+      <div><b>${codeLabel(p.code)}</b> — ${p.name}</div>
       <div style="color:var(--muted)">${t('categoryLabel')}${p.category||'-'}</div>
       <div>${ownerBadge(p)} ${stockBadge(p)}</div>
       <div>${t('stockLabel')}<b>${p.stock} ${p.unit}</b></div>
@@ -939,7 +971,7 @@ function renderTxTable(list){
     ${list.map(tr=>`<tr>
       <td>${fmtDate(tr.date)}</td>
       <td class="${tr.type==='withdraw'?'tag-out':'tag-in'}">${typeLabel(tr)}</td>
-      <td>${tr.code}</td><td>${tr.name}</td>
+      <td>${codeHTML(tr.code)}</td><td>${tr.name}</td>
       <td>${tr.type==='withdraw'?'-':'+'}${tr.qty}</td>
       <td>${tr.person}</td><td>${tr.note||'-'}</td>
     </tr>`).join('')}
@@ -947,7 +979,7 @@ function renderTxTable(list){
 }
 
 function renderHistory(){
-  return `<div class="card"><h2>${t('allTxTitle')} (${tx.length})</h2>${renderTxTable([...tx].reverse())}</div>`;
+  return `<div class="card" id="historyCard"><h2>${t('allTxTitle')} (${tx.length})</h2>${renderTxTable([...tx].reverse())}</div>`;
 }
 
 function periodCutoff(){
@@ -968,7 +1000,7 @@ function rankBars(list, color){
   if(!list.length) return `<div class="empty">${t('noDataPeriod')}</div>`;
   const max = Math.max(...list.map(i=>i.qty));
   return list.map(i=>`<div class="bar-item">
-    <div class="bh"><span>${i.code} — ${i.name}</span><span>${i.qty} ${t('units')}</span></div>
+    <div class="bh"><span>${codeLabel(i.code)} — ${i.name}</span><span>${i.qty} ${t('units')}</span></div>
     <div class="bar-track"><div class="bar-fill" style="width:${(i.qty/max*100)}%;background:${color}"></div></div>
   </div>`).join('');
 }
@@ -1196,11 +1228,16 @@ function attachHandlers(){
   const editPartSelect = document.getElementById('editPartSelect');
   if(editPartSelect) editPartSelect.onchange = ()=>populateEditFields(editPartSelect.value);
   const editPartSearchBox = document.getElementById('editPartSearchBox');
-  if(editPartSearchBox){
-    editPartSearchBox.oninput = ()=>{
-      document.getElementById('editPartSelect').innerHTML = editSelectOptions(editPartSearchBox.value);
-    };
-  }
+  const editCatFilter = document.getElementById('editCatFilter');
+  const editOwnerFilter = document.getElementById('editOwnerFilter');
+  const refreshEditPicker = ()=>{
+    document.getElementById('editPartSelect').innerHTML = editSelectOptions(editPartSearchBox.value, editCatFilter.value, editOwnerFilter.value);
+    document.getElementById('editPartFields').classList.add('hidden');
+    editingCode = null;
+  };
+  if(editPartSearchBox) editPartSearchBox.oninput = refreshEditPicker;
+  if(editCatFilter) editCatFilter.onchange = refreshEditPicker;
+  if(editOwnerFilter) editOwnerFilter.onchange = refreshEditPicker;
   const editPartForm = document.getElementById('editPartForm');
   if(editPartForm){
     editPartForm.onsubmit = e=>{
@@ -1300,7 +1337,9 @@ function attachHandlers(){
     addPartForm.onsubmit = e=>{
       e.preventDefault();
       const f = new FormData(addPartForm);
-      const part = {code:f.get('code').trim(), name:f.get('name').trim(), category:f.get('category').trim(),
+      const norm = normalizeCodes(f.get('code'));
+      if(!norm.ok){ showMsg('addPartMsg', norm.error, false); return; }
+      const part = {code:norm.value, name:f.get('name').trim(), category:f.get('category').trim(),
         unit:f.get('unit').trim(), stock:f.get('stock'), min:f.get('min'), owner:f.get('owner')};
       const submit = ()=>{
         callApi('addPart', part).then(res=>{
