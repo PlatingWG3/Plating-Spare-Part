@@ -91,6 +91,14 @@ th.col-collapsed,td.col-collapsed{width:34px;min-width:34px;padding:8px 2px;text
 .badge.owner{background:var(--bg);color:var(--accent);border:1px solid var(--border);}
 .part-thumb{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;cursor:zoom-in;transition:transform .25s ease, box-shadow .25s ease;transform-origin:center;}
 .part-thumb-img{object-fit:cover;background:var(--bg);border:1px solid var(--border);}
+.part-row{cursor:pointer;}
+.part-row:hover td{background:var(--bg);}
+.detail-body{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;}
+.detail-img{width:200px;height:200px;object-fit:contain;border:1px solid var(--border);border-radius:12px;background:var(--bg);flex-shrink:0;}
+.detail-letter{display:flex;align-items:center;justify-content:center;color:#fff;font-size:72px;font-weight:700;border:none;}
+.detail-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13px;flex:1;min-width:220px;align-content:start;}
+.detail-grid .k{color:var(--muted);}
+.detail-grid .v{font-weight:500;word-break:break-word;}
 .part-thumb:hover{transform:scale(2.6);box-shadow:0 10px 24px rgba(0,0,0,.35);position:relative;z-index:20;}
 form{display:grid;gap:10px;grid-template-columns:1fr 1fr;}
 form .full{grid-column:1/-1;}
@@ -275,7 +283,7 @@ const I18N = {
     collapseCol:'ยุบคอลัมน์', expandCol:'ขยายคอลัมน์',
     codeHint:'ถ้าอะไหล่มี 2 รหัส ให้ใส่รหัสแรก แล้วคั่นด้วยเครื่องหมาย , (Comma) ตามด้วยรหัสที่สอง', codeEmpty:'กรุณากรอกรหัสอะไหล่', codeTooMany:'ใส่รหัสอะไหล่ได้สูงสุด 2 รหัส (คั่นด้วย ,)', codeSame:'รหัสทั้งสองต้องไม่ซ้ำกัน', codeExists:'มีรหัสอะไหล่นี้อยู่แล้ว: ',
     logoTitle:'โลโก้ระบบ', logoHint:'อัปโหลดรูปไอคอน (PNG/JPG/SVG) เพื่อใช้แทนไอคอนที่มุมบนซ้าย ระบบจะย่อรูปให้อัตโนมัติ รูปจะถูกจำไว้ในเบราว์เซอร์เครื่องนี้', logoUpload:'อัปโหลดรูป', logoRemove:'ลบรูป (กลับเป็นไอคอนเดิม)', logoSaved:'บันทึกโลโก้แล้ว', logoFail:'อ่านไฟล์รูปไม่สำเร็จ',
-    txnKind:'ประเภทรายการ', kindAdd:'เติมสต็อก', kindReturn:'คืน', typeAddStock:'เติมสต็อก', typeReturn:'คืน',
+    detailTitle:'รายละเอียดอะไหล่', recentMovements:'ความเคลื่อนไหวล่าสุดของอะไหล่นี้ (5 รายการ)', txnKind:'ประเภทรายการ', kindAdd:'เติมสต็อก', kindReturn:'คืน', typeAddStock:'เติมสต็อก', typeReturn:'คืน',
     all:'ทั้งหมด', statusFilter:'สถานะ', colCode:'รหัส', colImage:'รูป', colName:'ชื่อ', colCategory:'หมวดหมู่',
     colOwner:'เจ้าของ', colStock:'คงเหลือ', colUnit:'หน่วย', colMin:'ขั้นต่ำ', colStatus:'สถานะ',
     noMatch:'ไม่พบรายการที่ตรงกับตัวกรอง', pinTitle:'ปักหมุด',
@@ -332,7 +340,7 @@ const I18N = {
     collapseCol:'Collapse column', expandCol:'Expand column',
     codeHint:'If the part has 2 codes, enter the first code, then a comma (,), then the second code', codeEmpty:'Please enter a part code', codeTooMany:'A part can have at most 2 codes (separated by a comma)', codeSame:'The two codes must be different', codeExists:'This part code already exists: ',
     logoTitle:'System Logo', logoHint:'Upload an icon image (PNG/JPG/SVG) to replace the icon at the top-left. The image is resized automatically and remembered in this browser only.', logoUpload:'Upload image', logoRemove:'Remove image (back to default icon)', logoSaved:'Logo saved', logoFail:'Could not read the image file',
-    txnKind:'Transaction type', kindAdd:'Add Stock', kindReturn:'Return', typeAddStock:'Add Stock', typeReturn:'Return',
+    detailTitle:'Part Details', recentMovements:'Recent movements of this part (last 5)', txnKind:'Transaction type', kindAdd:'Add Stock', kindReturn:'Return', typeAddStock:'Add Stock', typeReturn:'Return',
     all:'All', statusFilter:'Status', colCode:'Part number', colImage:'Image', colName:'Description', colCategory:'Category',
     colOwner:'Owner', colStock:'Current Qty.', colUnit:'Unit', colMin:'Safety Stock', colStatus:'Status',
     noMatch:'No items match the filter', pinTitle:'Pin',
@@ -883,9 +891,71 @@ function safetyHeaderHTML(){
     : `<th class="col-collapsed"><button type="button" class="col-toggle" id="toggleSafetyBtn" title="${t('expandCol')}: ${t('colMin')}">▸</button></th>`;
 }
 
+// ---------- Pop up รายละเอียดอะไหล่ (คลิกที่แถวในตารางคลังอะไหล่) ----------
+function detailLetterHTML(p){
+  const colors = {ME:'#2563eb', MFG:'#059669', PE:'#d97706'};
+  const letter = (p.category || p.name || p.code || '?').trim().charAt(0).toUpperCase();
+  return `<div class="detail-img detail-letter" style="background:${colors[p.owner]||'#6b7280'}">${letter}</div>`;
+}
+function detailImgFailed(img){
+  const p = partByCode(img.dataset.code);
+  if(p) img.outerHTML = detailLetterHTML(p);
+}
+function closePartDetail(){
+  const m = document.getElementById('detailModal');
+  if(m) m.remove();
+}
+function openPartDetail(code){
+  const p = partByCode(code);
+  if(!p) return;
+  closePartDetail();
+  const short = Math.max(0, p.min - p.stock);
+  const moves = tx.filter(tr=>tr.code===p.code).slice(-5).reverse();
+  const img = p.image
+    ? `<img class="detail-img" src="${p.image}" data-code="${p.code}" referrerpolicy="no-referrer" onerror="detailImgFailed(this)" alt="${escHTML(p.name)}">`
+    : detailLetterHTML(p);
+  const movesHTML = moves.length
+    ? `<div class="tbl-wrap"><table><thead><tr><th>${t('colDate')}</th><th>${t('colType')}</th><th>${t('colQty')}</th><th>${t('colBy')}</th><th>${t('colNote')}</th></tr></thead><tbody>
+        ${moves.map(tr=>`<tr><td>${fmtDate(tr.date)}</td><td class="${tr.type==='withdraw'?'tag-out':'tag-in'}">${typeLabel(tr)}</td><td>${tr.type==='withdraw'?'-':'+'}${tr.qty}</td><td>${escHTML(tr.person||'')}</td><td>${escHTML(tr.note||'-')}</td></tr>`).join('')}
+      </tbody></table></div>`
+    : `<div class="empty">${t('noItemsYet')}</div>`;
+  const el = document.createElement('div');
+  el.id = 'detailModal';
+  el.className = 'modal-overlay';
+  el.innerHTML = `<div class="modal-box" style="max-width:600px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;">${t('detailTitle')}</h2>
+        <button type="button" id="detailCloseBtn" title="${t('close')}" style="border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);">×</button>
+      </div>
+      <div class="detail-body">
+        ${img}
+        <div class="detail-grid">
+          <div class="k">${t('colCode')}</div><div class="v">${codeHTML(p.code)}</div>
+          <div class="k">${t('colName')}</div><div class="v">${escHTML(p.name)}</div>
+          <div class="k">${t('colCategory')}</div><div class="v">${escHTML(p.category||'-')}</div>
+          <div class="k">${t('colOwner')}</div><div class="v">${escHTML(OWNER_LABEL[p.owner]||p.owner||'-')}</div>
+          <div class="k">${t('colStock')}</div><div class="v"><b>${p.stock}</b> ${escHTML(p.unit)}</div>
+          <div class="k">${t('colMin')}</div><div class="v">${p.min} ${escHTML(p.unit)}</div>
+          <div class="k">${t('colStatus')}</div><div class="v">${stockBadge(p)}</div>
+          ${short ? `<div class="k">${t('shortageLabel').replace(/[: ]+$/,'')}</div><div class="v"><b>${short}</b> ${escHTML(p.unit)}</div>` : ''}
+        </div>
+      </div>
+      <h2 style="margin:18px 0 8px;font-size:14px;">${t('recentMovements')}</h2>
+      ${movesHTML}
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button type="button" id="detailOkBtn" class="logout" style="flex:1;padding:10px;">${t('close')}</button>
+      </div>
+    </div>`;
+  el.onclick = e=>{ if(e.target===el) closePartDetail(); };
+  document.body.appendChild(el);
+  document.getElementById('detailCloseBtn').onclick = closePartDetail;
+  document.getElementById('detailOkBtn').onclick = closePartDetail;
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePartDetail(); });
+
 function partsTableHTML(list){
   return `<table><thead><tr><th>📌</th><th>${t('colCode')}</th><th>${t('colImage')}</th><th>${t('colName')}</th><th>${t('colCategory')}</th><th>${t('colOwner')}</th><th>${t('colStock')}</th><th>${t('colUnit')}</th>${safetyHeaderHTML()}<th>${t('colStatus')}</th></tr></thead><tbody>
-    ${list.map(p=>`<tr><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${codeHTML(p.code)}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.stock}</span></td><td>${p.unit}</td>${showSafety ? `<td>${p.min} ${p.unit}</td>` : `<td class="col-collapsed"></td>`}<td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="10" class="empty">${t('noMatch')}</td></tr>`}
+    ${list.map(p=>`<tr class="part-row" data-code="${p.code}"><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${codeHTML(p.code)}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.stock}</span></td><td>${p.unit}</td>${showSafety ? `<td>${p.min} ${p.unit}</td>` : `<td class="col-collapsed"></td>`}<td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="10" class="empty">${t('noMatch')}</td></tr>`}
   </tbody></table>`;
 }
 
@@ -1303,7 +1373,10 @@ function attachHandlers(){
   const partsTableWrap = document.getElementById('partsTableWrap');
   if(partsTableWrap){
     partsTableWrap.onclick = e=>{
-      if(e.target.closest('#toggleSafetyBtn')){ showSafety = !showSafety; render(); }
+      if(e.target.closest('#toggleSafetyBtn')){ showSafety = !showSafety; render(); return; }
+      if(e.target.closest('.pin-btn')) return; // ปุ่มปักหมุดมีการทำงานของตัวเอง
+      const row = e.target.closest('tr.part-row');
+      if(row) openPartDetail(row.dataset.code);
     };
   }
 
