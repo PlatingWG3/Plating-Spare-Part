@@ -497,10 +497,12 @@ function driveImgUrl(u){
          || String(u).match(/lh3\.googleusercontent\.com\/d\/([\w-]{10,})/);
   return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w800' : String(u);
 }
+// Google Sheets แปลงค่าที่เป็นตัวเลขล้วน (เช่น รหัส 12345) ให้เป็น Number — บังคับให้เป็นข้อความเสมอ ไม่เช่นนั้นการค้นหา/เทียบรหัส (===) จะล้มเหลว
+function str(v){ return (v === null || v === undefined) ? '' : String(v); }
 function mapPart(raw){
   return {
-    code: raw['รหัส'], name: raw['ชื่อ'], category: raw['หมวดหมู่'], owner: raw['เจ้าของ'],
-    stock: Number(raw['คงเหลือ'])||0, min: Number(raw['ขั้นต่ำ'])||0, unit: raw['หน่วยนับ'],
+    code: str(raw['รหัส']), name: str(raw['ชื่อ']), category: str(raw['หมวดหมู่']), owner: str(raw['เจ้าของ']),
+    stock: Number(raw['คงเหลือ'])||0, min: Number(raw['ขั้นต่ำ'])||0, unit: str(raw['หน่วยนับ']),
     image: driveImgUrl(raw['รูปภาพ'] || ''),
   };
 }
@@ -508,11 +510,11 @@ function mapHistoryRow(raw){
   return {
     date: new Date(raw['วันที่']), type: raw['ประเภท']==='เบิกออก' ? 'withdraw' : 'replenish',
     kind: raw['ประเภท']==='คืน' ? 'return' : 'add',
-    code: raw['รหัส'], name: raw['ชื่ออะไหล่'], qty: Number(raw['จำนวน'])||0, person: raw['โดย'], note: raw['หมายเหตุ']||'',
+    code: str(raw['รหัส']), name: str(raw['ชื่ออะไหล่']), qty: Number(raw['จำนวน'])||0, person: str(raw['โดย']), note: str(raw['หมายเหตุ']),
   };
 }
 function mapUser(raw){
-  return { user: raw['Username'], name: raw['ชื่อ-นามสกุล'], dept: raw['แผนก'] };
+  return { user: str(raw['Username']), name: str(raw['ชื่อ-นามสกุล']), dept: str(raw['แผนก']) };
 }
 
 // ---------- Nav ----------
