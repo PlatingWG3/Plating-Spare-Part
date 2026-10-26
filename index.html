@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ระบบจัดการอะไหล่ (Spare Part Management)</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
 <style>
 :root{
   --bg:#f5f6f8; --card:#ffffff; --text:#1a1d21; --muted:#6b7280;
@@ -99,6 +100,8 @@ th.col-collapsed,td.col-collapsed{width:34px;min-width:34px;padding:8px 2px;text
 .detail-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13px;flex:1;min-width:220px;align-content:start;}
 .detail-grid .k{color:var(--muted);}
 .detail-grid .v{font-weight:500;word-break:break-word;}
+.detail-grid .v.v-strong{font-size:16px;font-weight:700;line-height:1.4;}
+.detail-grid .k.k-strong{font-weight:600;}
 .part-thumb:hover{transform:scale(2.6);box-shadow:0 10px 24px rgba(0,0,0,.35);position:relative;z-index:20;}
 form{display:grid;gap:10px;grid-template-columns:1fr 1fr;}
 form .full{grid-column:1/-1;}
@@ -139,6 +142,27 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 .login-card p{font-size:12px;color:var(--muted);text-align:center;margin:0 0 18px;}
 .login-card form{grid-template-columns:1fr;}
 .login-lang-row{display:flex;justify-content:flex-end;margin-bottom:10px;}
+
+.img-drop{border:2px dashed var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;font-size:12.5px;color:var(--muted);outline:none;transition:border-color .15s,background .15s;}
+.img-drop:hover,.img-drop:focus,.img-drop.over{border-color:var(--accent);background:rgba(127,127,127,.08);}
+.img-drop [hidden]{display:none !important;}
+.img-drop-prev{position:relative;display:inline-block;}
+.img-drop-prev img{display:block;max-width:100%;max-height:110px;border-radius:8px;}
+.img-drop-clear{position:absolute;top:-8px;right:-8px;width:22px;height:22px;padding:0;border:none;border-radius:50%;background:var(--danger);color:#fff;cursor:pointer;line-height:1;font-size:12px;}
+
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:42px;}
+.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;padding:0;border:none;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+.pw-eye:hover,.pw-eye.on{color:var(--accent);}
+.pw-eye svg{width:20px;height:20px;}
+.pw-eye .slash{display:none;}
+.pw-eye.on .slash{display:inline;}
+
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 16px);transform:translate(-50%,-20px);background:var(--ok);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:300;max-width:calc(100vw - 32px);text-align:center;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+
+.btn-danger{width:100%;padding:9px;border:1px solid var(--danger);background:transparent;color:var(--danger);border-radius:8px;cursor:pointer;font-size:13px;}
+.btn-danger:hover{background:var(--danger-bg);}
 </style>
 </head>
 <body>
@@ -196,7 +220,13 @@ const MOCK = {
     [_ago(1),'เบิกออก','SP-002','ตลับลูกปืน 6205',3,'ช่างซ่อมบำรุง (ME)','เปลี่ยนลูกปืนปั๊ม'],
   ].map(r=>({'วันที่':r[0],'ประเภท':r[1],'รหัส':r[2],'ชื่ออะไหล่':r[3],'จำนวน':r[4],'โดย':r[5],'หมายเหตุ':r[6]})),
   logins: [],
+  changes: [
+    [_ago(7),'แก้ไขข้อมูล','SP-003','ฟิลเตอร์ลมอัด','ขั้นต่ำ (Safety Stock)','5','8','ผู้ดูแลระบบ'],
+    [_ago(5),'แก้ไขข้อมูล','SP-001','สายพานลำเลียง 10mm','หมวดหมู่','General','Consumable','ช่างซ่อมบำรุง (ME)'],
+    [_ago(2),'เพิ่มอะไหล่','CH-001','น้ำยาล้างคราบ (ตัวอย่าง Chemical)','เพิ่มอะไหล่ใหม่','-','ชื่อ: น้ำยาล้างคราบ | หมวดหมู่: Chemical | เจ้าของ: PE | คงเหลือ: 12 ลิตร | ขั้นต่ำ: 6','วิศวกรกระบวนการ (PE)'],
+  ].map(r=>({'วันที่':r[0],'ประเภท':r[1],'รหัส':r[2],'ชื่ออะไหล่':r[3],'ข้อมูลที่เปลี่ยน':r[4],'ข้อมูลเก่า':r[5],'ข้อมูลใหม่':r[6],'โดย':r[7],'หมายเหตุ':''})),
 };
+function _log(type,code,name,field,o,n,by){ MOCK.changes.push({'วันที่':new Date().toISOString(),'ประเภท':type,'รหัส':String(code),'ชื่ออะไหล่':name,'ข้อมูลที่เปลี่ยน':field,'ข้อมูลเก่า':o,'ข้อมูลใหม่':n,'โดย':by||'','หมายเหตุ':''}); }
 function _partRow(p){
   return {'รหัส':p.code,'ชื่อ':p.name,'หมวดหมู่':p.category,'เจ้าของ':p.owner,'คงเหลือ':p.stock,'ขั้นต่ำ':p.min,'หน่วยนับ':p.unit,'รูปภาพ':p.image};
 }
@@ -216,6 +246,7 @@ function _mockHandle(action, p){
       return {name:'Master Spare Part List (Demo)', url:'https://docs.google.com/spreadsheets'};
     case 'getPartsList': return MOCK.parts.map(_partRow);
     case 'getHistory': return MOCK.history.slice();
+    case 'getChangeLog': return MOCK.changes.slice();
     case 'getUsers': return MOCK.users.map(u=>({'Username':u.u,'ชื่อ-นามสกุล':u.n,'แผนก':u.d}));
     case 'getLoginRecords': return MOCK.logins.slice();
     case 'createUser':
@@ -226,11 +257,22 @@ function _mockHandle(action, p){
       if(MOCK.parts.some(x=>_tk(x.code).some(k=>_tk(p.code).includes(k)))) return {ok:false, message:'มีรหัสอะไหล่นี้อยู่แล้ว'};
       MOCK.parts.push({code:p.code,name:p.name,category:p.category||'',owner:p.owner||'',stock:Number(p.stock)||0,min:Number(p.min)||0,unit:p.unit||'',
         image:p.imageBase64?('data:'+(p.imageMimeType||'image/jpeg')+';base64,'+p.imageBase64):''});
+      _log('เพิ่มอะไหล่',p.code,p.name,'เพิ่มอะไหล่ใหม่','-','ชื่อ: '+p.name+' | หมวดหมู่: '+(p.category||'-')+' | เจ้าของ: '+(p.owner||'-')+' | คงเหลือ: '+(Number(p.stock)||0)+' '+(p.unit||'')+' | ขั้นต่ำ: '+(Number(p.min)||0),p.person);
       return {ok:true};
+    }
+    case 'deletePart': {
+      const dx = MOCK.parts.find(y=>_sameCode(y.code,p.code));
+      if(dx) _log('ลบอะไหล่',dx.code,dx.name,'ลบอะไหล่','ชื่อ: '+dx.name+' | หมวดหมู่: '+(dx.category||'-')+' | เจ้าของ: '+(dx.owner||'-')+' | คงเหลือ: '+dx.stock+' '+dx.unit+' | ขั้นต่ำ: '+dx.min,'-',p.person);
+      const n = MOCK.parts.length;
+      MOCK.parts = MOCK.parts.filter(y=>!_sameCode(y.code,p.code));
+      return MOCK.parts.length < n ? {ok:true} : {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
     }
     case 'updatePart': {
       const x = MOCK.parts.find(y=>y.code===p.code);
       if(!x) return {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
+      [['ชื่อ',x.name,p.name],['หมวดหมู่',x.category,p.category||''],['เจ้าของ',x.owner,p.owner||''],['หน่วยนับ',x.unit,p.unit||''],['ขั้นต่ำ (Safety Stock)',x.min,Number(p.min)||0]]
+        .forEach(d=>{ if(String(d[1]).trim()!==String(d[2]).trim()) _log('แก้ไขข้อมูล',x.code,p.name,d[0],d[1],d[2],p.person); });
+      if(p.imageBase64) _log('แก้ไขข้อมูล',x.code,p.name,'รูปภาพ',x.image?'มีรูปเดิม':'ไม่มีรูป','เปลี่ยนเป็นรูปใหม่',p.person);
       Object.assign(x,{name:p.name,category:p.category||'',owner:p.owner||'',min:Number(p.min)||0,unit:p.unit||''});
       if(p.imageBase64) x.image = 'data:'+(p.imageMimeType||'image/jpeg')+';base64,'+p.imageBase64;
       return {ok:true};
@@ -258,7 +300,7 @@ try{ const saved = localStorage.getItem('spm_lang'); if(saved==='th'||saved==='e
 const I18N = {
   th: {
     appTitle:'WG3 Plating Spare Part Management', loginSubtitle:'กรุณาเข้าสู่ระบบ',
-    username:'Username', password:'Password', loginBtn:'เข้าสู่ระบบ', loggingIn:'กำลังตรวจสอบ...',    
+    username:'Username', password:'Password', loginBtn:'เข้าสู่ระบบ', loggingIn:'กำลังตรวจสอบ...', loginOk:'เข้าสู่ระบบสำเร็จ — ยินดีต้อนรับ',    
     errorPrefix:'เกิดข้อผิดพลาด: ', connectFail:'เชื่อมต่อ API ไม่ได้: ',
     logout:'ออกจากระบบ', loadingData:'กำลังโหลดข้อมูล...', loadFail:'โหลดข้อมูลไม่สำเร็จ: ',
     tabDashboard:'ภาพรวม', tabParts:'คลังอะไหล่', tabWithdraw:'เบิกอะไหล่', tabReplenish:'เติมสต็อก/คืน',
@@ -267,7 +309,7 @@ const I18N = {
     selectPartToEdit:'เลือกอะไหล่ที่ต้องการแก้ไข', selectPartPlaceholder:'-- เลือกอะไหล่ --',
     partCode:'รหัสอะไหล่', partName:'ชื่ออะไหล่', category:'หมวดหมู่', unit:'หน่วยนับ',
     stockEditNote:'คงเหลือ (แก้ไขผ่านเบิก/เติมสต็อกเท่านั้น)', minStock:'สต็อกขั้นต่ำ', owner:'เจ้าของอะไหล่ (Owner)',
-    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
+    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
     selectPartFirst:'กรุณาเลือกอะไหล่ก่อนบันทึก', noPartFound:'ไม่พบอะไหล่ที่ตรงกับคำค้นหา',
     addPartTitle:'เพิ่มอะไหล่ใหม่', initialStock:'จำนวนเริ่มต้น', uploadImage:'รูปภาพอะไหล่ (อัปโหลด)',
     addPartBtn:'+ เพิ่มอะไหล่', codePlaceholder:'เช่น SP-005 หรือ SP-005,SP-006', unitPlaceholder:'ชิ้น / เส้น / กล่อง',
@@ -293,7 +335,7 @@ const I18N = {
     replenishTitle:'📥 บันทึกการเติมสต็อก/คืน', qtyReceived:'จำนวนที่รับเข้า', recordedBy:'ผู้บันทึก / ผู้ส่งมอบ',
     notePO:'หมายเหตุ / อ้างอิง PO', notePlaceholderR:'เช่น PO-2026-0912', saveReplenish:'บันทึกการเติมสต็อก/คืน',
     replenishSuccess:'บันทึกการเติมสต็อก/คืนสำเร็จ — คงเหลือ ', notSelected:'ยังไม่ได้เลือกอะไหล่',
-    allTxTitle:'ประวัติการเคลื่อนไหวทั้งหมด', noItemsYet:'ยังไม่มีรายการ', colDate:'วันที่', colType:'ประเภท',
+    allTxTitle:'ประวัติการเคลื่อนไหวทั้งหมด', histTabMoves:'ประวัติการเคลื่อนไหวทั้งหมด', histTabChanges:'ประวัติการเพิ่มและแก้ไขข้อมูลอะไหล่', colField:'ข้อมูลที่เปลี่ยน', colOld:'ข้อมูลเก่า', colNew:'ข้อมูลใหม่', noItemsYet:'ยังไม่มีรายการ', colDate:'วันที่', colType:'ประเภท',
     colQty:'จำนวน', colBy:'โดย', colNote:'หมายเหตุ', typeWithdraw:'เบิกออก', typeReplenish:'เติมสต็อก/คืน',
     reportTitle:'รายงานสรุป — ', weekly:'รายสัปดาห์ (7 วันล่าสุด)', monthly:'รายเดือน (30 วันล่าสุด)',
     weeklyBtn:'รายสัปดาห์', monthlyBtn:'รายเดือน', topWithdrawn:'📤 อะไหล่ที่เบิกออกมากที่สุด',
@@ -315,7 +357,7 @@ const I18N = {
   },
   en: {
     appTitle:'WG3 Plating Spare Part Management', loginSubtitle:'Please sign in',
-    username:'Username', password:'Password', loginBtn:'Sign In', loggingIn:'Checking...',    
+    username:'Username', password:'Password', loginBtn:'Sign In', loggingIn:'Checking...', loginOk:'Login successful — welcome',    
     errorPrefix:'Error: ', connectFail:'Could not connect to API: ',
     logout:'Log out', loadingData:'Loading data...', loadFail:'Failed to load data: ',
     tabDashboard:'Overview', tabParts:'Inventory', tabWithdraw:'Withdraw', tabReplenish:'Add Stock/Return',
@@ -324,7 +366,7 @@ const I18N = {
     selectPartToEdit:'Select part to edit', selectPartPlaceholder:'-- Select part --',
     partCode:'Part code', partName:'Part name', category:'Category', unit:'Unit',
     stockEditNote:'Stock (editable via Withdraw/Replenish only)', minStock:'Safety Stock', owner:'Owner',
-    changeImage:'Change image (optional)', saveEdit:'Save changes', cancel:'Cancel',
+    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
     selectPartFirst:'Please select a part first', noPartFound:'No matching parts found',
     addPartTitle:'Add New Part', initialStock:'Initial stock', uploadImage:'Part image (upload)',
     addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005 or SP-005,SP-006', unitPlaceholder:'pcs / rolls / boxes',
@@ -350,7 +392,7 @@ const I18N = {
     replenishTitle:'📥 Record Add Stock/Return', qtyReceived:'Quantity received', recordedBy:'Recorded by / supplier',
     notePO:'Note / PO reference', notePlaceholderR:'e.g. PO-2026-0912', saveReplenish:'Save Add Stock/Return',
     replenishSuccess:'Add Stock/Return recorded — remaining ', notSelected:'No part selected yet',
-    allTxTitle:'All Transaction History', noItemsYet:'No records yet', colDate:'Date', colType:'Type',
+    allTxTitle:'All Transaction History', histTabMoves:'All movement history', histTabChanges:'Part add/edit history', colField:'Field changed', colOld:'Old value', colNew:'New value', noItemsYet:'No records yet', colDate:'Date', colType:'Type',
     colQty:'Qty', colBy:'By', colNote:'Note', typeWithdraw:'Withdraw', typeReplenish:'Add Stock/Return',
     reportTitle:'Summary Report — ', weekly:'Weekly (last 7 days)', monthly:'Monthly (last 30 days)',
     weeklyBtn:'Weekly', monthlyBtn:'Monthly', topWithdrawn:'📤 Most Withdrawn Parts',
@@ -402,14 +444,19 @@ function langToggleHTML(variant){
 
 // ---------- State ----------
 let currentUser = null;
-// ไม่จำสถานะล็อกอินข้ามการเปิดหน้าเว็บ: ต้อง Login ใหม่ทุกครั้งที่เปิดหน้านี้ (และล้างค่าเก่าที่เคยถูกจำไว้ก่อนหน้านี้)
+// จำสถานะล็อกอินด้วย sessionStorage: Refresh หน้าเว็บแล้วไม่ต้อง Login ใหม่ แต่เมื่อปิดแท็บ/เบราว์เซอร์แล้วเปิดใหม่ ต้อง Login ใหม่เสมอ
+// (ไม่ใช้ localStorage เพราะจะจำข้ามการปิดเบราว์เซอร์ และล้างค่าเก่าที่เคยถูกจำไว้ก่อนหน้านี้)
 try{ localStorage.removeItem('spm_user'); }catch(e){}
+try{
+  const savedUser = JSON.parse(sessionStorage.getItem('spm_session') || 'null');
+  if(savedUser && savedUser.user) currentUser = savedUser;
+}catch(e){}
 
-const CATEGORIES = ['General','Consumable','PPE','Stationary'];
-let brandLogo = '';
-try{ brandLogo = localStorage.getItem('spm_logo') || ''; }catch(e){}
+const CATEGORIES = ['General','Consumable','PPE','Stationary','Chemical'];
+const BRAND_ICON = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAoJElEQVR42u19aZBd1XXut/beZ7hTjxpBaEJGWMJgHGIHsAEZ9MA2yIRyt51yknpUqnCesexnKonznqvSrR+uZ+dV4UGOE6sqlSIOqdCdOH52BhwBAlsSBst2gUEYEEiMQlOrhzucYe+93o9zzlV3q+e+PQh0iq6iult9zznft7417LXXJpxjFzNTZ2+vAIDezk4z+ud/9OD+tlIOa43l9QDWCvA6ZqxjYAkYLURoBshnhguwm/xRRCQoAjhgxgAI/QScJMJhCzoM4IgU9PJQDUf+9pZr+kZ/ZkdPjwSAno4OS0R8Lr1PdY6gTh29vWLTs88yEVkABgDu+u4BR64rb/Bc9z3W8AcYfDkxrzMGKwRRQTgOSAiAGWwZzBZsLcAMIoBTqEiQD8AHiSYhxDIiARIEEEFYCxvHMIYrBYW3tj+89zCBnhaSngij6NfmcPHQrs6rYgAgAF1dXeLg5s3U29FhcQ6QgRbzzXUxi4O9vTTc0u/Zc2BJbGpXQ4gtAD5EwCbleXnpOLDGwmoNazTYWjBgwZw+JQHMlPwv0XjywsnPGUj+AxEIECQEhFQQSkFIARPH0GFYZeAggJ/C2j2OzD1+75arTg5Xhk0dHbwjIe15Akz1njp6esRwC7pr9+5mT+ZuIIhtDL5JKrVaeR6sNjBxBGutpRRpBoiYaVyQZ+F7mIgpZQaDSAghpONCKAkdhjBav0qghxj2h6GpPbpr69aB4QrW29lpkdDqPAHGBX6YtW/fve9KkugA0R1Sqo3SdWHiCCaKGESWE4tuPNjTIQXARMRgFtJ1STouTBTBGP08mL/PBr07t177q+GqsJiIsCgIkL4Uk1nLZx99/GbJfBcxPuIWCv4I0AEiQCzKUAWwBIwgQ1SpBEz4T0O06zs3XP3jTNVGPPM7lQBdzGIHwEgsiO7es+8OQeLzkug65fuIazUws1nMoE9GBiKSTi4HHQQwzD+xbL/1V1uu/X72zF0ALWSMsFDSOeLBP/fIvo8Jwp9K5VwvpEIcVBkgC2axYPLeQDcBIguwcPw8WaNhdPyYZfzfb3/42n8/yxDe7gQYLn13P/TY+6RQXxZS3iEdB3EQZL5R4u15GQDk+L4wcQxrzPeN1V/5q5uu/+VCuQVaCKv/wr/uaeFW98+IxHbl+cW4Ukmt5G0L/NlEYBZOoUA6DMrMdiedjv7ym7+7pX++1WBeCNDFLDK5375n/y0C+KqTy10RBwHYWvMOAv4sIpAQ0kninacs8Oc7t1zz4Oh3dk4TIJO1z+7ZU3SE1w2Le6Trkg4CA+Dc9/GNiBEAq3xfmihiCNwb27D7O1u2lOfDJdAcPlhW/DB3P/TY+6RyvuP6+Q9E1QonNRUSOH8N54ElInLzBYqC6hNGx5/9q5uu/2VHT4+cy7IyzdHDZCVX3v7wvj8QjvqGUk5bVKsaOm/1kxWWrJvLS63jPhvr/7nzxmu/B2ZKqtKNJ0HDgch8V0dPj1y5dNVXhFRfYrZgrQ2I5HmUp0QEQ0pJIgFr9NeOnnj9y72dnWYu4oKGynBHT4/cQWTv2r27eeXSVfe7+fyXrNHW6pjPgz8dsyRpdczWaOvm819auXTV/Xft3t2cGdaiVIAsYNm+Z88qgne/m89fF5XL5wO9BgSIbrEoo2r1J4zw0zu3bHm9kcEhNRL8z/34sXXSUT9w8oXLo0pFg86RfoNFTwRot1BQcbXytIn17d+++frDjSIBNQr8e3b/5BKt1A8d398YVauGzkt+o8XAuPm8jIPgeaX1tnu3XvdCI0gwKwJkQckX/vPxtezzgwn4NU3nLX+OSADt5nMqDoLnKaBbvvmRq4/MNjCccRDY1dUldhDZu/fuvQA+/+A8+PMRG0JF1Zp2fH8jfP7B3Xv3XrCDyHZ1dYl5VYCkjkP40u7dTYEq/MjJ5T4UVirnZX/4Cx0e96bNh9wwJWDjFQoyrtV+6uvKbV/bunUwWXScfp2AZvDp1AUQHoU4zfvvdwuFzrBcfkeDT0mRBswMwwzLgOUzWAgCBFH9i5lnTQZmNl6xKKNKpaeVrvk0boCdySLSdKWDOnp7xQ4i22f3fsUtFDqjd7DlEyXdaLG1qMQakbHwlMSSnIeLW0p4V0sTLm4pYUUhh5xSMNaiEsWIrW3EZ8uoUjFuodDZZ/d+ZQeR7Uja5WnOFKCe6z+y99PKcf/BGmPYmHdcnp+WuRFpAwvGBYU8LmlrxiUtzbigWEDJdeErCUplPzYWQ1GE49UaDg8O4ekTfThaqUISzU4JmJmktEJKqePo93d++IP3TzczmDJwWbS5ffe+K6UjHwahxWgNeqeBTwRjLSJrsaG5hA9euBJXLG1D3nGm9O+DOMbX9j6B14MIxVxuhKuYIQdYKgUw+k1sbty59dpfTSczoKkSrbu7m3BDR/40Dzzs+Ln3R7WKJRLvqBU9QYTQGBQcha2rV+GGiy6AK0U9zkuaxemsF2uZIYhwuhbgG/ufxHPHT6HgOcgVinA9Ly34zYYE1rq5goiD2pOt1HwjHu2tdnd381SCQpqW9T/02L1eqfmL78SgTxChpjUuKhbwB5suweqmYh1cSjaPjGc8ICIMBCG+vv9JHDx+EkXHgUlBL5RKDSJBEhSGQwNf33nT9fdMVQUmteAs3//CI/tuFp6/PapW7bnWodso8C9tbcHd792M1U3FunSLWYAPAJWhIURhOOswigARVatWeP72Lzyy7+ap1gdo0nwfwF0PPdTkidxex/cvi4PAvpOaOQQRAm2wuqmAz733MpRcpy7pk7y7ScEfXuEplEpwXXdWSsDM1vF9EQfBM6GtfXDXTTcNTtZHMCGQ3cmuG/Yo9+deoXiZDkMzn+AzL+z2GSIgthatvos7N22cG/ABwNpECaJoVkpAREKHofEKxcs8yv05iLh7EiOnyfz+5x7+2RVS8j4Q5VjrOd2GxanFWWtBRFAiSZMsc0IGTu6Y5o0AhFBr/PfNG/GBlcvmBvxhbCchUCiV4MxGCZiZlGIw14yha7994+88NVE8IMalfnd3spvWxt2O7xfYGJ5r8KUgBJHG06/04+kj/Th8rIy+cohYWwhBUJIgBdV/n+dQHgQBgdZ479J2/PaKpWDG3IGfvnObKkE8GyUgIjaGHd8vkI27wUzo7h5Zmp5MAbJiwucf3vtRoZx/s0Yz5jDwq4Mfajzz6gAGahqCAMvJ931HoJRTaM47aMo7yHsKjhQg4Kyya2NdEOPzV16GDa3NsJyQYk7AH/V3hBAoNjVBqlmtq1khFVkd3/qtGz/4H+MViGgsJrK19Jlf/EL5A7WHnVzhQ3FQm7Pe/eGW/8wrAxisaShJ6d78xMotoy6JShLyrkQpr9Ccd1HKOch5CvX9/A2L+g02t7Xg7is3T5jmNRJ8jKodLGlvAws5U3dgHD8n41rlp0Fz7sbv/tZvaRKCR8vmWVbd8cADkojYHajdJh3vQ1GtynMPvsEzr6bgC6oHf9m9CkqAz342VNN441SA514bxC9fOo1nD70Fo01jPRQzrlzeXl+8megZiAj9QYhvNAB8kcYda1pb8eGL1gDGgGf2XDKqVVk63ofcgdptRMQdDzwgJ44BiNDT0WHvOnDAIYgvCiVBc7Q7ZST4/Ris6nrQN5ZEDc8IZBYPSIGoPISjb5xA36l+gC0aESIaa1FwFdY3N00YKWfEGAhCfHP/k3j22OzBD7TGmrY23Lb5MqxtbYVvLKIwhJhB0ZWIrFASBPHFuw4ccHqS/QXjEyCz/lxf5cPSUdfEQTAn1j9V8JkBk7mAUf+eQdCVIdigDAYwMFRDZWgI1s5OCQiAZotl+TyW5fP1bGCi369pjdf6B5FTcsbxSB381lb87nsuh++4ICGwoljEwMAATBzP5LlkHAQsHXVNrq/y4bFUYAQBejo6LABYKf9Yuq4AYBcC/MzaPQWUPELRIyiRECFTKlMZgqmW6+vw5VqMOI5TEtgZkyBZ7AHaPBdK0KS/CwDLi3lc3N6K0Nhxo+2pgn/7ey5H3nURGw1BhKZ8DmwtyoODSBffph1OSNcVVso/Ho7xWQTo6OmRRMSff+jxy4nELbpWA5jFnIAfjg++ZcB3gLUthHe1C6xvJVzcSnhXm8DKEkEA0Cn4yaivJEaoVEMYC5gGkIABNHvuCJmfKFgjEN7V3gbDPG0HNDb4ph57tOZyUFLAzJQEzELXaiAStyTYEg/fW1AHeFNHR1rctp9yC3nfWmMbGVVlRZ4g1HjmtfHBL7jAxa0CrTmCHPbprgJWlgQuKllwUEX2qrMgLIg0gjCGlAJxFNVJgBk+Qi5NwaYq6BuXtMGTAtPp9ZkI/LqG05keD2vM9ElARNYa6xbyPoT91Ais6wRgph1EtutnLzSxtR0mimf84iYtrsQW5ZqBHMPnSwIuLBEcCWiLs9yCNoy2koPlS4rpKtyZupUxjKFqXP9GHEWoDg0BMySBnmLXTgbEmtZmtOfz0MZOSQWmAv5YKbrJSGDMdEgAE8Vgazu6fvZC0w4iC2aqEyBtJUJf9fgW5XkbdBQyobE1f0rlsugrFHw5IlImJMFeyScUXILlsSNvIsBYxpKWHFxHwtqRFBqqhln5AESEKFWCmZQMo5QANIXnYgBNnoe1rc3QdvJy8XTAj4wZcf80AxIQSOgoZOV5G/qqx7cMxzwZufrss+l8RLFNuu6cpX6WAUcJlHwF8NmGmVNnXuhEC0SuI+G7qj4DMivTVmsxotgMU4aUBIOD014E6guCSTOA4ekgA9i4tA2h0fVYIOsZnAn49fpCrQpt7YifExGM1tMjAZFNsBXbhmOukAxVtPfsObAktsFWE0ZTIf7MAwEAzQUXb54ORiBNmLjUOtrqaFQ/HREQxQbVQKOl5MHaxEVkJMDQEAql0pTAVEQ4WQsQGgNPyinf06Zly/DuZctwqlJBOYpgrIUUApIIQiSl6yDWWNM2ueVTei8DKRHHzFZSEhSbmiDlpBVDMmEEtnbrPXsOLLl3y1UnwUyiozdRgdjUrlaOc5GOozmr+2fzeZtyCq6kETkmAwj15EEXAdDGIoyT9YJhmSGsZZSr0VnsJSJEYZjEBFPJVEigLwhxrFKtR/qTVu8MI2SFjvdeid+/6ircftl78IE1a3BBUxOUlIi1RiWKpgR+XSniGG8ODEAKMSa401QCoeOIleNcFJva1YkbgFCbOpJ3SFLeID0PRsdzOqyJmZFzFfK+wkAlhkiDQUHAUMSIDaBEQg4a04UQBgcjhJEe0VWb+f7BSghji2e5FyJCGIYAEfLF4sTVE0Goao2nTvRhddPkqhEaxssDVVS0gSRCcy6PtkIRm1asQKA1+mtVvDEwgL5KBe9fswYF10U0AfjMDKUUjg0N4VS1khBgorqF1qikSiAmUAIiWOl50hhzA4AfbeoAqx1E9q4DBxweDK+zxoB5bpu8LQOOJDTlHPRX4rrTp1QB3qoAFzUBApRYHp+xcEclNYQ3jw+dbeXZglHaNzDWMxARwiBISFAoTHyfluuWP9ELycCvpuBnGYQ2Js1sCMuKJaxsagYzI7Z28mg/leDnjx9DqDU85Uwo70QEPcwdjEcCZlCCMV9314EDzg6iWABArq+8AWw3myial34LBtBccEaMbAcAIQjHTgzh5TcGEMWmXvNXkkCCMFCO8OKrp1EL4hExACHJDgp5D+tWtUBMEEwQEcJaDbVKZUxgBYBqrLHlogvwsfWrJ3RJw8EfEaQNCwCTfQEGtThGqHW9iXQihZRS4nStiueOHYOa4mpgnQRDQ7DjuAMCyEQRwHZzrq+8IQkCAYDU5Y7n5+KgxiTEnBKAKPGppZyC50iEcfry0vIu18o4UQUGyiFaih48V8EyoxLEGCqHMNaOADgDP59z8a7VbfC9s9PDsV5WUKvVlSB7wQJAVRtcv2olPnXpxUk1bpyIeDzwx/s8moZxKCL88vXX0R8E8JSa8nIwEUGnldBCUxPE6NiBiKzW7Pi5nKkFlwN4TgEAC36/dBzoKJyXYY3MgOdIFDyJIDIgQSPKu5KAONY41qfP8s2jLW264I8gQTUJ8vKFAgiMaqxx/aoLGgr+9Nwjw1cKr54+jV++/jocOf1eACJK1kQGB8ckAQlhpeNIHdbeD+ABkbhPupzt/M0rZk58Y3PeAUAwtTJMrVx33FkOnPUAZG5gdDYwU/BHuINqFWE1AfO6Blv+dINjJQXKYYCHXnh+SnHCpCQYZ00kOUyDLgdA4osP7m9lonVGa3CDF38mZHtaD7C1IQSDg0hPcqm7ieGrgvWG0AaCfybuEDg1MIBrlrbj9y7dUPfb8235UghYy/iPgwfx5sAAXCln1SJOaTl8NAmYWRitwUTrvvjg/lbBOawltiut0ZivXX5Zzt6Uc7B5TQtWLWtCU8mHUslL0IbrgBJGRvQNBZ8IlSjCf3vXevz+ey4dc1vXfIDvSYVQx/jhM7/GiydPwleqIX2Ow0nA6ZoIAbBGg9iu5BzWKlheL4TKJy5gfjd6EgEXrFiC1qYcKuUKYmNRrsUoVyKUqxGCUEMbW19IEkRzAv6dv3VFvaYwE/B5BqVTywxJhJzj4K3BQTz4m+fwWv9peMppaJPrcBIUSqWka9haCKnysHa9MrBrlePChCEvxDZvYy1cPw9jGCKoIdessLQ5B20YQaRRrsYoVyNUgwi1QCfgr2mD7zYO/Nn6fCWS9Xqb9QOM9XvpegEBkELAUwpBHOPxw4fxs1ePoBLF8BsM/ohKaFoOzzc1gZhZSEVaB2sVsVhPSaWJacFOEGHkiwWAkEbmBCKgkHNQzDng9jy0tqgEMTxXwXcaC/5MZZ/SQkZ/tYrmXK6eshnmkZH3sOkglhmDQYBDJ0/g12++idcHBqCEgCvlnLW3jyDB4CDypRILKYhDsV4xsBZ24c8vYuY0HQNqKQms5XpVTwpCczHZRTubvrtGgY80X3/0pUP41Rtv4MKWFqxtbUN7oYBm30/IkJaRYmNRDkOcqlbwen8/3hwYwKm0EOUplagDzz0GGQl4aAjK8yAE1iqAl/B4tdMFIEGuUACI6pW6ekaQlmdnepcNB18IPHroRew/cgRSCLx44gRePH4cSkr4SkFJWZd8Yy1CrRElZVgoIeClAyXmA/ixYoLq0BA8z21XYLQwW6TLwouDBPk8CEB1VLl2MYH/2KEXse/IEbgyGQWT7eJhZgRaA1qfdQ9ettNnnix+AhJQUKsiDmvLFAEtPAvLmisS+Pk8QJSQYBZ/a67Bz9QJI6aCnV365QWw9ok4AMswxi4VDPLBFott0BMzw8/lUJhk6XahwZ+opj/8a7Fdqdt3BQAHi/RiZni+P+n6/WID/1y5mFkJgN1FJE1jksD1/Sm1c50Hf/quQJwjVIXreVMiwXnwp6mUAEXnwqg/ngIJzoM/bQGwAkB8DvmsMyQYo936PPjTTQfBgsEBSCyqHGUqJCiWSvXE5Tz4M8sEAY4EAf0kCHwO3Tozw3FdFEolSCFQDs+DP90XSEmDTZ8CoZ9IIB0zTucSCTzPQ00b3LL6woat6r39LR9gIpYkyFh7XAF0MlvVwjk091kAqEQxblq3Gp+6dEN9k8h58KceAICoKgg4AnFuDfw+u3v3PPjTTatJCIDokGCyL7O1oHNE/hvdut1I8Pkc44EADgsJccTGGufCoQ+LGXwgmW8gaPEH1JTsD4AlOiwg6GVrdTUZ/b9wqSBh5Lk62RdlP1vE4It0F3J/1aAcxFBCnLXraVFlACTIGhMR4yVFNRxhVxwVUl2sjZnXODDbQmWZEVuGYVOfB5z9XBJBCYHaIgM/29BKAKox43gF6BuKweUBLG8vYHl7Aa4SMJaxmNIrBiCkALQ9XrD8EgGg7Q/v/S8vX7gpqlXnbCLoWMBHxkLbZA9+m++hPeej2U2mc2lmlKMYp4MQx6o1fGDlMvzepRsWjeVLAkIDnKgw+moMzQTSIaL+Plhm5H0XK5eW0N7sQwiacQ/jHOi/UZ4ndVDbeyuHNygATOCnSYib5sWPp2fuhNpgeSGH9y1rx+b2NlxYLCDvnD0bN9AaJ6oBVhYLiwL8bIbxiSrjeBkINEOIhBCG0x1NRKiFMV5+rQ8n+31cuLSIpqIHcLKnYUGjLWYIKQESz3R2dBoFAGTpSRPHYGvFXB4DlB2+UHAkbll7Ea5dtQLNrjtuJE0AfKVwUVNxxPfmG3xOLR4ABsIE+HKUdFEpcXbTRzYRDQQMDgUoV0Isac1jxZIS8p6CZTvuHKT5CAGsMSDQE0C2O5j103FYqwmlcnM1Fp7SY1cubi7hUxs31EEd3ktPYwCctVuNd0vzYfmKgKpOgO8PeMTk8NGEHT3jKJuGduxUGacHA6xYUsSy1jycND6Y9yKgECIOghiwT2WZFWptxUMg8ax0XczFIR2Z5V++pA3/44rNuCg9cyezlIm2T2fxwkKAnw2gOlpmHDrFOFXjuhsYfVlGMqgya2UfpWhKCmht8OrRATx3+BT6hoJ5V4DsiDlB9ELA0W8AQHQxi11XXRUT0U+ElGh0GpuBf0lrE+68bCOKw45dmc0LmA/LJwIiwzhWZhhOlGAs4AEg7wAtBYmmog+lJLTls+YcEhEcSRiqhHjrZGXeS+9ExMJxAIi9vZ2dNXR1CXWwN8GBjXnUhOE9UzgVZVovMLYWbb6HP9x0CXLpzpnZfsBC5Pl2DGlMJpsSVhSBgkMQwgG3tyGKLU4OVHH0RBk8ans2I5mEIhag/M7MwsYazPwIAHRs3kyityMZ1uXI3OM6jl9Tjkto4JBoaxm3XbwaS3L+pONRFiP44z4XAyUPWN9KaPZpROHHdyVWL2/Cxata0wENi6MAJJUiE0fHIkfvBZJZgQJEjK4uce+Wq06SELtlMiR51recHHxgcElrM357xbL60IeJaujZtq/xelOmDv6huV3YYcARwIVNAkokY21HkoMRa4slLTksby+MGGu7gPm/la7LILHnn26//U0wE3bssCKTggQA+0MTRQ0ZFJHt7r/mwuXJ1utxJmln3zepVIph0zXtsH2AUwFfEOGxlw5h35HDcwZ+Jo8lj5BTGD+do+SZ2lvycNTcbvycsvwbS2D8EDgzKlYBQG86Q74tv2xPX/nYIeX5G3Qc2pnOC06GORosyfnY3NZaTwPPltEkHnjy9aP4wcHnsb6tBZcuXYKL21qwvFisAx0ai5cHauPvz2eGqxSeeOUI9r78MnzHmbMOt+yv5pwzKR9NkEG4joTnSlSqZiF7sK10HGGi8DXfK+0ejnk6JYw4PVtu8POP7OuVrvO/dBTMOEolIsSWsbapiILrjPmSMvB//sZR/PUTv0AtjvHSqdN46NARNPkeVjWVsKG9FVesXAHl5lDRBmqCFEUQIU7PDZps3nCjAtypGsMiWAlg6bqwsfnXXdu2nBx+jmCdkwd7e1PdFf8UVaqBEFLMxowYwIXFQt1CxwP/Oz/7BbQ1yLsO8q4D31GoxTGeO3ESvc88h10//xUGw2SFzU4scVjZ3JT83lzus8eZsbZTIYk2FnFsFjoGEHEQxJbMP47Auq4AAHo7Ow0zExE9vf3hvQ86+cLtcbU6o7FxjGT8Savvjiv7Z8C3UEKOqIpJIiil4CmJoSDA6WoVK5uaYdmMr3FgFFwPrpSIjZmz9oZMzYZCRmwIUoytNpYBVwr0l6uIYr0gaV96GeX70tTCPRd3fPznKcb1FznCK3VmM+SN+RsTRRYzHRqdthfmRh18ODb4Z1tsdlwsQKjpGG8ODiQnho5n2USwFsg5TjJbb45FNzlVFHirkk0kP3Pf2S06SqBci/Hm8fKCWn8S/BnAEX+9g8hmGI9JgN5PftIwM9XaCo+YWO93fJ8AmJl/+PTBH4tMb/T3w0xy8keSh/O8deMIAk5WGK8NJAOuJaE+0xAEnB4M8OKrfYgivZDNVsbxfDJx/Av05x8EQL2f/KQZlwBgRmdvr9h11VUxw37dajOzlDCtnFV0XJfDmYGfzM19a2gI1SiqD2MejwCB1tDGNDQI5GHl3rE+82SV8eIpi1cGGEcHYrz61iCeP9yHF185hTCMz5L+rGA0H/0BzEwgQEnxjfvu3BJ09PSISU8OzVQgas79yMThT91cftoqQOmk71O1EMyJZUwbfJyZm9tfq+HoYDJMacy4lBkChKEgQKh1w2rZnBZ8mjxKj68dWwliC5ysAa/3x3jj+BAGy+OfNqI1QymB5pI399bv+0IHwQE7cOKfwUy9o46MG5MAw1UAoK+aOJ6RSxUEvDaU+L+ZgJ+9QJP+G2eCKVrpeTc4USlP6iqma/1KENa0JF++ovqaAI3KDBQlZB1+wvmI4pFNlpFbm3N49/olWNlenNPdeMwgZoZy1Ffvu/POoKO3V6Sbf0ZcY0b4B//5n7mrq0v85Z1/+OJvv3j4vV6x8G4Tx2aqQWFW9tWWEUUh/uFXTyPQZkIQxwVfStx22WW4eMnScaP7rK9w3+GXMRAEkHPQ1FJwCC3pUXaBBuLRp4kTgY2BDYOz4hLDQDHvYe0FzbhwWQmeI+d6K6Zxcjmpg+C/1rYX/+KGtWvxne3bx8yixbjal5w5zyyc7jgIKiQlTeeuJRGG4hjff+EwQm3gzNDyb7vsMmxcthzROGflZVO3jg0N4s3BwWQ61xy8XM1JoLeiRNjQTliSo3p8M3bxB9DawnEk1qxsxrvXtaG92U/WO+bS/zMzCSIbhaFy/b/YsWWLPnjwII2XQY1rKjuIbBez+PaNv/OU1Wan4/kC0zxNjJlRyOdQamqaclA2FvjBJOfmCiI89cYbCOK4oXN8xyoAGQY8RVjdQljXSigNiw/qwNskD16+pIR3r1uKC5aWIIigzbzkKFZ5OQFrd/3d7Tc/0dXVJXp7e8eN4SbUym6AwUwh174aVsrPKM+TzDwtElhmOFOc7jEe+OOBapnhKYXDfadw8K1j0zpcYVZESA+0bvII61sJFzUTPEX1g65bmnK4dG071l3YDM+V0NambnHOo34rXVfqWvUlI3M7ssMhJ4zVJgGEu7q7adfWrQOC6E+MNZrE9GcJTGW6x3TBz6S/GkV49NAhRNbMe76dKfnSPGFDG2FFk8K6Va3YuKYVpYKbTjqdpxF8DBZCJIvpgv70e3dsPdXVDdqxY4edfK1ikitbPNj+0GP3eqXmL4blsiGiaZeIs+PbKqOOb5sJ+DI9h++Hz/4az86T9U8U9IrMwikdcYt5XgJiNk6+IHWtuuu+jm2f6ejpkb2dnXaykghN0YKpu7ubcENH/jQPPOz4ufdHtYqlGfSQjz7SdTrgZ8MWXSkRGY3/+s1v8PTRo/DS8u9iuBZiFxAzW+X5wkThMzoS1/3jCz8f4O5upjHSvmm5gOGuAN3d2LHlsjIb/LGJotNSOcQzMDlmhptO9xBEiE1y3Nqtmzdj49Kzwc9A52Hz9U+Wy/iXp57C00ffTIcyL55rITp9hVJga8oC4jP/+OlbT3dlmDX6flNZMdsf2ftp5bj/YI0xbIyYifMlIZIz/IIAH9u0CRuWLUc1jDB6n7ogqsv9YBDgmaNH8eSrr6ASRfAadLLGOXwxiKxyXWmi+DP3feLWXRlGc0VY6ujpEb2dnWb7wz/9mlcs/VlUqcx4P6FlxhLfx+VLlqAtl0PB8+EO8yraWtTiCCcrFRzp68MLJ06gr1KBknLc41TfYZdx8nkZVyvf+fuOj989Vb8/O8Vipi6A8CjEad5/v1sodM40KASSdfwojMBhgJLjouD79aJ7qDUGggCVKEJsDJQQUFLWT994R5s+s3bzeRUHwb9Te/ETax+9IdrRDcYUpX9WLittKsCXdu9uClThR04u96GwUpkxCQQRgijC0MBAspo3bNKXFKI+K4DPA38m4s/lpQ7DX3iuvWXXtm0nU0ym/Xpm1vRJxF1dXfS1rVsHtGM/FddqT7n5vGSGnpEKMMNzXbS2tiLvefDSQxdcpepLwPY8+HXwle9LHYUvGGs6dm3bdrKLWcwE/FkHrVl94Av/+fha9vlBx/c3RtWaJoKaIbHqhyBbY86FqTULAr7R+lUFvuVv77j1uekGfQ1RgOzaQWQ7enrkNz9y9RGl9bY4CJ538znFzGZmz5ccm15saoKU8nyQNwp86fnSaP0KdPTxRoDfsLQ1u5HP/fixddJRP3DyhcujSkVjFkpgUiUw55Ug9fk5qcPwBa3k795/+0cPNgL8WStAdvV2dpqOnh757ZuvP2wp+lhUq/7ELRYUmA1mWCyS55UgextJiTeKDgjQRxoJfsMIMJwEO7dseT3QlW1RtfqAWyxKCMHM9jwJpv/8DMA6uYLUYfBvwoiP/t0nbn25keA3zAWMFRh29PTIlUtXfUVI9SVmC9baYIYLSO9Ad2BICCkdBRPrbzflxJ/s/OhHw+E7ehYtAep1ggQ93v7wvj8QjvqGUk5bVKsaAqZdOiYiGGMSEmj9tiYBMxvH86U1usIwf3LfHdv+BgC6urrEZEu7C+oCRtcJsuBw543Xfk9HwdY4Cp7wCsVkBMk0m0o4bQ8vNjVBLuCy7xwDbwGwm89Lq+On2eqb77tj2990dXUJMNNcgD9nCjBWhvDZPXuKjvC6YXGPdF3SQZA0mU7DnN+WSsDMILLCcSQAsNXfVdr533/beUtfo/39ghBgeFwAANv37L9FAF91crkr4iAAWzutxaS3GQkMiKTj52Ci8Hm25sv3fWLbvww3nLm+gXnZsb6DyIKZupjFzi3XPIj+8IYoqP4fEMpOPp+F+GaqBpO5A3WOuoM0LbLK9yURRSYKv6U5uO6+T2z7l0zy5wP8eVOAsVwCANz90GPvk0J9WUh5h3QcxEGQLWXKqSiBTZVAnyNKwMwWRHA8T7C1MHH8Y5bY8b07tj0+n1a/oARI3wR1AZS5hc89su9jgvCnUjnXC6kQB1UGyIJ5whjhHCFButmZheP5BDCMjp9ga+/9+46P99Qj/O7uaS/lnrsEGB4bIF3DZqa79+y7Q5D4vCS6Tvk+4loNzGzS3eZiQhIMDUFPsn9gvgs5RGRBJJXnJbuGjHlSkNhZ1uWe3s7OCMMabBbqPhfF2xohfcz02Ucfv1ky30WMj7iFgm/iCCaKGER2LDJkJKgMDSFeSBKkET0DJJUS0nER16oGAg9JqO+WTfnfU+AXRO4XLQGyexltDdt377uSJDpAdIeUaqN0XYwgQ1JwIhAREcFai8rg4DySgJlBTGlvplSKpOuCjYGJolcg8ANr8MD3OhMfXwe+o9NikRwsshidZkKEjg6b+cS7du9u9mTuBoLYxuCbpFKrlefBagMTR7DW2mRPnIC1lqqDgxTHMTWYBJy2ojERMQMkiIRwHAipYI2GiaJjBH6Upfx/UouH/q7zoyfGe6ZF87IXc9TcxSwO9vaOSInu2XNgSWxqV0OILQA+RMAm5Xl56TiwxoKNho5jlPv7EcWxHU4CYqZJpSFx3nwmfjsjMSQlhFIQUsIaAx3UNIh+Q6B9ylEPx6He//edt70x/P7rafAivc6NKgozdfT2ik3PPsvDS6J3ffeAI9eVN3iu+x5r+AMMvpyZ1gmBFSAq1Go16DjOZs4nBGE74awhIgJJCQKB0v3fRmuwMSGAEyAcBuhZED9JQvyqLa4+//XOztow/lBnb++itPZzlwAjDZSyQUdjBVF/9OD+tpLCWrhifRTEa8pD/e8m0AawLYKxnIF2ECkAEmfG3yQROxAB3McWx0FUJaJDYHOEIA6zKw4h5JfWdnzs+GiLzpSqp6PD0jkA+vDr/wPW757xsYpddgAAAABJRU5ErkJggg=='; // จากไฟล์ Icon.ico
+let brandLogo = BRAND_ICON;
 function brandIconHTML(){
-  return brandLogo ? `<img class="brand-logo" src="${brandLogo}" alt="logo">` : '🏭';
+  return `<img class="brand-logo" src="${BRAND_ICON}" alt="logo">`;
 }
 function applyBrandLogo(){
   document.querySelectorAll('.brand-icon').forEach(el=>{ el.innerHTML = brandIconHTML(); });
@@ -436,7 +483,7 @@ function resizeImageToDataUrl(file, maxSize, cb, outType){
   reader.readAsDataURL(file);
 }
 function setBrandLogo(dataUrl){
-  brandLogo = dataUrl || '';
+  brandLogo = BRAND_ICON; // ล็อกไว้ที่ไอคอนมาตรฐาน
   try{
     if(brandLogo) localStorage.setItem('spm_logo', brandLogo); else localStorage.removeItem('spm_logo');
   }catch(e){}
@@ -454,6 +501,8 @@ let OWNERS = ["ME","MFG","PE"];
 let OWNER_LABEL = {ME:"ME – ซ่อมบำรุง", MFG:"MFG – ฝ่ายผลิต", PE:"PE – วิศวกรรมกระบวนการ"};
 let parts = [];
 let tx = [];
+let changeLog = [];
+let histTab = 'moves'; // 'moves' = ประวัติการเคลื่อนไหวทั้งหมด, 'changes' = ประวัติการเพิ่มและแก้ไขข้อมูลอะไหล่
 let USERS = [];
 
 function fmtDate(d){ return d.toLocaleString(lang==='th'?'th-TH':'en-US',{dateStyle:'short',timeStyle:'short'}); }
@@ -518,6 +567,10 @@ function mapHistoryRow(raw){
     code: str(raw['รหัส']), name: str(raw['ชื่ออะไหล่']), qty: Number(raw['จำนวน'])||0, person: str(raw['โดย']), note: str(raw['หมายเหตุ']),
   };
 }
+function mapChangeRow(raw){
+  return { date:new Date(raw['วันที่']), type:str(raw['ประเภท']), code:str(raw['รหัส']), name:str(raw['ชื่ออะไหล่']),
+    field:str(raw['ข้อมูลที่เปลี่ยน']), oldV:str(raw['ข้อมูลเก่า']), newV:str(raw['ข้อมูลใหม่']), person:str(raw['โดย']) };
+}
 function mapUser(raw){
   return { user: str(raw['Username']), name: str(raw['ชื่อ-นามสกุล']), dept: str(raw['แผนก']) };
 }
@@ -547,7 +600,7 @@ function renderLogin(){
       <p>${t('loginSubtitle')}</p>
       <form id="loginForm">
         <div><label>${t('username')}</label><input name="user" required autocomplete="username"></div>
-        <div><label>${t('password')}</label><input name="pass" type="password" required autocomplete="current-password"></div>
+        <div><label>${t('password')}</label>${pwFieldHTML('name="pass" required autocomplete="current-password"')}</div>
         <div class="msg" id="loginMsg"></div>
         <button class="submit" type="submit">${t('loginBtn')}</button>
       </form>
@@ -570,8 +623,9 @@ function renderLogin(){
           return;
         }
         currentUser = res.user;
-        // (ไม่บันทึกสถานะล็อกอินลงเบราว์เซอร์ เพื่อให้ต้อง Login ใหม่ทุกครั้งที่เปิดหน้าเว็บ)
+        try{ sessionStorage.setItem('spm_session', JSON.stringify(res.user)); }catch(e){} // หายเองเมื่อปิดแท็บ/เบราว์เซอร์
         bootApp();
+        showToast(t('loginOk') + ' ' + (res.user && (res.user.name || res.user.user) || ''));
       })
       .catch(err=>{
         btn.disabled = false; btn.textContent = orig;
@@ -590,7 +644,7 @@ function bootApp(){
 
 function logout(){
   currentUser = null;
-  try{ localStorage.removeItem('spm_user'); }catch(e){}
+  try{ localStorage.removeItem('spm_user'); sessionStorage.removeItem('spm_session'); }catch(e){}
   active = 'dashboard';
   renderLogin();
 }
@@ -624,15 +678,12 @@ function renderApp(){
     <div class="modal-box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <h2 style="margin:0;">${t('editPartTitle')}</h2>
+        <div style="display:flex;align-items:center;gap:4px;">
+        <button type="button" id="editDeleteBtn" title="${t('deletePart')}" aria-label="${t('deletePart')}" style="width:30px;height:30px;padding:0;border:none;background:transparent;cursor:pointer;color:var(--danger);display:flex;align-items:center;justify-content:center;border-radius:6px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
         <button type="button" id="editCloseBtn" title="${t('close')}" style="border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);">×</button>
+        </div>
       </div>
       <form id="editPartForm">
-        <div><label>${t('category')}</label><select id="editCatFilter">${categoryOptionsHTML('', true)}</select></div>
-        <div><label>${t('ownerFilter')}</label><select id="editOwnerFilter"><option value="">${t('all')}</option>${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}</select></div>
-        <div class="full"><label>${t('searchPart')}</label><input type="text" id="editPartSearchBox" placeholder="${t('searchPlaceholder')}"></div>
-        <div class="full"><label>${t('selectPartToEdit')}</label>
-          <select id="editPartSelect"><option value="">${t('selectPartPlaceholder')}</option></select>
-        </div>
         <div id="editPartFields" class="hidden" style="display:contents;">
         <div><label>${t('partCode')}</label><input name="code" disabled></div>
         <div><label>${t('partName')}</label><input name="name" required></div>
@@ -643,7 +694,7 @@ function renderApp(){
         <div class="full"><label>${t('owner')}</label>
           <select name="owner" required>${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}</select>
         </div>
-        <div class="full"><label>${t('changeImage')}</label><input type="file" name="image" accept="image/*"></div>
+        <div class="full"><label>${t('changeImage')}</label>${imgDropHTML()}</div>
         <div class="msg" id="editPartMsg"></div>
         <div class="full" style="display:flex;gap:8px;">
           <button class="submit" type="submit" style="flex:1">${t('saveEdit')}</button>
@@ -666,7 +717,7 @@ function renderApp(){
         <div class="full"><label>${t('owner')}</label>
           <select name="owner" required>${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}</select>
         </div>
-        <div class="full"><label>${t('uploadImage')}</label><input type="file" name="image" accept="image/*"></div>
+        <div class="full"><label>${t('uploadImage')}</label>${imgDropHTML()}</div>
         <div class="msg" id="addPartMsg"></div>
         <div class="full" style="display:flex;gap:8px;">
           <button class="submit" type="submit" style="flex:1">${t('addPartBtn')}</button>
@@ -681,10 +732,11 @@ function renderApp(){
 }
 
 function refreshAllData(){
-  Promise.all([callApi('getPartsList'), callApi('getHistory')])
-    .then(([list, hist])=>{
+  Promise.all([callApi('getPartsList'), callApi('getHistory'), callApi('getChangeLog').catch(()=>[])])
+    .then(([list, hist, chg])=>{
       parts = list.map(mapPart);
       tx = hist.map(mapHistoryRow);
+      changeLog = Array.isArray(chg) ? chg.map(mapChangeRow) : []; // ถ้า Code.gs ยังไม่ได้ Deploy เวอร์ชันใหม่ จะเป็นรายการว่าง
       render();
     })
     .catch(err=>{ document.getElementById('main').innerHTML = `<div class="card"><div class="empty">${t('loadFail')}${err.message}</div></div>`; });
@@ -710,16 +762,13 @@ function editSelectOptions(query, cat, owner){
 }
 function openEditModal(code){
   editingCode = null;
+  if(!code || !partByCode(code)) return;
   const modal = document.getElementById('editModal');
-  document.getElementById('editPartSearchBox').value = '';
-  document.getElementById('editCatFilter').value = '';
-  document.getElementById('editOwnerFilter').value = '';
-  document.getElementById('editPartSelect').innerHTML = editSelectOptions();
   document.getElementById('editPartFields').classList.add('hidden');
   document.getElementById('editPartForm').reset();
   document.getElementById('editPartMsg').className = 'msg';
   modal.classList.remove('hidden');
-  if(code){ document.getElementById('editPartSelect').value = code; populateEditFields(code); }
+  populateEditFields(code);
 }
 function populateEditFields(code){
   const p = partByCode(code);
@@ -866,7 +915,6 @@ function renderParts(){
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <h2 id="partsCount" style="margin:0;">${t('partsInStock')} (${filteredParts().length}/${parts.length})</h2>
       <div style="display:flex;gap:8px;">
-        <button id="openEditPartBtn" title="${t('editPartBtnTitle')}" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--accent);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✏️</button>
         <button id="openAddPartBtn" title="${t('addPartBtnTitle')}" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--accent);color:var(--accent-fg);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
       </div>
     </div>
@@ -932,13 +980,16 @@ function openPartDetail(code){
   el.innerHTML = `<div class="modal-box" style="max-width:600px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <h2 style="margin:0;">${t('detailTitle')}</h2>
-        <button type="button" id="detailCloseBtn" title="${t('close')}" style="border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);">×</button>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button type="button" id="detailEditBtn" title="${t('editPartBtnTitle')}" aria-label="${t('editPartBtnTitle')}" style="width:30px;height:30px;padding:0;border:none;background:transparent;cursor:pointer;color:var(--accent);display:flex;align-items:center;justify-content:center;border-radius:6px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
+          <button type="button" id="detailCloseBtn" title="${t('close')}" style="border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);">×</button>
+        </div>
       </div>
       <div class="detail-body">
         ${img}
         <div class="detail-grid">
-          <div class="k">${t('colCode')}</div><div class="v">${codeHTML(p.code)}</div>
-          <div class="k">${t('colName')}</div><div class="v">${escHTML(p.name)}</div>
+          <div class="k k-strong">${t('colCode')}</div><div class="v v-strong">${codeHTML(p.code)}</div>
+          <div class="k k-strong">${t('colName')}</div><div class="v v-strong">${escHTML(p.name)}</div>
           <div class="k">${t('colCategory')}</div><div class="v">${escHTML(p.category||'-')}</div>
           <div class="k">${t('colOwner')}</div><div class="v">${escHTML(OWNER_LABEL[p.owner]||p.owner||'-')}</div>
           <div class="k">${t('colStock')}</div><div class="v"><b>${p.stock}</b> ${escHTML(p.unit)}</div>
@@ -957,12 +1008,13 @@ function openPartDetail(code){
   document.body.appendChild(el);
   document.getElementById('detailCloseBtn').onclick = closePartDetail;
   document.getElementById('detailOkBtn').onclick = closePartDetail;
+  document.getElementById('detailEditBtn').onclick = ()=>{ closePartDetail(); openEditModal(p.code); };
 }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePartDetail(); });
 
 function partsTableHTML(list){
-  return `<table><thead><tr><th>📌</th><th>${t('colCode')}</th><th>${t('colImage')}</th><th>${t('colName')}</th><th>${t('colCategory')}</th><th>${t('colOwner')}</th><th>${t('colStock')}</th><th>${t('colUnit')}</th>${safetyHeaderHTML()}<th>${t('colStatus')}</th></tr></thead><tbody>
-    ${list.map(p=>`<tr class="part-row" data-code="${p.code}"><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${codeHTML(p.code)}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.stock}</span></td><td>${p.unit}</td>${showSafety ? `<td>${p.min} ${p.unit}</td>` : `<td class="col-collapsed"></td>`}<td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="10" class="empty">${t('noMatch')}</td></tr>`}
+  return `<table><thead><tr><th>📌</th><th>${t('colCode')}</th><th>${t('colImage')}</th><th>${t('colName')}</th><th>${t('colCategory')}</th><th>${t('colOwner')}</th><th>${t('colStock')}</th><th>${t('colUnit')}</th><th>${t('colStatus')}</th></tr></thead><tbody>
+    ${list.map(p=>`<tr class="part-row" data-code="${p.code}"><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${codeHTML(p.code)}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.stock}</span></td><td>${p.unit}</td><td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="9" class="empty">${t('noMatch')}</td></tr>`}
   </tbody></table>`;
 }
 
@@ -1042,6 +1094,21 @@ function renderReplenish(){
   </div>`;
 }
 
+const CHG_TYPE_CLASS = {'เพิ่มอะไหล่':'tag-in', 'ลบอะไหล่':'tag-out'};
+const CHG_EN = {'เพิ่มอะไหล่':'Add part','แก้ไขข้อมูล':'Edit','ลบอะไหล่':'Delete part','ชื่อ':'Name','หมวดหมู่':'Category','เจ้าของ':'Owner','หน่วยนับ':'Unit','ขั้นต่ำ (Safety Stock)':'Safety stock','รูปภาพ':'Image','เพิ่มอะไหล่ใหม่':'New part added','มีรูปเดิม':'Had image','ไม่มีรูป':'No image','เปลี่ยนเป็นรูปใหม่':'Replaced with new image'};
+function chgText(v){ return escHTML(lang==='en' && CHG_EN[v] ? CHG_EN[v] : v); }
+function renderChangeTable(list){
+  if(!list.length) return `<div class="empty">${t('noItemsYet')}</div>`;
+  return `<div class="tbl-wrap"><table><thead><tr><th>${t('colDate')}</th><th>${t('colType')}</th><th>${t('colCode')}</th><th>${t('colName')}</th><th>${t('colField')}</th><th>${t('colOld')}</th><th>${t('colNew')}</th><th>${t('colBy')}</th></tr></thead><tbody>
+    ${list.map(c=>`<tr>
+      <td>${fmtDate(c.date)}</td>
+      <td class="${CHG_TYPE_CLASS[c.type]||''}" style="${CHG_TYPE_CLASS[c.type]?'':'color:var(--warn);'}font-weight:600;">${chgText(c.type)}</td>
+      <td>${codeHTML(c.code)}</td><td>${escHTML(c.name)}</td>
+      <td>${chgText(c.field)}</td><td>${chgText(c.oldV)||'-'}</td><td><b>${chgText(c.newV)||'-'}</b></td>
+      <td>${escHTML(c.person)}</td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
 function renderTxTable(list){
   if(!list.length) return `<div class="empty">${t('noItemsYet')}</div>`;
   return `<div class="tbl-wrap"><table><thead><tr><th>${t('colDate')}</th><th>${t('colType')}</th><th>${t('colCode')}</th><th>${t('colName')}</th><th>${t('colQty')}</th><th>${t('colBy')}</th><th>${t('colNote')}</th></tr></thead><tbody>
@@ -1056,7 +1123,12 @@ function renderTxTable(list){
 }
 
 function renderHistory(){
-  return `<div class="card" id="historyCard"><h2>${t('allTxTitle')} (${tx.length})</h2>${renderTxTable([...tx].reverse())}</div>`;
+  const tabsHTML = `<div class="subtabs" id="histSubtabs" style="margin-top:0;">
+    <button type="button" class="subtab ${histTab==='moves'?'active':''}" data-htab="moves">${t('histTabMoves')}<span class="subtab-n">${tx.length}</span></button>
+    <button type="button" class="subtab ${histTab==='changes'?'active':''}" data-htab="changes">${t('histTabChanges')}<span class="subtab-n">${changeLog.length}</span></button>
+  </div>`;
+  if(histTab === 'changes') return `<div class="card" id="historyCard">${tabsHTML}<h2 style="margin-top:14px;">${t('histTabChanges')} (${changeLog.length})</h2>${renderChangeTable([...changeLog].reverse())}</div>`;
+  return `<div class="card" id="historyCard">${tabsHTML}<h2 style="margin-top:14px;">${t('allTxTitle')} (${tx.length})</h2>${renderTxTable([...tx].reverse())}</div>`;
 }
 
 function periodCutoff(){
@@ -1109,7 +1181,7 @@ function renderUsers(){
     <h2>${t('createUserTitle')}</h2>
     <form id="createUserForm">
       <div><label>${t('username')}</label><input name="user" required></div>
-      <div><label>${t('password')}</label><input name="pass" type="password" required></div>
+      <div><label>${t('password')}</label>${pwFieldHTML('name="pass" required')}</div>
       <div class="full"><label>${t('fullName')}</label><input name="name" required></div>
       <div class="full"><label>${t('department')}</label>
         <select name="dept" required>
@@ -1169,16 +1241,6 @@ function renderSettings(){
     <div id="sheetInfoBox" class="empty">${t('loadingFileInfo')}</div>
   </div>
   <div class="card">
-    <h2>${t('logoTitle')}</h2>
-    <p style="font-size:13px;color:var(--muted);margin-top:-4px;line-height:1.7;">${t('logoHint')}</p>
-    <div class="logo-row">
-      <div class="logo-preview" id="logoPreview">${brandIconHTML()}</div>
-      <label class="kind-opt" style="margin:0;">${t('logoUpload')}<input type="file" id="logoFileInput" accept="image/*" style="display:none;"></label>
-      <button type="button" class="logout" id="logoRemoveBtn">${t('logoRemove')}</button>
-    </div>
-    <div class="msg" id="logoMsg" style="margin-top:10px;"></div>
-  </div>
-  <div class="card">
     <h2>${t('backupTitle')}</h2>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button type="button" class="export-btn" data-export="parts" style="border:1px solid var(--border);background:var(--ok-bg);color:var(--ok);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;">${t('exportParts')}</button>
@@ -1236,6 +1298,83 @@ function fileToBase64(file, cb){
     }, 'image/jpeg');
   }catch(e){ sendOriginal(); }
 }
+
+function confirmDialog(title, msg, okLabel, onOk){
+  const el = document.createElement('div');
+  el.className = 'modal-overlay'; el.style.zIndex = '250';
+  el.innerHTML = `<div class="modal-box" style="max-width:360px;" role="alertdialog" aria-modal="true">
+    <h2 style="color:var(--danger);">${escHTML(title)}</h2>
+    <div style="font-size:14px;line-height:1.6;margin-bottom:16px;">${msg}</div>
+    <div style="display:flex;gap:8px;">
+      <button type="button" data-no style="flex:1;padding:10px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;">${t('cancel')}</button>
+      <button type="button" data-yes style="flex:1;padding:10px;background:var(--danger);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">${escHTML(okLabel)}</button>
+    </div></div>`;
+  const close = ()=>el.remove();
+  el.onclick = e=>{ if(e.target===el) close(); };
+  el.querySelector('[data-no]').onclick = close;
+  el.querySelector('[data-yes]').onclick = ()=>{ close(); onOk(); };
+  document.body.appendChild(el);
+  el.querySelector('[data-no]').focus();
+}
+function showToast(text){
+  let el = document.getElementById('appToast');
+  if(!el){ el = document.createElement('div'); el.id = 'appToast'; el.className = 'toast'; el.setAttribute('role','status'); document.body.appendChild(el); }
+  el.textContent = '✓ ' + text;
+  void el.offsetWidth; el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>el.classList.remove('show'), 2800);
+}
+function pwFieldHTML(attrs){
+  return `<div class="pw-wrap"><input ${attrs} type="password"><button type="button" class="pw-eye" tabindex="-1" aria-label="${t('showPassword')}" title="${t('showPassword')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M3 3l18 18"/></svg></button></div>`;
+}
+document.addEventListener('click', e=>{
+  const b = e.target.closest && e.target.closest('.pw-eye'); if(!b) return;
+  const inp = b.parentElement.querySelector('input'); if(!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  b.classList.toggle('on', show);
+  inp.focus();
+});
+function imgDropHTML(){
+  return `<div class="img-drop" tabindex="0"><input type="file" name="image" accept="image/*" hidden><div class="img-drop-hint">${t('dropHint')}</div><div class="img-drop-prev" hidden><img alt=""><button type="button" class="img-drop-clear" title="${t('removeImage')}">✕</button></div></div>`;
+}
+(function initImgDrop(){
+  const zoneOf = e => (e.target && e.target.closest) ? e.target.closest('.img-drop') : null;
+  const imgOf = files => Array.from(files || []).find(f=>/^image\//.test(f.type));
+  function setFile(z, file){
+    const inp = z.querySelector('input[type=file]'), prev = z.querySelector('.img-drop-prev'), hint = z.querySelector('.img-drop-hint');
+    if(!file){ inp.value = ''; prev.hidden = true; hint.hidden = false; return; }
+    try{ const dt = new DataTransfer(); dt.items.add(file); inp.files = dt.files; }catch(err){ return; }
+    prev.querySelector('img').src = URL.createObjectURL(file);
+    prev.hidden = false; hint.hidden = true;
+  }
+  document.addEventListener('click', e=>{
+    const z = zoneOf(e); if(!z) return;
+    if(e.target.closest('.img-drop-clear')){ e.preventDefault(); setFile(z, null); return; }
+    if(e.target.tagName !== 'INPUT') z.querySelector('input[type=file]').click();
+  });
+  document.addEventListener('keydown', e=>{
+    const z = zoneOf(e); if(z && (e.key==='Enter' || e.key===' ') && e.target===z){ e.preventDefault(); z.querySelector('input[type=file]').click(); }
+  });
+  document.addEventListener('change', e=>{
+    const z = zoneOf(e); if(z && e.target.type === 'file') setFile(z, e.target.files[0] || null);
+  });
+  ['dragenter','dragover'].forEach(ev=>document.addEventListener(ev, e=>{ const z = zoneOf(e); if(z){ e.preventDefault(); z.classList.add('over'); } }));
+  document.addEventListener('dragleave', e=>{ const z = zoneOf(e); if(z) z.classList.remove('over'); });
+  document.addEventListener('drop', e=>{
+    const z = zoneOf(e); if(!z) return;
+    e.preventDefault(); z.classList.remove('over');
+    const f = imgOf(e.dataTransfer && e.dataTransfer.files); if(f) setFile(z, f);
+  });
+  document.addEventListener('paste', e=>{
+    const f = imgOf(e.clipboardData && e.clipboardData.files); if(!f) return;
+    const z = document.querySelector('.modal-overlay:not(.hidden) .img-drop'); if(!z) return;
+    e.preventDefault(); setFile(z, f);
+  });
+  document.addEventListener('reset', e=>{
+    if(e.target.querySelectorAll) e.target.querySelectorAll('.img-drop').forEach(z=>setFile(z, null));
+  }, true);
+})();
 
 function attachHandlers(){
   document.querySelectorAll('.pin-btn').forEach(b=>{
@@ -1300,21 +1439,6 @@ function attachHandlers(){
   }
 
   // --- edit part (modal) ---
-  const openEditPartBtn = document.getElementById('openEditPartBtn');
-  if(openEditPartBtn) openEditPartBtn.onclick = ()=>openEditModal();
-  const editPartSelect = document.getElementById('editPartSelect');
-  if(editPartSelect) editPartSelect.onchange = ()=>populateEditFields(editPartSelect.value);
-  const editPartSearchBox = document.getElementById('editPartSearchBox');
-  const editCatFilter = document.getElementById('editCatFilter');
-  const editOwnerFilter = document.getElementById('editOwnerFilter');
-  const refreshEditPicker = ()=>{
-    document.getElementById('editPartSelect').innerHTML = editSelectOptions(editPartSearchBox.value, editCatFilter.value, editOwnerFilter.value);
-    document.getElementById('editPartFields').classList.add('hidden');
-    editingCode = null;
-  };
-  if(editPartSearchBox) editPartSearchBox.oninput = refreshEditPicker;
-  if(editCatFilter) editCatFilter.onchange = refreshEditPicker;
-  if(editOwnerFilter) editOwnerFilter.onchange = refreshEditPicker;
   const editPartForm = document.getElementById('editPartForm');
   if(editPartForm){
     editPartForm.onsubmit = e=>{
@@ -1322,12 +1446,13 @@ function attachHandlers(){
       if(!editingCode){ showMsg('editPartMsg', t('selectPartFirst'), false); return; }
       const f = new FormData(editPartForm);
       const part = {code:editingCode, name:f.get('name').trim(), category:f.get('category').trim(),
-        unit:f.get('unit').trim(), min:f.get('min'), owner:f.get('owner')};
+        unit:f.get('unit').trim(), min:f.get('min'), owner:f.get('owner'), person:(currentUser && currentUser.name) || ''};
       const submit = ()=>{
         callApi('updatePart', part).then(res=>{
           if(!res.ok){ showMsg('editPartMsg', translateServerMsg(res.message), false); return; }
           closeEditModal();
           refreshAllData();
+          showToast(t('saveDone'));
         }).catch(err=>{
           showMsg('editPartMsg', t('errorPrefix')+err.message, false);
         });
@@ -1342,7 +1467,27 @@ function attachHandlers(){
   if(editCloseBtn) editCloseBtn.onclick = closeEditModal;
   const editCancelBtn = document.getElementById('editCancelBtn');
   if(editCancelBtn) editCancelBtn.onclick = closeEditModal;
+  const editDeleteBtn = document.getElementById('editDeleteBtn');
+  if(editDeleteBtn) editDeleteBtn.onclick = ()=>{
+    const p = editingCode && partByCode(editingCode);
+    if(!p){ showMsg('editPartMsg', t('selectPartFirst'), false); return; }
+    const msg = t('deleteMsg').replace('{name}', escHTML(p.name)).replace('{code}', escHTML(p.code));
+    confirmDialog(t('deleteTitle'), msg, t('deleteConfirm'), ()=>{
+      callApi('deletePart', {code:p.code, person:(currentUser && currentUser.name) || ''}).then(res=>{
+        if(!res.ok){ showMsg('editPartMsg', translateServerMsg(res.message), false); return; }
+        closeEditModal();
+        refreshAllData();
+        showToast(t('deleteDone'));
+      }).catch(err=>showMsg('editPartMsg', t('errorPrefix')+err.message, false));
+    });
+  };
 
+  // --- History sub-tabs ---
+  const histSubtabs = document.getElementById('histSubtabs');
+  if(histSubtabs) histSubtabs.onclick = e=>{
+    const b = e.target.closest('[data-htab]');
+    if(b){ histTab = b.dataset.htab; render(); }
+  };
   // --- Inventory sub-tabs (category) ---
   const invSubtabs = document.getElementById('invSubtabs');
   if(invSubtabs){
@@ -1380,7 +1525,6 @@ function attachHandlers(){
   const partsTableWrap = document.getElementById('partsTableWrap');
   if(partsTableWrap){
     partsTableWrap.onclick = e=>{
-      if(e.target.closest('#toggleSafetyBtn')){ showSafety = !showSafety; render(); return; }
       if(e.target.closest('.pin-btn')) return; // ปุ่มปักหมุดมีการทำงานของตัวเอง
       const row = e.target.closest('tr.part-row');
       if(row) openPartDetail(row.dataset.code);
@@ -1420,7 +1564,7 @@ function attachHandlers(){
       const norm = normalizeCodes(f.get('code'));
       if(!norm.ok){ showMsg('addPartMsg', norm.error, false); return; }
       const part = {code:norm.value, name:f.get('name').trim(), category:f.get('category').trim(),
-        unit:f.get('unit').trim(), stock:f.get('stock'), min:f.get('min'), owner:f.get('owner')};
+        unit:f.get('unit').trim(), stock:f.get('stock'), min:f.get('min'), owner:f.get('owner'), person:(currentUser && currentUser.name) || ''};
       const submit = ()=>{
         callApi('addPart', part).then(res=>{
           if(!res.ok){ showMsg('addPartMsg', translateServerMsg(res.message), false); return; }
