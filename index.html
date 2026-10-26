@@ -457,7 +457,12 @@ let tx = [];
 let USERS = [];
 
 function fmtDate(d){ return d.toLocaleString(lang==='th'?'th-TH':'en-US',{dateStyle:'short',timeStyle:'short'}); }
-function partByCode(c){ return parts.find(p=>p.code===c); }
+function codeKey(c){
+  let s = String(c==null?'':c).trim().replace(/^'+/,'');
+  if(/^\d+(\.0+)?$/.test(s)) s = s.replace(/\.0+$/,'').replace(/^0+(?=\d)/,'');
+  return s.toLowerCase();
+}
+function partByCode(c){ return parts.find(p=>p.code===c) || parts.find(p=>splitCodes(p.code).map(codeKey).join(',')===splitCodes(c).map(codeKey).join(',')); }
 
 // ---- อะไหล่ที่มี 2 รหัส: เก็บเป็น "รหัสแรก,รหัสสอง" ในช่องเดียว ----
 function splitCodes(code){ return String(code||'').split(',').map(x=>x.trim()).filter(Boolean); }
