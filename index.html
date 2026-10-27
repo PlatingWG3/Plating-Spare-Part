@@ -51,7 +51,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',syst
 .main-area{flex:1;display:flex;flex-direction:column;min-width:0;}
 .topbar{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;z-index:10;}
 .topbar-title{font-size:16px;font-weight:700;}
-main{max-width:900px;margin:0 auto;padding:16px;width:100%;}
+main{max-width:1400px;margin:0 auto;padding:16px;width:100%;}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
 .card h2{margin:0 0 12px;font-size:15px;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
@@ -163,6 +163,15 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 
 .btn-danger{width:100%;padding:9px;border:1px solid var(--danger);background:transparent;color:var(--danger);border-radius:8px;cursor:pointer;font-size:13px;}
 .btn-danger:hover{background:var(--danger-bg);}
+
+.stock-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:12px;margin-bottom:14px;border:1px solid var(--border);background:var(--ok-bg);color:var(--ok);}
+.stock-hero.warn{background:var(--warn-bg);color:var(--warn);}
+.stock-hero.out{background:var(--danger-bg);color:var(--danger);}
+.stock-hero-label{font-size:12px;font-weight:600;opacity:.9;}
+.stock-hero-num{font-size:34px;font-weight:800;line-height:1.1;}
+.stock-hero-num span{font-size:15px;font-weight:600;margin-left:4px;}
+.stock-hero-side{text-align:right;font-size:12px;color:var(--muted);}
+.qty-num{font-size:16px;font-weight:700;}
 </style>
 </head>
 <body>
@@ -170,11 +179,11 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 <script>
 // ======== ตั้งค่า API / API config ========
 // วาง URL ของ Google Apps Script Web App ที่ Deploy แล้ว (ลงท้ายด้วย /exec) ตรงนี้
-const API_URL = "https://script.google.com/macros/s/AKfycbw8seeYqJrR-_rDJYh1-VmeqoXoDKmFEEiPbgiD3cTQJTCXwOar4MkJQL71XSNEXkU_/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxTVMnJTpMgwp4L-Oa2ooJE3DNPhI0WfpK3VPvmOeXEzftTCRCQFebnC7kIguoCaMwN/exec";
 
 // ======== DEMO_MODE ========
 // true  = ใช้ข้อมูลจำลองในหน้าเว็บ (สำหรับ Published Artifact ที่เรียก Apps Script โดยตรงไม่ได้)
-// false = เรียก Google Apps Script จริงผ่าน  (ใช้ตอนนำไปวางบน GitHub Pages)
+// false = เรียก Google Apps Script จริงผ่าน API_URL (ใช้ตอนนำไปวางบน GitHub Pages)
 const DEMO_MODE = false;
 
 function callApi(action, payload){
@@ -226,6 +235,7 @@ const MOCK = {
     [_ago(2),'เพิ่มอะไหล่','CH-001','น้ำยาล้างคราบ (ตัวอย่าง Chemical)','เพิ่มอะไหล่ใหม่','-','ชื่อ: น้ำยาล้างคราบ | หมวดหมู่: Chemical | เจ้าของ: PE | คงเหลือ: 12 ลิตร | ขั้นต่ำ: 6','วิศวกรกระบวนการ (PE)'],
   ].map(r=>({'วันที่':r[0],'ประเภท':r[1],'รหัส':r[2],'ชื่ออะไหล่':r[3],'ข้อมูลที่เปลี่ยน':r[4],'ข้อมูลเก่า':r[5],'ข้อมูลใหม่':r[6],'โดย':r[7],'หมายเหตุ':''})),
 };
+const _mockLine = {login:true,partAddDelete:true,partEdit:true,transaction:true,dailyStock:true};
 function _log(type,code,name,field,o,n,by){ MOCK.changes.push({'วันที่':new Date().toISOString(),'ประเภท':type,'รหัส':String(code),'ชื่ออะไหล่':name,'ข้อมูลที่เปลี่ยน':field,'ข้อมูลเก่า':o,'ข้อมูลใหม่':n,'โดย':by||'','หมายเหตุ':''}); }
 function _partRow(p){
   return {'รหัส':p.code,'ชื่อ':p.name,'หมวดหมู่':p.category,'เจ้าของ':p.owner,'คงเหลือ':p.stock,'ขั้นต่ำ':p.min,'หน่วยนับ':p.unit,'รูปภาพ':p.image};
@@ -240,6 +250,9 @@ function _mockHandle(action, p){
       MOCK.logins.push({'วันที่-เวลา':new Date().toISOString(),'Username':p.username,'ชื่อ-นามสกุล':u?u.n:'-','แผนก':u?u.d:'-','ผลลัพธ์':u?'สำเร็จ':'ไม่สำเร็จ'});
       return u ? {ok:true, user:{user:u.u, name:u.n, dept:u.d}} : {ok:false, message:'Username หรือ Password ไม่ถูกต้อง'};
     }
+    case 'getLineSettings': return {settings:Object.assign({},_mockLine), configured:true};
+    case 'saveLineSettings': Object.keys(p.settings||{}).forEach(k=>{ if(k in _mockLine) _mockLine[k]=!!p.settings[k]; }); return {ok:true, settings:Object.assign({},_mockLine)};
+    case 'testLine': return {ok:true};
     case 'getOwnersConfig':
       return {owners:['ME','MFG','PE'], labels:{ME:'ME – ซ่อมบำรุง', MFG:'MFG – ฝ่ายผลิต', PE:'PE – วิศวกรรมกระบวนการ'}};
     case 'getSpreadsheetInfo':
@@ -309,7 +322,7 @@ const I18N = {
     selectPartToEdit:'เลือกอะไหล่ที่ต้องการแก้ไข', selectPartPlaceholder:'-- เลือกอะไหล่ --',
     partCode:'รหัสอะไหล่', partName:'ชื่ออะไหล่', category:'หมวดหมู่', unit:'หน่วยนับ',
     stockEditNote:'คงเหลือ (แก้ไขผ่านเบิก/เติมสต็อกเท่านั้น)', minStock:'สต็อกขั้นต่ำ', owner:'เจ้าของอะไหล่ (Owner)',
-    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
+    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
     selectPartFirst:'กรุณาเลือกอะไหล่ก่อนบันทึก', noPartFound:'ไม่พบอะไหล่ที่ตรงกับคำค้นหา',
     addPartTitle:'เพิ่มอะไหล่ใหม่', initialStock:'จำนวนเริ่มต้น', uploadImage:'รูปภาพอะไหล่ (อัปโหลด)',
     addPartBtn:'+ เพิ่มอะไหล่', codePlaceholder:'เช่น SP-005 หรือ SP-005,SP-006', unitPlaceholder:'ชิ้น / เส้น / กล่อง',
@@ -366,7 +379,7 @@ const I18N = {
     selectPartToEdit:'Select part to edit', selectPartPlaceholder:'-- Select part --',
     partCode:'Part code', partName:'Part name', category:'Category', unit:'Unit',
     stockEditNote:'Stock (editable via Withdraw/Replenish only)', minStock:'Safety Stock', owner:'Owner',
-    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
+    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
     selectPartFirst:'Please select a part first', noPartFound:'No matching parts found',
     addPartTitle:'Add New Part', initialStock:'Initial stock', uploadImage:'Part image (upload)',
     addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005 or SP-005,SP-006', unitPlaceholder:'pcs / rolls / boxes',
@@ -424,6 +437,10 @@ const SERVER_MSG_MAP_EN = {
   'มี Username นี้อยู่แล้ว': 'This username already exists',
 };
 function translateServerMsg(msg){
+  // Backend (Apps Script) ที่ Deploy อยู่ยังเป็นเวอร์ชันเก่า ไม่รู้จักคำสั่งใหม่ → บอกวิธีแก้ให้ชัดเจน
+  if(msg && /^Unknown action/.test(msg)) return lang==='en'
+    ? 'The Apps Script backend is out of date (' + msg + '). Paste the latest Code.gs, then Deploy > Manage deployments > Edit > New version.'
+    : 'Backend (Apps Script) ยังเป็นเวอร์ชันเก่า (' + msg + ') กรุณาวาง Code.gs ล่าสุด แล้ว Deploy > Manage deployments > Edit > New version';
   if(lang !== 'en' || !msg) return msg;
   if(SERVER_MSG_MAP_EN[msg]) return SERVER_MSG_MAP_EN[msg];
   const m = msg.match(/^จำนวนเบิกเกินสต็อกคงเหลือ \(คงเหลือ (.+)\)$/);
@@ -985,6 +1002,10 @@ function openPartDetail(code){
           <button type="button" id="detailCloseBtn" title="${t('close')}" style="border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);">×</button>
         </div>
       </div>
+      <div class="stock-hero ${p.stock<=0?'out':(p.stock<p.min?'warn':'')}">
+        <div><div class="stock-hero-label">${t('colStock')}</div><div class="stock-hero-num">${p.stock}<span>${escHTML(p.unit)}</span></div></div>
+        <div class="stock-hero-side">${stockBadge(p)}<div style="margin-top:6px;">${t('colMin')}: <b>${p.min}</b> ${escHTML(p.unit)}</div></div>
+      </div>
       <div class="detail-body">
         ${img}
         <div class="detail-grid">
@@ -992,22 +1013,15 @@ function openPartDetail(code){
           <div class="k k-strong">${t('colName')}</div><div class="v v-strong">${escHTML(p.name)}</div>
           <div class="k">${t('colCategory')}</div><div class="v">${escHTML(p.category||'-')}</div>
           <div class="k">${t('colOwner')}</div><div class="v">${escHTML(OWNER_LABEL[p.owner]||p.owner||'-')}</div>
-          <div class="k">${t('colStock')}</div><div class="v"><b>${p.stock}</b> ${escHTML(p.unit)}</div>
-          <div class="k">${t('colMin')}</div><div class="v">${p.min} ${escHTML(p.unit)}</div>
-          <div class="k">${t('colStatus')}</div><div class="v">${stockBadge(p)}</div>
           ${short ? `<div class="k">${t('shortageLabel').replace(/[: ]+$/,'')}</div><div class="v"><b>${short}</b> ${escHTML(p.unit)}</div>` : ''}
         </div>
       </div>
       <h2 style="margin:18px 0 8px;font-size:14px;">${t('recentMovements')}</h2>
       ${movesHTML}
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button type="button" id="detailOkBtn" class="logout" style="flex:1;padding:10px;">${t('close')}</button>
-      </div>
     </div>`;
   el.onclick = e=>{ if(e.target===el) closePartDetail(); };
   document.body.appendChild(el);
   document.getElementById('detailCloseBtn').onclick = closePartDetail;
-  document.getElementById('detailOkBtn').onclick = closePartDetail;
   document.getElementById('detailEditBtn').onclick = ()=>{ closePartDetail(); openEditModal(p.code); };
 }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePartDetail(); });
@@ -1241,6 +1255,10 @@ function renderSettings(){
     <div id="sheetInfoBox" class="empty">${t('loadingFileInfo')}</div>
   </div>
   <div class="card">
+    <h2>${t('lineTitle')}</h2>
+    <div id="lineBox" class="empty">${t('loadingFileInfo')}</div>
+  </div>
+  <div class="card">
     <h2>${t('backupTitle')}</h2>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button type="button" class="export-btn" data-export="parts" style="border:1px solid var(--border);background:var(--ok-bg);color:var(--ok);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;">${t('exportParts')}</button>
@@ -1250,7 +1268,29 @@ function renderSettings(){
     <div class="msg" id="settingsMsg"></div>
   </div>`;
 }
+const LINE_EVENT_KEYS = ['login','partAddDelete','partEdit','transaction','dailyStock'];
+function loadLineSettings(){
+  const box = document.getElementById('lineBox'); if(!box) return;
+  callApi('getLineSettings').then(r=>{
+    box.className = '';
+    box.innerHTML = `<div style="font-size:13px;margin-bottom:10px;color:${r.configured?'var(--ok)':'var(--warn)'};">${r.configured?t('lineConfigured'):t('lineNotConfigured')}</div>
+      ${LINE_EVENT_KEYS.map(k=>`<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px;cursor:pointer;"><input type="checkbox" data-lineev="${k}" ${r.settings[k]?'checked':''} style="width:18px;height:18px;margin:0;"><span style="flex:1;">${t('lineEv_'+k)}</span></label>`).join('')}
+      <div style="display:flex;gap:10px;align-items:center;margin-top:12px;"><button type="button" id="lineTestBtn" class="export-btn" style="border:1px solid var(--border);background:var(--bg);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer;">${t('lineTest')}</button><span id="lineMsg" style="font-size:12.5px;"></span></div>`;
+    const say = (txt, ok)=>{ const m = document.getElementById('lineMsg'); if(m){ m.textContent = txt; m.style.color = ok?'var(--ok)':'var(--danger)'; } };
+    box.querySelectorAll('input[data-lineev]').forEach(cb=>{
+      cb.onchange = ()=>{
+        callApi('saveLineSettings', {settings:{[cb.dataset.lineev]:cb.checked}}).then(x=>{
+          if(!x.ok){ cb.checked = !cb.checked; say(translateServerMsg(x.message), false); } else say(t('lineSaved'), true);
+        }).catch(err=>{ cb.checked = !cb.checked; say(err.message, false); });
+      };
+    });
+    document.getElementById('lineTestBtn').onclick = ()=>{
+      callApi('testLine').then(x=>say(x.ok ? t('lineTestOk') : translateServerMsg(x.message), !!x.ok)).catch(err=>say(err.message, false));
+    };
+  }).catch(err=>{ box.innerHTML = `<div class="empty">${t('loadFailShort')}${escHTML(translateServerMsg(err.message))}</div>`; });
+}
 function loadSheetInfo(){
+  loadLineSettings();
   callApi('getSpreadsheetInfo').then(info=>{
     document.getElementById('sheetInfoBox').innerHTML =
       `<div style="font-size:13px;line-height:1.8;">
@@ -1589,7 +1629,7 @@ function attachHandlers(){
       const f = new FormData(withdrawForm);
       const code = f.get('code');
       if(!code){ showMsg('withdrawMsg', t('pleaseSelectPart'), false); return; }
-      const txn = {type:'withdraw', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      const txn = {actor:(currentUser&&currentUser.name)||'', type:'withdraw', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
       callApi('recordTransaction', txn).then(res=>{
         if(!res.ok){ showMsg('withdrawMsg', translateServerMsg(res.message), false); return; }
         showMsg('withdrawMsg', `${t('withdrawSuccess')}${res.newStock}`, true);
@@ -1609,7 +1649,7 @@ function attachHandlers(){
       const f = new FormData(replenishForm);
       const code = f.get('code');
       if(!code){ showMsg('replenishMsg', t('pleaseSelectPart'), false); return; }
-      const txn = {type:'replenish', kind:f.get('kind')||'add', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      const txn = {actor:(currentUser&&currentUser.name)||'', type:'replenish', kind:f.get('kind')||'add', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
       callApi('recordTransaction', txn).then(res=>{
         if(!res.ok){ showMsg('replenishMsg', translateServerMsg(res.message), false); return; }
         showMsg('replenishMsg', `${t('replenishSuccess')}${res.newStock}`, true);
