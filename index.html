@@ -172,6 +172,15 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 .stock-hero-num span{font-size:15px;font-weight:600;margin-left:4px;}
 .stock-hero-side{text-align:right;font-size:12px;color:var(--muted);}
 .qty-num{font-size:16px;font-weight:700;}
+
+.lot-row{display:grid;grid-template-columns:1.2fr .8fr 1fr auto;gap:6px;margin-top:6px;}
+.lot-row input{min-width:0;}
+.lot-del,.lot-add{border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;cursor:pointer;padding:6px 10px;font-size:13px;}
+.lot-add{margin-top:8px;}.lot-del{color:var(--danger);}
+.lots-editor[hidden]{display:none !important;}
+.exp-badge{padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;white-space:nowrap;}
+
+.lotbox[hidden]{display:none !important;}
 </style>
 </head>
 <body>
@@ -179,7 +188,7 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 <script>
 // ======== ตั้งค่า API / API config ========
 // วาง URL ของ Google Apps Script Web App ที่ Deploy แล้ว (ลงท้ายด้วย /exec) ตรงนี้
-const API_URL = "https://script.google.com/macros/s/AKfycbw8seeYqJrR-_rDJYh1-VmeqoXoDKmFEEiPbgiD3cTQJTCXwOar4MkJQL71XSNEXkU_/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxTVMnJTpMgwp4L-Oa2ooJE3DNPhI0WfpK3VPvmOeXEzftTCRCQFebnC7kIguoCaMwN/exec";
 
 // ======== DEMO_MODE ========
 // true  = ใช้ข้อมูลจำลองในหน้าเว็บ (สำหรับ Published Artifact ที่เรียก Apps Script โดยตรงไม่ได้)
@@ -218,7 +227,13 @@ const MOCK = {
     ['SP-007','ถุงมือยางกันสารเคมี','PPE','PE',40,20,'คู่',''],
     ['SP-008','ปากกามาร์กเกอร์','Stationary','MFG',8,10,'ด้าม',''],
     ['SP-009,SP-109','ซีลกันน้ำมัน (2 เบอร์ทดแทนกัน)','Consumable','ME',14,6,'ชิ้น',''],
-  ].map(r=>({code:r[0],name:r[1],category:r[2],owner:r[3],stock:r[4],min:r[5],unit:r[6],image:r[7]})),
+    ['10234','ตลับลูกปืน 6204 (รหัสตัวเลขล้วน)','General','ME',8,5,'ชิ้น',''],
+    ['00567','ซีลน้ำมัน 35x52 (เลข 0 นำหน้า)','Consumable','ME',3,6,'ชิ้น',''],
+    ['88001,88002','สายพานฟัน (2 รหัสตัวเลข)','General','MFG',0,2,'เส้น',''],
+    ['4580012345','ฟิวส์ 10A (รหัสยาว)','General','PE',20,10,'ชิ้น',''],
+    ['CH-001','น้ำยาล้างคราบ (ตัวอย่าง Chemical)','Chemical','PE',12,6,'ลิตร',''],
+    ['70021','กรดไฮโดรคลอริก 35% (ตัวอย่าง Chemical)','Chemical','PE',4,5,'ลิตร',''],
+  ].map(r=>({code:/^\d+$/.test(r[0])?Number(r[0]):r[0],name:r[1],category:r[2],owner:r[3],stock:r[4],min:r[5],unit:r[6],image:r[7]})),
   history: [
     [_ago(12),'เบิกออก','SP-002','ตลับลูกปืน 6205',4,'ช่างซ่อมบำรุง (ME)','เปลี่ยนลูกปืนมอเตอร์ไลน์ 1'],
     [_ago(9),'เติมเข้า','SP-005','ซีลยางปั๊ม',20,'ผู้ดูแลระบบ','PO-2026-0801'],
@@ -235,10 +250,28 @@ const MOCK = {
     [_ago(2),'เพิ่มอะไหล่','CH-001','น้ำยาล้างคราบ (ตัวอย่าง Chemical)','เพิ่มอะไหล่ใหม่','-','ชื่อ: น้ำยาล้างคราบ | หมวดหมู่: Chemical | เจ้าของ: PE | คงเหลือ: 12 ลิตร | ขั้นต่ำ: 6','วิศวกรกระบวนการ (PE)'],
   ].map(r=>({'วันที่':r[0],'ประเภท':r[1],'รหัส':r[2],'ชื่ออะไหล่':r[3],'ข้อมูลที่เปลี่ยน':r[4],'ข้อมูลเก่า':r[5],'ข้อมูลใหม่':r[6],'โดย':r[7],'หมายเหตุ':''})),
 };
-const _mockLine = {login:true,partAddDelete:true,partEdit:true,transaction:true,dailyStock:true};
+(function seedExtras(){
+  const d = n=>{ const x=new Date(); x.setDate(x.getDate()+n); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+  MOCK.parts.forEach(p=>{ p.max=null; p.expiry=''; p.lots=[]; });
+  const g = c=>MOCK.parts.find(p=>String(p.code)===c);
+  g('SP-001').max=40; g('SP-003').max=20; g('10234').max=30; g('SP-007').max=100; g('SP-007').expiry=d(9);
+  const c1=g('CH-001'); c1.max=30; c1.lots=[{lot:'LOT-A',qty:5.5,expiry:d(10)},{lot:'LOT-B',qty:6.5,expiry:d(120)}]; c1.stock=12;
+  const c2=g('70021'); c2.max=20; c2.lots=[{lot:'B2610',qty:4,expiry:d(400)}]; c2.stock=4;
+  MOCK.parts.push({code:'CH-002',name:'โซดาไฟ NaOH 50% (ตัวอย่าง Chemical)',category:'Chemical',owner:'PE',stock:10.25,min:5,unit:'ลิตร',image:'',max:40,expiry:'',lots:[{lot:'N-0901',qty:2,expiry:d(-3)},{lot:'N-1105',qty:8.25,expiry:d(200)}]});
+})();
+const _byExp = (a,b)=>(a.expiry||'9999')<(b.expiry||'9999')?-1:1;
+const _lotSum = l=>(l&&l.length)?l.map(a=>(a.lot||'-')+': '+a.qty+' (หมดอายุ '+(a.expiry||'-')+')').join(', '):'-';
+function _applyLots(x,p){
+  x.max = (p.max===''||p.max==null) ? null : r2(p.max);
+  if(p.category==='Chemical' && p.lots && p.lots.length){ x.lots=p.lots.map(l=>({lot:l.lot,qty:r2(l.qty),expiry:l.expiry||''})); x.stock=r2(x.lots.reduce((s,l)=>s+l.qty,0)); x.expiry=''; }
+  else { x.lots=[]; x.expiry=p.expiry||''; }
+}
+function _ck(v){ let s=String(v==null?'':v).trim().replace(/^'+/,''); if(/^\d+(\.0+)?$/.test(s)) s=s.replace(/\.0+$/,'').replace(/^0+(?=\d)/,''); return s.toLowerCase(); }
+function _sameCode(a,b){ const A=String(a).split(',').map(_ck).filter(Boolean), B=String(b).split(',').map(_ck).filter(Boolean); return A.length>0 && A.join(',')===B.join(','); }
+const _mockLine = {login:true,partAddDelete:true,partEdit:true,transaction:true,dailyStock:true,expiry:true};
 function _log(type,code,name,field,o,n,by){ MOCK.changes.push({'วันที่':new Date().toISOString(),'ประเภท':type,'รหัส':String(code),'ชื่ออะไหล่':name,'ข้อมูลที่เปลี่ยน':field,'ข้อมูลเก่า':o,'ข้อมูลใหม่':n,'โดย':by||'','หมายเหตุ':''}); }
 function _partRow(p){
-  return {'รหัส':p.code,'ชื่อ':p.name,'หมวดหมู่':p.category,'เจ้าของ':p.owner,'คงเหลือ':p.stock,'ขั้นต่ำ':p.min,'หน่วยนับ':p.unit,'รูปภาพ':p.image};
+  return {'รหัส':p.code,'ชื่อ':p.name,'หมวดหมู่':p.category,'เจ้าของ':p.owner,'คงเหลือ':p.stock,'ขั้นต่ำ':p.min,'สต็อคสูงสุด':p.max==null?'':p.max,'วันหมดอายุ':p.expiry||'','หน่วยนับ':p.unit,'รูปภาพ':p.image,'lots':p.lots||[]};
 }
 function mockApi(action, payload){
   return new Promise(resolve=>setTimeout(()=>resolve(_mockHandle(action, payload)), 150));
@@ -266,10 +299,11 @@ function _mockHandle(action, p){
       if(MOCK.users.some(x=>x.u===p.user)) return {ok:false, message:'มี Username นี้อยู่แล้ว'};
       MOCK.users.push({u:p.user, p:p.pass, n:p.name, d:p.dept}); return {ok:true};
     case 'addPart': {
-      const _tk = c=>String(c).split(',').map(z=>z.trim().toLowerCase()).filter(Boolean);
+      const _tk = c=>String(c).split(',').map(_ck).filter(Boolean);
       if(MOCK.parts.some(x=>_tk(x.code).some(k=>_tk(p.code).includes(k)))) return {ok:false, message:'มีรหัสอะไหล่นี้อยู่แล้ว'};
-      MOCK.parts.push({code:p.code,name:p.name,category:p.category||'',owner:p.owner||'',stock:Number(p.stock)||0,min:Number(p.min)||0,unit:p.unit||'',
+      MOCK.parts.push({code:p.code,name:p.name,category:p.category||'',owner:p.owner||'',stock:r2(p.stock),min:r2(p.min),unit:p.unit||'',
         image:p.imageBase64?('data:'+(p.imageMimeType||'image/jpeg')+';base64,'+p.imageBase64):''});
+      _applyLots(MOCK.parts[MOCK.parts.length-1], p);
       _log('เพิ่มอะไหล่',p.code,p.name,'เพิ่มอะไหล่ใหม่','-','ชื่อ: '+p.name+' | หมวดหมู่: '+(p.category||'-')+' | เจ้าของ: '+(p.owner||'-')+' | คงเหลือ: '+(Number(p.stock)||0)+' '+(p.unit||'')+' | ขั้นต่ำ: '+(Number(p.min)||0),p.person);
       return {ok:true};
     }
@@ -281,25 +315,45 @@ function _mockHandle(action, p){
       return MOCK.parts.length < n ? {ok:true} : {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
     }
     case 'updatePart': {
-      const x = MOCK.parts.find(y=>y.code===p.code);
+      const x = MOCK.parts.find(y=>_sameCode(y.code,p.code));
       if(!x) return {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
       [['ชื่อ',x.name,p.name],['หมวดหมู่',x.category,p.category||''],['เจ้าของ',x.owner,p.owner||''],['หน่วยนับ',x.unit,p.unit||''],['ขั้นต่ำ (Safety Stock)',x.min,Number(p.min)||0]]
         .forEach(d=>{ if(String(d[1]).trim()!==String(d[2]).trim()) _log('แก้ไขข้อมูล',x.code,p.name,d[0],d[1],d[2],p.person); });
       if(p.imageBase64) _log('แก้ไขข้อมูล',x.code,p.name,'รูปภาพ',x.image?'มีรูปเดิม':'ไม่มีรูป','เปลี่ยนเป็นรูปใหม่',p.person);
-      Object.assign(x,{name:p.name,category:p.category||'',owner:p.owner||'',min:Number(p.min)||0,unit:p.unit||''});
+      [['สต็อคสูงสุด',x.max==null?'-':x.max,(p.max===''||p.max==null)?'-':r2(p.max)],['วันหมดอายุ',x.expiry||'-',p.expiry||'-']].forEach(d=>{
+        if(String(d[1])!==String(d[2]) && !(p.category==='Chemical' && p.lots && p.lots.length && d[0]==='วันหมดอายุ')) _log('แก้ไขข้อมูล',x.code,p.name,d[0],d[1],d[2],p.person);
+      });
+      const oldLots = _lotSum(x.lots);
+      Object.assign(x,{name:p.name,category:p.category||'',owner:p.owner||'',min:r2(p.min),unit:p.unit||''});
+      _applyLots(x,p);
+      if(oldLots!==_lotSum(x.lots)) _log('แก้ไขข้อมูล',x.code,p.name,'ล็อต (Lot)',oldLots,_lotSum(x.lots),p.person);
       if(p.imageBase64) x.image = 'data:'+(p.imageMimeType||'image/jpeg')+';base64,'+p.imageBase64;
       return {ok:true};
     }
     case 'recordTransaction': {
-      const x = MOCK.parts.find(y=>y.code===p.code);
+      const x = MOCK.parts.find(y=>_sameCode(y.code,p.code));
       if(!x) return {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
-      const q = Number(p.qty)||0;
+      const q = r2(p.qty);
       if(p.type==='withdraw'){
         if(q > x.stock) return {ok:false, message:'จำนวนเบิกเกินสต็อกคงเหลือ (คงเหลือ '+x.stock+')'};
-        x.stock -= q;
-      } else if(p.type==='replenish'){ x.stock += q; }
+        if(x.lots && x.lots.length && p.lot!==undefined){
+          const lt = x.lots.find(a=>a.lot===p.lot);
+          if(!lt) return {ok:false, message:'ไม่พบล็อตนี้'};
+          if(q > lt.qty) return {ok:false, message:'จำนวนเบิกเกินคงเหลือของล็อต (คงเหลือ '+lt.qty+')'};
+          lt.qty = r2(lt.qty-q); x.stock = r2(x.lots.reduce((s,a)=>s+a.qty,0));
+        } else if(x.lots && x.lots.length){ let need=q; x.lots.slice().sort(_byExp).forEach(l=>{ const u=Math.min(l.qty,need); l.qty=r2(l.qty-u); need=r2(need-u); }); x.stock=r2(x.lots.reduce((s,l)=>s+l.qty,0)); }
+        else x.stock = r2(x.stock-q);
+      } else if(p.type==='replenish'){
+        if(x.category==='Chemical'){
+          x.lots = x.lots||[];
+          if(!x.lots.length && x.stock>0) x.lots.push({lot:'',qty:x.stock,expiry:x.expiry||''});
+          const nm=(p.lot||'').trim(); const l=x.lots.find(a=>a.lot===nm && (!p.expiry || !a.expiry || a.expiry===p.expiry));
+          if(l){ l.qty=r2(l.qty+q); if(p.expiry) l.expiry=p.expiry; } else x.lots.push({lot:nm,qty:q,expiry:p.expiry||''});
+          x.stock = r2(x.lots.reduce((s,a)=>s+a.qty,0)); x.expiry='';
+        } else x.stock = r2(x.stock+q);
+      }
       else return {ok:false, message:'ประเภทรายการไม่ถูกต้อง'};
-      MOCK.history.push({'วันที่':new Date().toISOString(),'ประเภท':p.type==='withdraw'?'เบิกออก':(p.kind==='return'?'คืน':'เติมเข้า'),'รหัส':x.code,'ชื่ออะไหล่':x.name,'จำนวน':q,'โดย':p.person,'หมายเหตุ':p.note||''});
+      MOCK.history.push({'วันที่':new Date().toISOString(),'ประเภท':p.type==='withdraw'?'เบิกออก':(p.kind==='return'?'คืน':'เติมเข้า'),'รหัส':x.code,'ชื่ออะไหล่':x.name,'จำนวน':q,'โดย':p.person,'หมายเหตุ':((p.lot!==undefined && x.category==='Chemical') ? ('Lot '+(p.lot||'-')+(p.note?' | ':'')) : '')+(p.note||'')||''});
       return {ok:true, newStock:x.stock};
     }
     default: return {ok:false, message:'Unknown action: '+action};
@@ -322,7 +376,7 @@ const I18N = {
     selectPartToEdit:'เลือกอะไหล่ที่ต้องการแก้ไข', selectPartPlaceholder:'-- เลือกอะไหล่ --',
     partCode:'รหัสอะไหล่', partName:'ชื่ออะไหล่', category:'หมวดหมู่', unit:'หน่วยนับ',
     stockEditNote:'คงเหลือ (แก้ไขผ่านเบิก/เติมสต็อกเท่านั้น)', minStock:'สต็อกขั้นต่ำ', owner:'เจ้าของอะไหล่ (Owner)',
-    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
+    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', maxStock:'สต็อคสูงสุด', expiryDate:'วันหมดอายุ', refillQty:'ควรเติมอีก (ถึงสต็อคสูงสุด)', lotsTitle:'รายการล็อต (Lot) ของ Chemical', lotsHint:'ใช้เมื่อ Part number เดียวกันมีหลายล็อตที่วันหมดอายุต่างกัน ระบบจะรวมจำนวนเป็นคงเหลือ และเบิกจากล็อตที่หมดอายุก่อน (FEFO)', lotAdd:'+ เพิ่มล็อต', lotName:'Lot / เลขล็อต', expAlertTitle:'⏰ Alert — อะไหล่ใกล้หมดอายุ (ภายใน 14 วัน) / หมดอายุแล้ว', expExpired:'หมดอายุแล้ว {n} วัน', expToday:'หมดอายุวันนี้', expIn:'อีก {n} วัน', lineEv_expiry:'แจ้งเตือนอะไหล่ใกล้หมดอายุ (ล่วงหน้า 14 วัน) ทุกวัน 08:00', lotId:'Lot ID', newLotId:'Lot ID ใหม่', lotPlaceholder:'เลือก Lot ID', lotNew:'+ ล็อตใหม่ (ระบุ Lot ID ใหม่)', lotNoName:'(ไม่ระบุเลขล็อต)', lotSelectPartFirst:'เลือกอะไหล่ก่อน', lotExists:'Lot ID นี้มีอยู่แล้ว กรุณาเลือกจากรายการ', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
     selectPartFirst:'กรุณาเลือกอะไหล่ก่อนบันทึก', noPartFound:'ไม่พบอะไหล่ที่ตรงกับคำค้นหา',
     addPartTitle:'เพิ่มอะไหล่ใหม่', initialStock:'จำนวนเริ่มต้น', uploadImage:'รูปภาพอะไหล่ (อัปโหลด)',
     addPartBtn:'+ เพิ่มอะไหล่', codePlaceholder:'เช่น SP-005 หรือ SP-005,SP-006', unitPlaceholder:'ชิ้น / เส้น / กล่อง',
@@ -379,7 +433,7 @@ const I18N = {
     selectPartToEdit:'Select part to edit', selectPartPlaceholder:'-- Select part --',
     partCode:'Part code', partName:'Part name', category:'Category', unit:'Unit',
     stockEditNote:'Stock (editable via Withdraw/Replenish only)', minStock:'Safety Stock', owner:'Owner',
-    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
+    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', maxStock:'Max Stock', expiryDate:'Expiry date', refillQty:'To refill (up to Max Stock)', lotsTitle:'Chemical lots', lotsHint:'Use when the same Part number has several lots with different expiry dates. Quantities are summed into Current Qty., and withdrawals use the earliest-expiring lot first (FEFO).', lotAdd:'+ Add lot', lotName:'Lot no.', expAlertTitle:'⏰ Alert — Parts expiring within 14 days / expired', expExpired:'Expired {n} days ago', expToday:'Expires today', expIn:'In {n} days', lineEv_expiry:'Expiry alert (14 days ahead) daily 08:00', lotId:'Lot ID', newLotId:'New Lot ID', lotPlaceholder:'Select Lot ID', lotNew:'+ New lot (enter new Lot ID)', lotNoName:'(no lot no.)', lotSelectPartFirst:'Select a part first', lotExists:'This Lot ID already exists. Please pick it from the list.', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
     selectPartFirst:'Please select a part first', noPartFound:'No matching parts found',
     addPartTitle:'Add New Part', initialStock:'Initial stock', uploadImage:'Part image (upload)',
     addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005 or SP-005,SP-006', unitPlaceholder:'pcs / rolls / boxes',
@@ -445,6 +499,8 @@ function translateServerMsg(msg){
   if(SERVER_MSG_MAP_EN[msg]) return SERVER_MSG_MAP_EN[msg];
   const m = msg.match(/^จำนวนเบิกเกินสต็อกคงเหลือ \(คงเหลือ (.+)\)$/);
   if(m) return 'Requested quantity exceeds remaining stock (remaining ' + m[1] + ')';
+  const m2 = msg.match(/^จำนวนเบิกเกินคงเหลือของล็อต \(คงเหลือ (.+)\)$/);
+  if(m2) return 'Requested quantity exceeds the remaining qty of this lot (remaining ' + m2[1] + ')';
   return msg;
 }
 function switchLang(l){
@@ -546,7 +602,64 @@ function normalizeCodes(raw){
   }
   return {ok:true, value:arr.join(',')};
 }
-function statusOf(p){ if(p.stock===0) return 'out'; if(p.stock<p.min) return 'low'; return 'ok'; }
+const r2 = n => Math.round((Number(n)||0)*100)/100;
+const EXPIRY_WARN_DAYS = 14;
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function daysTo(ds){ return Math.round((new Date(ds+'T00:00:00')-new Date(todayStr()+'T00:00:00'))/86400000); }
+function expiryItems(p){
+  if(p.lots && p.lots.length) return p.lots.filter(l=>l.expiry).map(l=>({lot:l.lot, qty:l.qty, expiry:l.expiry, days:daysTo(l.expiry)}));
+  return p.expiry ? [{lot:'', qty:p.stock, expiry:p.expiry, days:daysTo(p.expiry)}] : [];
+}
+function nextExpiry(p){ return expiryItems(p).filter(i=>i.qty>0).sort((a,b)=>a.days-b.days)[0] || null; }
+function expiryAlerts(){ const out=[]; parts.forEach(p=>expiryItems(p).forEach(i=>{ if(i.qty>0 && i.days<=EXPIRY_WARN_DAYS) out.push(Object.assign({p}, i)); })); return out.sort((a,b)=>a.days-b.days); }
+function refillQty(p){ return p.max>0 ? r2(Math.max(0, p.max-p.stock)) : null; }
+function expText(d){ return d<0 ? t('expExpired').replace('{n}',-d) : (d===0 ? t('expToday') : t('expIn').replace('{n}',d)); }
+function expColor(d){ return d<0 ? 'var(--danger)' : (d<=EXPIRY_WARN_DAYS ? 'var(--warn)' : 'var(--muted)'); }
+function expiryCellHTML(p){
+  const n = nextExpiry(p) || expiryItems(p)[0]; if(!n) return '-';
+  return `<span style="color:${expColor(n.days)};font-weight:600;">${n.expiry}</span> <span style="font-size:12px;color:${expColor(n.days)};">(${expText(n.days)})</span>`;
+}
+function lotsTableHTML(p){
+  if(!p.lots || !p.lots.length) return '';
+  const rows = p.lots.slice().sort((a,b)=>(a.expiry||'9999')<(b.expiry||'9999')?-1:1);
+  return `<h2 style="margin:18px 0 8px;font-size:14px;">${t('lotsTitle')}</h2><div class="tbl-wrap"><table><thead><tr><th>${t('lotName')}</th><th>${t('colQty')}</th><th>${t('expiryDate')}</th></tr></thead><tbody>${rows.map(l=>`<tr><td>${escHTML(l.lot||'-')}</td><td><b>${l.qty}</b> ${escHTML(p.unit)}</td><td>${l.expiry ? `<span style="color:${expColor(daysTo(l.expiry))};font-weight:600;">${l.expiry}</span> <span style="font-size:12px;color:${expColor(daysTo(l.expiry))};">(${expText(daysTo(l.expiry))})</span>` : '-'}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function expiryCardHTML(){
+  const a = expiryAlerts(); if(!a.length) return '';
+  return `<div class="card"><h2>${t('expAlertTitle')}</h2>${a.map(x=>`<div class="alert-card ${x.days<0?'out':''}"><div class="row1"><span>${codeLabel(x.p.code)} — ${escHTML(x.p.name)}${x.lot?' · '+escHTML(x.lot):''}</span><span class="exp-badge" style="background:${x.days<0?'var(--danger-bg)':'var(--warn-bg)'};color:${x.days<0?'var(--danger)':'var(--warn)'};">${expText(x.days)}</span></div><div class="details"><span>${t('expiryDate')}: <b>${x.expiry}</b></span><span>${t('stockLabel')}<b>${x.qty} ${escHTML(x.p.unit)}</b></span></div></div>`).join('')}</div>`;
+}
+function lotRowHTML(l){ l=l||{}; return `<div class="lot-row"><input class="lot-name" placeholder="${t('lotName')}" value="${escHTML(l.lot||'')}"><input class="lot-qty" type="number" min="0" step="0.01" placeholder="${t('colQty')}" value="${l.qty==null?'':l.qty}"><input class="lot-exp" type="date" value="${l.expiry||''}"><button type="button" class="lot-del" title="✕">✕</button></div>`; }
+function lotsEditorHTML(){ return `<div class="full lots-editor" hidden><label>${t('lotsTitle')}</label><div class="field-hint">${t('lotsHint')}</div><div class="lot-rows"></div><button type="button" class="lot-add">${t('lotAdd')}</button></div>`; }
+function readLots(form){
+  if(form.elements.category.value!=='Chemical') return null;
+  return [...form.querySelectorAll('.lot-row')].map(r=>({lot:r.querySelector('.lot-name').value.trim(), qty:r2(r.querySelector('.lot-qty').value), expiry:r.querySelector('.lot-exp').value})).filter(l=>l.lot||l.qty||l.expiry);
+}
+function syncLotsUI(form){
+  if(!form) return;
+  const ed = form.querySelector('.lots-editor'); if(!ed) return;
+  const chem = form.elements.category.value === 'Chemical';
+  ed.hidden = !chem;
+  const rows = ed.querySelector('.lot-rows');
+  if(chem && !rows.children.length){
+    const cur = form.id==='editPartForm' ? partByCode(editingCode) : null;
+    rows.insertAdjacentHTML('beforeend', lotRowHTML({qty: cur ? cur.stock : '', expiry: form.elements.expiry.value}));
+  }
+  const has = chem && rows.children.length > 0;
+  form.elements.expiry.disabled = has;
+  if(form.id==='addPartForm') form.elements.stock.disabled = has;
+}
+document.addEventListener('click', e=>{
+  const add = e.target.closest && e.target.closest('.lot-add');
+  if(add){ add.closest('.lots-editor').querySelector('.lot-rows').insertAdjacentHTML('beforeend', lotRowHTML()); return; }
+  const del = e.target.closest && e.target.closest('.lot-del');
+  if(del){ const form = del.closest('form'); del.closest('.lot-row').remove(); syncLotsUI(form); }
+});
+document.addEventListener('change', e=>{ const f = e.target.form; if(e.target.name==='category' && f && (f.id==='addPartForm'||f.id==='editPartForm')) syncLotsUI(f); });
+document.addEventListener('reset', e=>{
+  const ed = e.target.querySelector && e.target.querySelector('.lots-editor');
+  if(ed){ ed.hidden = true; ed.querySelector('.lot-rows').innerHTML = ''; if(e.target.elements.expiry) e.target.elements.expiry.disabled = false; if(e.target.id==='addPartForm') e.target.elements.stock.disabled = false; }
+}, true);
+function statusOf(p){ if(p.stock<=0) return 'out'; if(p.stock<p.min) return 'low'; return 'ok'; }
 function filteredParts(){
   return parts.filter(p=>{
     if(partFilter.search){
@@ -571,9 +684,12 @@ function driveImgUrl(u){
 // Google Sheets แปลงค่าที่เป็นตัวเลขล้วน (เช่น รหัส 12345) ให้เป็น Number — บังคับให้เป็นข้อความเสมอ ไม่เช่นนั้นการค้นหา/เทียบรหัส (===) จะล้มเหลว
 function str(v){ return (v === null || v === undefined) ? '' : String(v); }
 function mapPart(raw){
+  const lots = Array.isArray(raw.lots) ? raw.lots.map(l=>({lot:str(l.lot), qty:r2(l.qty), expiry:str(l.expiry).slice(0,10)})) : [];
   return {
     code: str(raw['รหัส']), name: str(raw['ชื่อ']), category: str(raw['หมวดหมู่']), owner: str(raw['เจ้าของ']),
-    stock: Number(raw['คงเหลือ'])||0, min: Number(raw['ขั้นต่ำ'])||0, unit: str(raw['หน่วยนับ']),
+    stock: lots.length ? r2(lots.reduce((s,l)=>s+l.qty,0)) : r2(raw['คงเหลือ']), min: r2(raw['ขั้นต่ำ']),
+    max: (raw['สต็อคสูงสุด']===''||raw['สต็อคสูงสุด']==null) ? null : r2(raw['สต็อคสูงสุด']),
+    expiry: str(raw['วันหมดอายุ']).slice(0,10), lots, unit: str(raw['หน่วยนับ']),
     image: driveImgUrl(raw['รูปภาพ'] || ''),
   };
 }
@@ -707,7 +823,10 @@ function renderApp(){
         <div><label>${t('category')}</label><select name="category">${categoryOptionsHTML('General', false)}</select></div>
         <div><label>${t('unit')}</label><input name="unit" required></div>
         <div><label>${t('stockEditNote')}</label><input name="stock" disabled></div>
-        <div><label>${t('minStock')}</label><input name="min" type="number" min="0" required></div>
+        <div><label>${t('minStock')}</label><input name="min" type="number" min="0" step="0.01" required></div>
+        <div><label>${t('maxStock')}</label><input name="max" type="number" min="0" step="0.01" placeholder="-"></div>
+        <div><label>${t('expiryDate')}</label><input name="expiry" type="date"></div>
+        ${lotsEditorHTML()}
         <div class="full"><label>${t('owner')}</label>
           <select name="owner" required>${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}</select>
         </div>
@@ -729,8 +848,11 @@ function renderApp(){
         <div><label>${t('partName')}</label><input name="name" required></div>
         <div><label>${t('category')}</label><select name="category">${categoryOptionsHTML('General', false)}</select></div>
         <div><label>${t('unit')}</label><input name="unit" required placeholder="${t('unitPlaceholder')}"></div>
-        <div><label>${t('initialStock')}</label><input name="stock" type="number" min="0" value="0" required></div>
-        <div><label>${t('minStock')}</label><input name="min" type="number" min="0" value="0" required></div>
+        <div><label>${t('initialStock')}</label><input name="stock" type="number" min="0" step="0.01" value="0" required></div>
+        <div><label>${t('minStock')}</label><input name="min" type="number" min="0" step="0.01" value="0" required></div>
+        <div><label>${t('maxStock')}</label><input name="max" type="number" min="0" step="0.01" placeholder="-"></div>
+        <div><label>${t('expiryDate')}</label><input name="expiry" type="date"></div>
+        ${lotsEditorHTML()}
         <div class="full"><label>${t('owner')}</label>
           <select name="owner" required>${OWNERS.map(o=>`<option value="${o}">${OWNER_LABEL[o]}</option>`).join('')}</select>
         </div>
@@ -762,6 +884,7 @@ function refreshAllData(){
 function openAddModal(){
   document.getElementById('addPartForm').reset();
   document.getElementById('addPartForm').elements.category.value = invCategory || 'General';
+  syncLotsUI(document.getElementById('addPartForm'));
   document.getElementById('addPartMsg').className = 'msg';
   document.getElementById('addModal').classList.remove('hidden');
 }
@@ -799,7 +922,12 @@ function populateEditFields(code){
   form.elements.unit.value = p.unit;
   form.elements.stock.value = p.stock + ' ' + p.unit;
   form.elements.min.value = p.min;
+  form.elements.max.value = p.max==null ? '' : p.max;
+  form.elements.expiry.value = p.expiry || '';
   form.elements.owner.value = p.owner || '';
+  const lotRows = form.querySelector('.lot-rows'); lotRows.innerHTML = '';
+  if((p.category||'')==='Chemical') (p.lots.length ? p.lots : [{lot:'', qty:p.stock, expiry:p.expiry}]).forEach(l=>lotRows.insertAdjacentHTML('beforeend', lotRowHTML(l)));
+  syncLotsUI(form);
   document.getElementById('editPartFields').classList.remove('hidden');
 }
 function closeEditModal(){
@@ -873,6 +1001,7 @@ function renderDashboard(){
   const out = parts.filter(p=>statusOf(p)==='out').length;
   const alertList = parts.filter(p=>statusOf(p)!=='ok');
   return `
+  ${expiryCardHTML()}
   ${alertList.length ? `
   <div class="card">
     <h2>${t('alertTitle')}</h2>
@@ -884,7 +1013,8 @@ function renderDashboard(){
           <span>${t('categoryLabel')}${p.category||'-'}</span>
           <span>${t('stockLabel')}<b>${p.stock} ${p.unit}</b></span>
           <span>${t('minLabel')}${p.min} ${p.unit}</span>
-          <span>${t('shortageLabel')}<b>${Math.max(0,p.min-p.stock)} ${p.unit}</b></span>
+          <span>${t('shortageLabel')}<b>${r2(Math.max(0,p.min-p.stock))} ${p.unit}</b></span>
+          ${p.max>0?`<span>${t('refillQty')}: <b>${refillQty(p)} ${p.unit}</b></span>`:''}
         </div>
       </div>`).join('')}
   </div>` : ''}
@@ -981,7 +1111,8 @@ function openPartDetail(code){
   const p = partByCode(code);
   if(!p) return;
   closePartDetail();
-  const short = Math.max(0, p.min - p.stock);
+  const short = r2(Math.max(0, p.min - p.stock));
+  const refill = refillQty(p);
   const moves = tx.filter(tr=>tr.code===p.code).slice(-5).reverse();
   const img = p.image
     ? `<img class="detail-img" src="${p.image}" data-code="${p.code}" referrerpolicy="no-referrer" onerror="detailImgFailed(this)" alt="${escHTML(p.name)}">`
@@ -1004,7 +1135,7 @@ function openPartDetail(code){
       </div>
       <div class="stock-hero ${p.stock<=0?'out':(p.stock<p.min?'warn':'')}">
         <div><div class="stock-hero-label">${t('colStock')}</div><div class="stock-hero-num">${p.stock}<span>${escHTML(p.unit)}</span></div></div>
-        <div class="stock-hero-side">${stockBadge(p)}<div style="margin-top:6px;">${t('colMin')}: <b>${p.min}</b> ${escHTML(p.unit)}</div></div>
+        <div class="stock-hero-side">${stockBadge(p)}<div style="margin-top:6px;">${t('colMin')}: <b>${p.min}</b> ${escHTML(p.unit)}</div>${refill>0?`<div style="margin-top:4px;color:var(--text);">${t('refillQty')}: <b>${refill}</b> ${escHTML(p.unit)}</div>`:''}</div>
       </div>
       <div class="detail-body">
         ${img}
@@ -1013,9 +1144,13 @@ function openPartDetail(code){
           <div class="k k-strong">${t('colName')}</div><div class="v v-strong">${escHTML(p.name)}</div>
           <div class="k">${t('colCategory')}</div><div class="v">${escHTML(p.category||'-')}</div>
           <div class="k">${t('colOwner')}</div><div class="v">${escHTML(OWNER_LABEL[p.owner]||p.owner||'-')}</div>
+          <div class="k">${t('maxStock')}</div><div class="v">${p.max==null ? '-' : p.max+' '+escHTML(p.unit)}</div>
+          <div class="k">${t('expiryDate')}</div><div class="v">${expiryCellHTML(p)}</div>
+          <div class="k">${t('refillQty')}</div><div class="v">${refill==null ? '-' : (refill>0 ? '<b>'+refill+'</b> '+escHTML(p.unit) : '0')}</div>
           ${short ? `<div class="k">${t('shortageLabel').replace(/[: ]+$/,'')}</div><div class="v"><b>${short}</b> ${escHTML(p.unit)}</div>` : ''}
         </div>
       </div>
+      ${lotsTableHTML(p)}
       <h2 style="margin:18px 0 8px;font-size:14px;">${t('recentMovements')}</h2>
       ${movesHTML}
     </div>`;
@@ -1032,6 +1167,33 @@ function partsTableHTML(list){
   </tbody></table>`;
 }
 
+function lotOptionsHTML(p, withNew){
+  const lots = (p.lots && p.lots.length) ? p.lots.slice().sort((a,b)=>(a.expiry||'9999')<(b.expiry||'9999')?-1:1) : [{lot:'', qty:p.stock, expiry:p.expiry}];
+  const opt = l=>`<option value="${escHTML(l.lot||'__blank__')}" data-qty="${l.qty}">${escHTML(l.lot||t('lotNoName'))} — ${t('colStock')} ${l.qty} ${escHTML(p.unit)} · ${t('expiryDate')} ${l.expiry||'-'}</option>`;
+  return `<option value="">${t('lotPlaceholder')}</option>` + lots.map(opt).join('') + (withNew ? `<option value="__new__">${t('lotNew')}</option>` : '');
+}
+function syncLotExtra(prefix){
+  const ls = document.getElementById(prefix+'Lot'); if(!ls) return;
+  if(prefix==='replenish'){
+    const nb = document.getElementById('replenishNewLot'); const isNew = !ls.disabled && ls.value==='__new__';
+    nb.hidden = !isNew; nb.querySelectorAll('input').forEach(i=>{ i.disabled = !isNew; });
+  } else {
+    const q = document.querySelector('#withdrawForm [name=qty]'); const o = ls.selectedOptions[0];
+    if(q) q.max = (o && o.dataset.qty) ? o.dataset.qty : '';
+  }
+}
+// แสดงช่องเลือก Lot ID เฉพาะเมื่ออะไหล่ที่เลือกเป็น Chemical (หน้าเบิก: แสดงเมื่อกรองหมวด Chemical ด้วย)
+function syncLotPicker(prefix){
+  const sel = document.getElementById(prefix+'Select'), box = document.getElementById(prefix+'LotBox'), ls = document.getElementById(prefix+'Lot');
+  if(!sel || !box || !ls) return;
+  const p = partByCode(sel.value), cat = document.getElementById(prefix+'CatFilter');
+  const isChem = !!p && p.category==='Chemical';
+  const show = isChem || (!p && prefix==='withdraw' && cat && cat.value==='Chemical');
+  box.hidden = !show; ls.disabled = !show;
+  ls.innerHTML = isChem ? lotOptionsHTML(p, prefix==='replenish') : `<option value="">${t('lotSelectPartFirst')}</option>`;
+  syncLotExtra(prefix);
+}
+document.addEventListener('change', e=>{ if(e.target.id==='withdrawLot' || e.target.id==='replenishLot') syncLotExtra(e.target.id.replace('Lot','')); });
 function partPickerFiltersHTML(prefix){
   return `<div><label>${t('category')}</label><select id="${prefix}CatFilter">${categoryOptionsHTML('', true)}</select></div>
       <div><label>${t('searchPart')}</label><input type="text" id="${prefix}SearchBox" placeholder="${t('searchPlaceholder')}"></div>`;
@@ -1041,6 +1203,7 @@ function refreshPartSelect(prefix){
   const c = document.getElementById(prefix+'CatFilter').value;
   document.getElementById(prefix+'Select').innerHTML = `<option value="">${t('selectPartPlaceholder')}</option>${partOptions(q, c)}`;
   document.getElementById(prefix+'PartPreview').innerHTML = partPreviewHTML('');
+  syncLotPicker(prefix);
 }
 function typeLabel(tr){
   if(tr.type==='withdraw') return t('typeWithdraw');
@@ -1076,7 +1239,8 @@ function renderWithdraw(){
       ${partPickerFiltersHTML('withdraw')}
       <div class="full"><label>${t('selectPart')}</label><select name="code" id="withdrawSelect" required><option value="">${t('selectPartPlaceholder')}</option>${partOptions()}</select></div>
       <div class="full" id="withdrawPartPreview">${partPreviewHTML('')}</div>
-      <div><label>${t('qtyWithdraw')}</label><input name="qty" type="number" min="1" required></div>
+      <div class="full lotbox" id="withdrawLotBox" hidden><label>${t('lotId')}</label><select name="lot" id="withdrawLot" required disabled><option value="">${t('lotSelectPartFirst')}</option></select></div>
+      <div><label>${t('qtyWithdraw')}</label><input name="qty" type="number" min="0.01" step="0.01" required></div>
       <div><label>${t('withdrawnBy')}</label><input name="person" required value="${currentUser.name}"></div>
       <div class="full"><label>${t('noteUsedFor')}</label><input name="note" placeholder="${t('notePlaceholderW')}"></div>
       <div class="msg" id="withdrawMsg"></div>
@@ -1099,7 +1263,10 @@ function renderReplenish(){
       ${partPickerFiltersHTML('replenish')}
       <div class="full"><label>${t('selectPart')}</label><select name="code" id="replenishSelect" required><option value="">${t('selectPartPlaceholder')}</option>${partOptions()}</select></div>
       <div class="full" id="replenishPartPreview">${partPreviewHTML('')}</div>
-      <div><label>${t('qtyReceived')}</label><input name="qty" type="number" min="1" required></div>
+      <div class="full lotbox" id="replenishLotBox" hidden><label>${t('lotId')}</label><select name="lot" id="replenishLot" required disabled><option value="">${t('lotSelectPartFirst')}</option></select>
+        <div id="replenishNewLot" class="lotbox" hidden style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;"><div><label>${t('newLotId')}</label><input name="newLot" required disabled></div><div><label>${t('expiryDate')}</label><input name="newExpiry" type="date" disabled></div></div>
+      </div>
+      <div><label>${t('qtyReceived')}</label><input name="qty" type="number" min="0.01" step="0.01" required></div>
       <div><label>${t('recordedBy')}</label><input name="person" required value="${currentUser.name}"></div>
       <div class="full"><label>${t('notePO')}</label><input name="note" placeholder="${t('notePlaceholderR')}"></div>
       <div class="msg" id="replenishMsg"></div>
@@ -1268,10 +1435,12 @@ function renderSettings(){
     <div class="msg" id="settingsMsg"></div>
   </div>`;
 }
-const LINE_EVENT_KEYS = ['login','partAddDelete','partEdit','transaction','dailyStock'];
+const LINE_EVENT_KEYS = ['login','partAddDelete','partEdit','transaction','dailyStock','expiry'];
 function loadLineSettings(){
   const box = document.getElementById('lineBox'); if(!box) return;
   callApi('getLineSettings').then(r=>{
+    // Backend เก่าที่ยังไม่รู้จักคำสั่งนี้จะตอบ {ok:false, message:'Unknown action...'} ไม่มี settings
+    if(!r || !r.settings) throw new Error((r && r.message) || 'Invalid response');
     box.className = '';
     box.innerHTML = `<div style="font-size:13px;margin-bottom:10px;color:${r.configured?'var(--ok)':'var(--warn)'};">${r.configured?t('lineConfigured'):t('lineNotConfigured')}</div>
       ${LINE_EVENT_KEYS.map(k=>`<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px;cursor:pointer;"><input type="checkbox" data-lineev="${k}" ${r.settings[k]?'checked':''} style="width:18px;height:18px;margin:0;"><span style="flex:1;">${t('lineEv_'+k)}</span></label>`).join('')}
@@ -1428,12 +1597,14 @@ function attachHandlers(){
   if(withdrawSelect){
     withdrawSelect.onchange = ()=>{
       document.getElementById('withdrawPartPreview').innerHTML = partPreviewHTML(withdrawSelect.value);
+      syncLotPicker('withdraw');
     };
   }
   const replenishSelect = document.getElementById('replenishSelect');
   if(replenishSelect){
     replenishSelect.onchange = ()=>{
       document.getElementById('replenishPartPreview').innerHTML = partPreviewHTML(replenishSelect.value);
+      syncLotPicker('replenish');
     };
   }
   document.querySelectorAll('.export-btn').forEach(b=>{
@@ -1486,7 +1657,7 @@ function attachHandlers(){
       if(!editingCode){ showMsg('editPartMsg', t('selectPartFirst'), false); return; }
       const f = new FormData(editPartForm);
       const part = {code:editingCode, name:f.get('name').trim(), category:f.get('category').trim(),
-        unit:f.get('unit').trim(), min:f.get('min'), owner:f.get('owner'), person:(currentUser && currentUser.name) || ''};
+        unit:f.get('unit').trim(), min:f.get('min'), max:f.get('max'), expiry:f.get('expiry')||'', lots:readLots(editPartForm), owner:f.get('owner'), person:(currentUser && currentUser.name) || ''};
       const submit = ()=>{
         callApi('updatePart', part).then(res=>{
           if(!res.ok){ showMsg('editPartMsg', translateServerMsg(res.message), false); return; }
@@ -1604,7 +1775,7 @@ function attachHandlers(){
       const norm = normalizeCodes(f.get('code'));
       if(!norm.ok){ showMsg('addPartMsg', norm.error, false); return; }
       const part = {code:norm.value, name:f.get('name').trim(), category:f.get('category').trim(),
-        unit:f.get('unit').trim(), stock:f.get('stock'), min:f.get('min'), owner:f.get('owner'), person:(currentUser && currentUser.name) || ''};
+        unit:f.get('unit').trim(), stock:f.get('stock'), min:f.get('min'), max:f.get('max'), expiry:f.get('expiry')||'', lots:readLots(addPartForm), owner:f.get('owner'), person:(currentUser && currentUser.name) || ''};
       const submit = ()=>{
         callApi('addPart', part).then(res=>{
           if(!res.ok){ showMsg('addPartMsg', translateServerMsg(res.message), false); return; }
@@ -1629,7 +1800,7 @@ function attachHandlers(){
       const f = new FormData(withdrawForm);
       const code = f.get('code');
       if(!code){ showMsg('withdrawMsg', t('pleaseSelectPart'), false); return; }
-      const txn = {actor:(currentUser&&currentUser.name)||'', type:'withdraw', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      const txn = {actor:(currentUser&&currentUser.name)||'', type:'withdraw', code, lot:(f.has('lot') ? (f.get('lot')==='__blank__' ? '' : f.get('lot')) : undefined), qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
       callApi('recordTransaction', txn).then(res=>{
         if(!res.ok){ showMsg('withdrawMsg', translateServerMsg(res.message), false); return; }
         showMsg('withdrawMsg', `${t('withdrawSuccess')}${res.newStock}`, true);
@@ -1649,7 +1820,13 @@ function attachHandlers(){
       const f = new FormData(replenishForm);
       const code = f.get('code');
       if(!code){ showMsg('replenishMsg', t('pleaseSelectPart'), false); return; }
-      const txn = {actor:(currentUser&&currentUser.name)||'', type:'replenish', kind:f.get('kind')||'add', code, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      let lotV = f.has('lot') ? f.get('lot') : '', expV = '';
+      if(lotV==='__new__'){
+        lotV = (f.get('newLot')||'').trim(); expV = f.get('newExpiry')||'';
+        const pp = partByCode(code);
+        if(pp && pp.lots.some(l=>l.lot===lotV)){ showMsg('replenishMsg', t('lotExists'), false); return; }
+      } else if(lotV==='__blank__') lotV = '';
+      const txn = {actor:(currentUser&&currentUser.name)||'', type:'replenish', kind:f.get('kind')||'add', code, lot:lotV, expiry:expV, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
       callApi('recordTransaction', txn).then(res=>{
         if(!res.ok){ showMsg('replenishMsg', translateServerMsg(res.message), false); return; }
         showMsg('replenishMsg', `${t('replenishSuccess')}${res.newStock}`, true);
