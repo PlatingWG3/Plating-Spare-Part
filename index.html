@@ -229,15 +229,22 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 @keyframes drift{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){.login-bg *{animation:none !important;}}
 
-#analysisTableWrap{max-height:calc(100vh - 300px);overflow:auto;}
-#analysisTableWrap thead th{position:sticky;top:0;background:var(--card);z-index:1;white-space:nowrap;}
-#analysisTableWrap td{white-space:nowrap;}
-#analysisTableWrap td u{text-underline-offset:3px;font-weight:700;}
-.wh-status{font-size:13px;font-weight:600;}
 </style>
 </head>
 <body>
 <div id="app"></div>
+<script>
+// ===== SPM Plugin Host v1: ให้ไฟล์เสริม (เช่น analysis.js) ลงทะเบียนแท็บ/ข้อความ/CSS เข้ากับแอปหลัก =====
+// ถ้าไฟล์เสริมโหลดไม่ขึ้นหรือเวอร์ชันไม่ตรง แอปหลักยังทำงานได้ตามปกติ (แค่ไม่มีแท็บนั้น)
+window.SPM = {
+  apiVersion: 1,
+  tabs: [], i18n: { th: {}, en: {} }, api: null,
+  registerTab: function (def) { this.tabs.push(def); },
+  registerI18n: function (d) { var self = this; ['th', 'en'].forEach(function (l) { Object.assign(self.i18n[l], (d && d[l]) || {}); }); },
+  addStyle: function (css) { var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); }
+};
+</script>
+<script src="analysis.js?v=1"></script>
 <script>
 // ======== ตั้งค่า API / API config ========
 // วาง URL ของ Google Apps Script Web App ที่ Deploy แล้ว (ลงท้ายด้วย /exec) ตรงนี้
@@ -463,7 +470,7 @@ const I18N = {
     selectPartToEdit:'เลือกอะไหล่ที่ต้องการแก้ไข', selectPartPlaceholder:'-- เลือกอะไหล่ --',
     partCode:'รหัสอะไหล่', partName:'ชื่ออะไหล่', category:'หมวดหมู่', unit:'หน่วยนับ',
     stockEditNote:'คงเหลือ (แก้ไขผ่านเบิก/เติมสต็อกเท่านั้น)', minStock:'สต็อกขั้นต่ำ', owner:'เจ้าของอะไหล่ (Owner)',
-    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', maxStock:'สต็อคสูงสุด', expiryDate:'วันหมดอายุ', refillQty:'ควรเติมอีก (ถึงสต็อคสูงสุด)', lotsTitle:'รายการล็อต (Lot) ของ Plating / Lap Chemical', lotsHint:'ใช้เมื่อ Part number เดียวกันมีหลายล็อตที่วันหมดอายุต่างกัน ระบบจะรวมจำนวนเป็นคงเหลือ และเบิกจากล็อตที่หมดอายุก่อน (FEFO)', lotAdd:'+ เพิ่มล็อต', lotName:'Lot / เลขล็อต', expAlertTitle:'⏰ Alert — อะไหล่ใกล้หมดอายุ (ภายใน 14 วัน) / หมดอายุแล้ว', expExpired:'หมดอายุแล้ว {n} วัน', expToday:'หมดอายุวันนี้', expIn:'อีก {n} วัน', lineEv_expiry:'แจ้งเตือนอะไหล่ก่อนหมดอายุ 14 วัน (จันทร์-ศุกร์ 08:00)', lineEv_lowStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock (จันทร์-ศุกร์ 08:00)', lineEv_outStock:'แจ้งเตือนอะไหล่หมด Stock (จันทร์-ศุกร์ 08:00)', lineEv_withdraw:'แจ้งเตือนการเบิกอะไหล่ (ทันที)', lineEv_replenish:'แจ้งเตือนการเติม/คืนอะไหล่ (ทันที)', lotId:'Lot ID', newLotId:'Lot ID ใหม่', lotPlaceholder:'เลือก Lot ID', lotNew:'+ ล็อตใหม่ (ระบุ Lot ID ใหม่)', lotNoName:'(ไม่ระบุเลขล็อต)', lotSelectPartFirst:'เลือกอะไหล่ก่อน', lotExists:'Lot ID นี้มีอยู่แล้ว กรุณาเลือกจากรายการ', exportCsv:'Export รายการอะไหล่เป็น CSV (ตามแท็บหมวดหมู่ที่เลือก)', exportEmpty:'ไม่มีอะไหล่ให้ Export ในหมวดนี้', exportDone:'Export {n} รายการ ({c}) แล้ว', tabAnalysis:'Analysis', position:'ตำแหน่ง', positionHint:'เช่น Admin, Engineer, Technician', analysisTitle:'Analysis — Full SP Analysis', analysisUpload:'Upload Excel', analysisUpdate:'Update WH data', whUploadOk:'Upload success!', whUploadFail:'Upload ไม่สำเร็จ: ', whNoFile:'ยังไม่ได้ Upload ไฟล์ Excel', whNoFormat:'Error: ไม่พบ Sheet ชื่อ "Format" ในไฟล์ Excel ที่ Upload', whNoHeader:'Error: ไม่พบหัวคอลัมน์ *Material และ *Stock Qty ใน Sheet "Format"', whUpdating:'กำลังอัปเดต Current WH Qty. ...', whDone:'อัปเดต Current WH Qty. แล้ว: จับคู่ได้ {m} รายการ, No info {n} รายการ', analysisSearch:'ค้นหาในตาราง', analysisLegend:'ตัวเลข Current Internal Qty. ที่ขีดเส้นใต้ = ข้อมูลล่าสุดจากคลังอะไหล่ (จับคู่รหัสได้) ส่วนที่ไม่ขีดเส้นใต้ = ค่าจากชีท Full SP Analysis', analysisShowing:'แสดง {a} จาก {b} รายการ', analysisEmpty:'ไม่มีข้อมูลในชีท Full SP Analysis', analysisHdrMissing:'ไม่พบหัวคอลัมน์ "Spare parts P/N (Delta)" ในชีท จึงยังเทียบกับคลังอะไหล่ไม่ได้', codeDefaultNote:'ถ้าไม่มีรหัสอะไหล่ ให้ใช้ดังนี้: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'ยุบเมนู', sidebarExpand:'ขยายเมนู', machine:'เครื่องจักร', machineAll:'ทุกเครื่องจักร', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
+    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', lineLastOk:'ส่งสำเร็จล่าสุด', lineLastError:'ข้อผิดพลาดล่าสุด', maxStock:'สต็อคสูงสุด', expiryDate:'วันหมดอายุ', refillQty:'ควรเติมอีก (ถึงสต็อคสูงสุด)', lotsTitle:'รายการล็อต (Lot) ของ Plating / Lap Chemical', lotsHint:'ใช้เมื่อ Part number เดียวกันมีหลายล็อตที่วันหมดอายุต่างกัน ระบบจะรวมจำนวนเป็นคงเหลือ และเบิกจากล็อตที่หมดอายุก่อน (FEFO)', lotAdd:'+ เพิ่มล็อต', lotName:'Lot / เลขล็อต', expAlertTitle:'⏰ Alert — อะไหล่ใกล้หมดอายุ (ภายใน 14 วัน) / หมดอายุแล้ว', expExpired:'หมดอายุแล้ว {n} วัน', expToday:'หมดอายุวันนี้', expIn:'อีก {n} วัน', lineEv_expiry:'แจ้งเตือนอะไหล่ก่อนหมดอายุ 14 วัน (จันทร์-ศุกร์ 08:00)', lineEv_lowStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock (จันทร์-ศุกร์ 08:00)', lineEv_outStock:'แจ้งเตือนอะไหล่หมด Stock (จันทร์-ศุกร์ 08:00)', lineEv_withdraw:'แจ้งเตือนการเบิกอะไหล่ (ทันที)', lineEv_replenish:'แจ้งเตือนการเติม/คืนอะไหล่ (ทันที)', lotId:'Lot ID', newLotId:'Lot ID ใหม่', lotPlaceholder:'เลือก Lot ID', lotNew:'+ ล็อตใหม่ (ระบุ Lot ID ใหม่)', lotNoName:'(ไม่ระบุเลขล็อต)', lotSelectPartFirst:'เลือกอะไหล่ก่อน', lotExists:'Lot ID นี้มีอยู่แล้ว กรุณาเลือกจากรายการ', exportCsv:'Export รายการอะไหล่เป็น CSV (ตามแท็บหมวดหมู่ที่เลือก)', exportEmpty:'ไม่มีอะไหล่ให้ Export ในหมวดนี้', exportDone:'Export {n} รายการ ({c}) แล้ว', codeDefaultNote:'ถ้าไม่มีรหัสอะไหล่ ให้ใช้ดังนี้: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'ยุบเมนู', sidebarExpand:'ขยายเมนู', machine:'เครื่องจักร', machineAll:'ทุกเครื่องจักร', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
     selectPartFirst:'กรุณาเลือกอะไหล่ก่อนบันทึก', noPartFound:'ไม่พบอะไหล่ที่ตรงกับคำค้นหา',
     addPartTitle:'เพิ่มอะไหล่ใหม่', initialStock:'จำนวนเริ่มต้น', uploadImage:'รูปภาพอะไหล่ (อัปโหลด)',
     addPartBtn:'+ เพิ่มอะไหล่', codePlaceholder:'เช่น SP-005 หรือ SP-005,SP-006', unitPlaceholder:'ชิ้น / เส้น / กล่อง',
@@ -520,7 +527,7 @@ const I18N = {
     selectPartToEdit:'Select part to edit', selectPartPlaceholder:'-- Select part --',
     partCode:'Part code', partName:'Part name', category:'Category', unit:'Unit',
     stockEditNote:'Stock (editable via Withdraw/Replenish only)', minStock:'Safety Stock', owner:'Owner',
-    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', maxStock:'Max Stock', expiryDate:'Expiry date', refillQty:'To refill (up to Max Stock)', lotsTitle:'Plating / Lap Chemical lots', lotsHint:'Use when the same Part number has several lots with different expiry dates. Quantities are summed into Current Qty., and withdrawals use the earliest-expiring lot first (FEFO).', lotAdd:'+ Add lot', lotName:'Lot no.', expAlertTitle:'⏰ Alert — Parts expiring within 14 days / expired', expExpired:'Expired {n} days ago', expToday:'Expires today', expIn:'In {n} days', lineEv_expiry:'Expiry alert, 14 days ahead (Mon-Fri 08:00)', lineEv_lowStock:'Below Safety Stock alert (Mon-Fri 08:00)', lineEv_outStock:'Out of stock alert (Mon-Fri 08:00)', lineEv_withdraw:'Withdraw notification (instant)', lineEv_replenish:'Refill / return notification (instant)', lotId:'Lot ID', newLotId:'New Lot ID', lotPlaceholder:'Select Lot ID', lotNew:'+ New lot (enter new Lot ID)', lotNoName:'(no lot no.)', lotSelectPartFirst:'Select a part first', lotExists:'This Lot ID already exists. Please pick it from the list.', exportCsv:'Export parts list as CSV (current category tab)', exportEmpty:'No parts to export in this category', exportDone:'Exported {n} parts ({c})', tabAnalysis:'Analysis', position:'Position', positionHint:'e.g. Admin, Engineer, Technician', analysisTitle:'Analysis — Full SP Analysis', analysisUpload:'Upload Excel', analysisUpdate:'Update WH data', whUploadOk:'Upload success!', whUploadFail:'Upload failed: ', whNoFile:'No Excel file uploaded yet', whNoFormat:'Error: Sheet "Format" not found in the uploaded Excel file', whNoHeader:'Error: Columns *Material and *Stock Qty not found in Sheet "Format"', whUpdating:'Updating Current WH Qty. ...', whDone:'Current WH Qty. updated: {m} matched, {n} No info', analysisSearch:'Search table', analysisLegend:'Underlined Current Internal Qty. = live value from the spare part inventory (code matched). Not underlined = value from the Full SP Analysis sheet', analysisShowing:'Showing {a} of {b} rows', analysisEmpty:'No data in the Full SP Analysis sheet', analysisHdrMissing:'Column "Spare parts P/N (Delta)" not found, so rows cannot be matched with the inventory', codeDefaultNote:'If the part has no code, use: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'Collapse menu', sidebarExpand:'Expand menu', machine:'Machine', machineAll:'All machines', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
+    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', lineLastOk:'Last successful send', lineLastError:'Last error', maxStock:'Max Stock', expiryDate:'Expiry date', refillQty:'To refill (up to Max Stock)', lotsTitle:'Plating / Lap Chemical lots', lotsHint:'Use when the same Part number has several lots with different expiry dates. Quantities are summed into Current Qty., and withdrawals use the earliest-expiring lot first (FEFO).', lotAdd:'+ Add lot', lotName:'Lot no.', expAlertTitle:'⏰ Alert — Parts expiring within 14 days / expired', expExpired:'Expired {n} days ago', expToday:'Expires today', expIn:'In {n} days', lineEv_expiry:'Expiry alert, 14 days ahead (Mon-Fri 08:00)', lineEv_lowStock:'Below Safety Stock alert (Mon-Fri 08:00)', lineEv_outStock:'Out of stock alert (Mon-Fri 08:00)', lineEv_withdraw:'Withdraw notification (instant)', lineEv_replenish:'Refill / return notification (instant)', lotId:'Lot ID', newLotId:'New Lot ID', lotPlaceholder:'Select Lot ID', lotNew:'+ New lot (enter new Lot ID)', lotNoName:'(no lot no.)', lotSelectPartFirst:'Select a part first', lotExists:'This Lot ID already exists. Please pick it from the list.', exportCsv:'Export parts list as CSV (current category tab)', exportEmpty:'No parts to export in this category', exportDone:'Exported {n} parts ({c})', codeDefaultNote:'If the part has no code, use: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'Collapse menu', sidebarExpand:'Expand menu', machine:'Machine', machineAll:'All machines', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
     selectPartFirst:'Please select a part first', noPartFound:'No matching parts found',
     addPartTitle:'Add New Part', initialStock:'Initial stock', uploadImage:'Part image (upload)',
     addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005 or SP-005,SP-006', unitPlaceholder:'pcs / rolls / boxes',
@@ -801,10 +808,22 @@ function mapUser(raw){
 }
 // ชื่อ-นามสกุล ต่อด้วยตำแหน่งในวงเล็บ
 function userLabel(u){ u = u || {}; return (u.name || u.user || '') + (u.position ? ' (' + u.position + ')' : ''); }
-// เมนู Analysis แสดงเฉพาะตำแหน่ง Admin และ Engineer (เทียบกับคอลัมน์ "ตำแหน่ง" ในชีท Users)
-function canSeeAnalysis(u){ const p = String((u && u.position) || '').trim().toLowerCase(); return p === 'admin' || p === 'engineer'; }
 
 // ---------- Nav ----------
+// แท็บหลัก + แท็บจากไฟล์เสริม (SPM.tabs เช่น analysis.js) โดยวางไว้ถัดจากแท็บที่ระบุใน after
+function allTabs(){
+  const out = tabs.slice();
+  (SPM.tabs || []).forEach(p=>{
+    const i = out.findIndex(x=>x.id===p.after);
+    out.splice(i>=0 ? i+1 : out.length, 0, {id:p.id, labelKey:p.labelKey, icon:p.icon, plugin:p});
+  });
+  return out;
+}
+function tabAllowed(tb){
+  if(tb.adminOnly && currentUser.dept!=='Admin') return false;
+  if(tb.plugin){ try{ return !tb.plugin.visible || !!tb.plugin.visible(currentUser); }catch(e){ return false; } }
+  return true;
+}
 const tabs = [
   {id:'dashboard', labelKey:'tabDashboard', icon:'📊'},
   {id:'parts', labelKey:'tabParts', icon:'📦'},
@@ -812,7 +831,6 @@ const tabs = [
   {id:'replenish', labelKey:'tabReplenish', icon:'📥'},
   {id:'history', labelKey:'tabHistory', icon:'📜'},
   {id:'report', labelKey:'tabReport', icon:'📈'},
-  {id:'analysis', labelKey:'tabAnalysis', icon:'🔬', needsAnalysis:true},
   {id:'users', labelKey:'tabUsers', icon:'👤', adminOnly:true},
   {id:'settings', labelKey:'tabSettings', icon:'⚙️', adminOnly:true},
 ];
@@ -1104,7 +1122,7 @@ function closeEditModal(){
 
 function renderNav(){
   const nav = document.getElementById('nav');
-  const visibleTabs = tabs.filter(tb=>(!tb.adminOnly || currentUser.dept==='Admin') && (!tb.needsAnalysis || canSeeAnalysis(currentUser)));
+  const visibleTabs = allTabs().filter(tabAllowed);
   nav.innerHTML = visibleTabs.map(tb=>`<button data-tab="${tb.id}" class="${active===tb.id?'active':''}" title="${t(tb.labelKey)}"><span class="nav-icon">${tb.icon}</span><span class="nav-label">${t(tb.labelKey)}</span></button>`).join('');
   nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.tab; render();});
   const topbarTitle = document.getElementById('topbarTitle');
@@ -1528,113 +1546,6 @@ function renderReport(){
   </div>`;
 }
 
-// ================= Analysis (เฉพาะตำแหน่ง Admin / Engineer) =================
-let analysisData = null;      // {headers:[...], rows:[[...]]} จากชีท Full SP Analysis
-let analysisSearch = '';
-let whWorkbook = null, whFileName = '';
-let whStatus = {text:'', ok:true};
-const ANALYSIS_MAX_ROWS = 500;
-const WH_KEY_HEADER = 'Spare parts P/N (Delta)', WH_QTY_HEADER = 'Current WH Qty.', INTERNAL_QTY_HEADER = 'Current Internal Qty.';
-const hnorm = h => String(h==null?'':h).trim().toLowerCase();
-function renderAnalysis(){
-  return `
-  <div class="card">
-    <h2>${t('analysisTitle')}</h2>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-      <button type="button" id="whUploadBtn" class="period-btn" style="border:1px solid var(--border);background:var(--bg);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;">${t('analysisUpload')}</button>
-      <button type="button" id="whUpdateBtn" class="submit" style="width:auto;padding:8px 16px;margin:0;">${t('analysisUpdate')}</button>
-      <input type="file" id="whFileInput" accept=".xlsx,.xlsm,.xls" hidden>
-      <span id="whStatus" class="wh-status" style="color:${whStatus.ok?'var(--ok)':'var(--danger)'};">${escHTML(whStatus.text)}</span>
-    </div>
-    <div style="margin-top:12px;"><input id="analysisSearch" placeholder="${t('analysisSearch')}" value="${escHTML(analysisSearch)}" style="max-width:320px;"></div>
-  </div>
-  <div class="card">
-    <div id="analysisInfo" style="font-size:12px;color:var(--muted);margin-bottom:8px;"></div>
-    <div class="tbl-wrap" id="analysisTableWrap"><div class="empty">${t('loading')}</div></div>
-    <div style="font-size:12px;color:var(--muted);margin-top:10px;">${t('analysisLegend')}</div>
-  </div>`;
-}
-function loadAnalysis(){
-  callApi('getFullSPAnalysis').then(res=>{
-    if(!res || res.ok===false || !res.headers) throw new Error((res && res.message) || 'Invalid response');
-    analysisData = res; renderAnalysisTable();
-  }).catch(err=>{
-    const w = document.getElementById('analysisTableWrap');
-    if(w) w.innerHTML = `<div class="empty">${t('loadFailShort')}${escHTML(translateServerMsg(err.message))}</div>`;
-  });
-}
-function renderAnalysisTable(){
-  const wrap = document.getElementById('analysisTableWrap'); if(!wrap || !analysisData) return;
-  const H = analysisData.headers, R = analysisData.rows;
-  if(!R.length){ wrap.innerHTML = `<div class="empty">${t('analysisEmpty')}</div>`; return; }
-  const iPN = H.findIndex(h=>hnorm(h)===hnorm(WH_KEY_HEADER)), iInt = H.findIndex(h=>hnorm(h)===hnorm(INTERNAL_QTY_HEADER));
-  const idx = new Map(); parts.forEach(p=>splitCodes(p.code).forEach(c=>idx.set(codeKey(c), p)));
-  const live = row => { if(iPN<0) return null; for(const c of splitCodes(String(row[iPN]))){ const p = idx.get(codeKey(c)); if(p) return p; } return null; };
-  const q = analysisSearch.trim().toLowerCase();
-  const filtered = q ? R.filter(r=>r.join(' ').toLowerCase().includes(q)) : R;
-  const shown = filtered.slice(0, ANALYSIS_MAX_ROWS);
-  wrap.innerHTML = `<table><thead><tr>${H.map(h=>`<th>${escHTML(h)}</th>`).join('')}</tr></thead><tbody>
-    ${shown.map(r=>{ const p = (iInt>=0) ? live(r) : null;
-      return `<tr>${H.map((h,i)=> (i===iInt && p) ? `<td><u title="${escHTML(t('colStock'))}">${p.stock}</u></td>` : `<td>${escHTML(r[i]==null?'':r[i])}</td>`).join('')}</tr>`; }).join('')}
-  </tbody></table>`;
-  const info = document.getElementById('analysisInfo');
-  if(info) info.textContent = t('analysisShowing').replace('{a}', shown.length).replace('{b}', filtered.length) + (iPN<0 ? ' · ' + t('analysisHdrMissing') : '');
-}
-function setWhStatus(text, ok){ whStatus = {text, ok}; const el = document.getElementById('whStatus'); if(el){ el.textContent = text; el.style.color = ok ? 'var(--ok)' : 'var(--danger)'; } }
-let _xlsxPromise = null;
-function loadXLSX(){ // ตัวอ่านไฟล์ Excel (SheetJS) โหลดเมื่อใช้งานครั้งแรกเท่านั้น
-  if(window.XLSX) return Promise.resolve(window.XLSX);
-  if(_xlsxPromise) return _xlsxPromise;
-  _xlsxPromise = new Promise((res, rej)=>{
-    const sc = document.createElement('script');
-    sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-    sc.onload = ()=>res(window.XLSX);
-    sc.onerror = ()=>{ _xlsxPromise = null; rej(new Error('โหลดตัวอ่านไฟล์ Excel ไม่สำเร็จ (ตรวจการเชื่อมต่ออินเทอร์เน็ต)')); };
-    document.head.appendChild(sc);
-  });
-  return _xlsxPromise;
-}
-function handleWhFile(file){
-  if(!file) return;
-  whWorkbook = null; whFileName = file.name;
-  loadXLSX().then(X=>file.arrayBuffer().then(buf=>{ whWorkbook = X.read(buf, {type:'array'}); setWhStatus(t('whUploadOk') + '  (' + file.name + ')', true); }))
-    .catch(err=>setWhStatus(t('whUploadFail') + err.message, false));
-}
-function doUpdateWh(){
-  if(!whWorkbook){ setWhStatus(t('whNoFile'), false); return; }
-  const X = window.XLSX;
-  const sheetName = whWorkbook.SheetNames.find(n=>hnorm(n)==='format');
-  if(!sheetName){ setWhStatus(t('whNoFormat'), false); return; }
-  const rows = X.utils.sheet_to_json(whWorkbook.Sheets[sheetName], {header:1, raw:true, defval:''});
-  let hr = -1, cM = -1, cQ = -1;
-  for(let i=0; i<Math.min(rows.length, 30) && hr<0; i++){
-    const m = rows[i].findIndex(c=>hnorm(c)==='*material'), q = rows[i].findIndex(c=>hnorm(c)==='*stock qty');
-    if(m>=0 && q>=0){ hr = i; cM = m; cQ = q; }
-  }
-  if(hr<0){ setWhStatus(t('whNoHeader'), false); return; }
-  const agg = new Map(); // รวมจำนวนของ Material เดียวกันที่ซ้ำหลายแถว
-  for(let i=hr+1; i<rows.length; i++){
-    const mat = String(rows[i][cM]==null?'':rows[i][cM]).trim(); if(!mat) continue;
-    const qty = Number(String(rows[i][cQ]).replace(/,/g,'')) || 0;
-    const k = codeKey(mat), cur = agg.get(k);
-    agg.set(k, {material: cur ? cur.material : mat, qty: r2((cur ? cur.qty : 0) + qty)});
-  }
-  setWhStatus(t('whUpdating'), true);
-  const btn = document.getElementById('whUpdateBtn'); if(btn) btn.disabled = true;
-  callApi('updateWhData', {items:[...agg.values()], fileName:whFileName, person:(currentUser&&currentUser.name)||''}).then(res=>{
-    if(btn) btn.disabled = false;
-    if(!res.ok){ setWhStatus(translateServerMsg(res.message), false); return; }
-    setWhStatus(t('whDone').replace('{m}', res.matched).replace('{n}', res.noInfo), true);
-    loadAnalysis();
-  }).catch(err=>{ if(btn) btn.disabled = false; setWhStatus(t('errorPrefix') + err.message, false); });
-}
-document.addEventListener('click', e=>{
-  const c = e.target.closest ? e.target.closest('#whUploadBtn, #whUpdateBtn') : null; if(!c) return;
-  if(c.id==='whUploadBtn') document.getElementById('whFileInput').click(); else doUpdateWh();
-});
-document.addEventListener('change', e=>{ if(e.target.id==='whFileInput'){ handleWhFile(e.target.files[0]); e.target.value = ''; } });
-document.addEventListener('input', e=>{ if(e.target.id==='analysisSearch'){ analysisSearch = e.target.value; renderAnalysisTable(); } });
-
 function renderUsers(){
   return `
   <div class="card">
@@ -1737,6 +1648,8 @@ function loadLineSettings(){
     if(!r || !r.settings) throw new Error((r && r.message) || 'Invalid response');
     box.className = '';
     box.innerHTML = `<div style="font-size:13px;margin-bottom:10px;color:${r.configured?'var(--ok)':'var(--warn)'};">${r.configured?t('lineConfigured'):t('lineNotConfigured')}</div>
+      ${r.lastOk ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px;">${t('lineLastOk')}: ${escHTML(r.lastOk)}</div>` : ''}
+      ${r.lastError ? `<div style="font-size:12px;color:var(--danger);margin-bottom:8px;word-break:break-word;">${t('lineLastError')}: ${escHTML(r.lastError)}</div>` : ''}
       ${LINE_EVENT_KEYS.map(k=>`<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px;cursor:pointer;"><input type="checkbox" data-lineev="${k}" ${r.settings[k]?'checked':''} style="width:18px;height:18px;margin:0;"><span style="flex:1;">${t('lineEv_'+k)}</span></label>`).join('')}
       <div style="display:flex;gap:10px;align-items:center;margin-top:12px;"><button type="button" id="lineTestBtn" class="export-btn" style="border:1px solid var(--border);background:var(--bg);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer;">${t('lineTest')}</button><span id="lineMsg" style="font-size:12.5px;"></span></div>`;
     const say = (txt, ok)=>{ const m = document.getElementById('lineMsg'); if(m){ m.textContent = txt; m.style.color = ok?'var(--ok)':'var(--danger)'; } };
@@ -1767,7 +1680,8 @@ function loadSheetInfo(){
 
 function render(){
   if((active==='users'||active==='settings') && currentUser.dept!=='Admin') active = 'dashboard';
-  if(active==='analysis' && !canSeeAnalysis(currentUser)) active = 'dashboard';
+  let curTab = allTabs().find(x=>x.id===active);
+  if(curTab && curTab.plugin && !tabAllowed(curTab)){ active = 'dashboard'; curTab = null; }
   renderNav();
   const main = document.getElementById('main');
   if(active==='dashboard') main.innerHTML = renderDashboard();
@@ -1776,12 +1690,15 @@ function render(){
   else if(active==='replenish') main.innerHTML = renderReplenish();
   else if(active==='history') main.innerHTML = renderHistory();
   else if(active==='report') main.innerHTML = renderReport();
-  else if(active==='analysis') main.innerHTML = renderAnalysis();
+  else if(curTab && curTab.plugin){
+    try{ main.innerHTML = curTab.plugin.render(); }
+    catch(e){ console.error(e); main.innerHTML = `<div class="card"><div class="empty">${t('loadFailShort')}${escHTML(e.message)}</div></div>`; }
+  }
   else if(active==='users') main.innerHTML = renderUsers();
   else if(active==='settings') main.innerHTML = renderSettings();
   attachHandlers();
   if(active==='users') loadUsersTable();
-  if(active==='analysis') loadAnalysis();
+  if(curTab && curTab.plugin && curTab.plugin.onShow){ try{ curTab.plugin.onShow(); }catch(e){ console.error(e); } }
   if(active==='settings') loadSheetInfo();
 }
 
@@ -2135,6 +2052,10 @@ function attachHandlers(){
     };
   }
 }
+
+// ---------- ผูกฟังก์ชันของแอปหลักให้ปลั๊กอิน (SPM) ใช้ ----------
+SPM.api = { t, escHTML, callApi, splitCodes, codeKey, r2, translateServerMsg, showToast, getParts:()=>parts, getUser:()=>currentUser };
+['th','en'].forEach(l=>Object.assign(I18N[l], SPM.i18n[l]));
 
 // ---------- Boot ----------
 if(API_URL.indexOf('PASTE_YOUR') === 0){
