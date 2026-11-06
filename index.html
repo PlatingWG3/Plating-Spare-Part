@@ -229,22 +229,29 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 @keyframes drift{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){.login-bg *{animation:none !important;}}
 
+
+.badge.pend{background:transparent;color:var(--muted);border:1px dashed var(--muted);}
+.led{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:#9AA5B1;vertical-align:middle;}
+.led.on{background:#22C55E;box-shadow:0 0 6px rgba(34,197,94,.7);}
+.alert-group-title{margin:14px 0 6px;font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;}
+.alert-group-title .n{font-weight:600;color:var(--muted);}
+.alert-group-title:first-of-type{margin-top:4px;}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-// ===== SPM Plugin Host v1: ให้ไฟล์เสริม (เช่น analysis.js) ลงทะเบียนแท็บ/ข้อความ/CSS เข้ากับแอปหลัก =====
+// ===== SPM Plugin Host v2: ให้ไฟล์เสริม (เช่น analysis.js) ลงทะเบียนแท็บ/ข้อความ/CSS เข้ากับแอปหลัก =====
 // ถ้าไฟล์เสริมโหลดไม่ขึ้นหรือเวอร์ชันไม่ตรง แอปหลักยังทำงานได้ตามปกติ (แค่ไม่มีแท็บนั้น)
 window.SPM = {
-  apiVersion: 1,
+  apiVersion: 2,
   tabs: [], i18n: { th: {}, en: {} }, api: null,
   registerTab: function (def) { this.tabs.push(def); },
   registerI18n: function (d) { var self = this; ['th', 'en'].forEach(function (l) { Object.assign(self.i18n[l], (d && d[l]) || {}); }); },
   addStyle: function (css) { var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); }
 };
 </script>
-<script src="analysis.js?v=2"></script>
+<script src="analysis.js?v=3"></script>
 <script>
 // ======== ตั้งค่า API / API config ========
 // วาง URL ของ Google Apps Script Web App ที่ Deploy แล้ว (ลงท้ายด้วย /exec) ตรงนี้
@@ -272,10 +279,10 @@ const _day = 86400000;
 function _ago(d){ return new Date(Date.now() - d*_day).toISOString(); }
 const MOCK = {
   users: [
-    {u:'admin', p:'1234', n:'ผู้ดูแลระบบ', d:'Admin', pos:'Admin'},
-    {u:'me01', p:'1234', n:'สมชาย ช่างซ่อม', d:'ME', pos:'Technician'},
-    {u:'mfg01', p:'1234', n:'สมหญิง ฝ่ายผลิต', d:'MFG', pos:'Operator'},
-    {u:'pe01', p:'1234', n:'วิชัย วิศวกร', d:'PE', pos:'Engineer'},
+    {u:'admin', p:'1234', n:'ผู้ดูแลระบบ', d:'Admin', pos:'Admin', lv:3},
+    {u:'me01', p:'1234', n:'สมชาย ช่างซ่อม', d:'ME', pos:'Technician', lv:1},
+    {u:'mfg01', p:'1234', n:'สมหญิง ฝ่ายผลิต', d:'MFG', pos:'Operator', lv:1},
+    {u:'pe01', p:'1234', n:'วิชัย วิศวกร', d:'PE', pos:'Engineer', lv:2},
   ],
   parts: [
     ['SP-001','สายพานลำเลียง 10mm','General','MFG',12,5,'เส้น',''],
@@ -304,6 +311,7 @@ const MOCK = {
     [_ago(1),'เบิกออก','SP-002','ตลับลูกปืน 6205',3,'ช่างซ่อมบำรุง (ME)','เปลี่ยนลูกปืนปั๊ม'],
   ].map(r=>({'วันที่':r[0],'ประเภท':r[1],'รหัส':r[2],'ชื่ออะไหล่':r[3],'จำนวน':r[4],'โดย':r[5],'หมายเหตุ':r[6]})),
   logins: [],
+  online: {pe01: Infinity},   // Demo: pe01 แสดงเป็นออนไลน์ตลอดเพื่อให้เห็น LED สีเขียว/เทา (ผู้ใช้ที่ล็อกอินอยู่ออนไลน์จริงตามสัญญาณ)
   changes: [
     [_ago(7),'แก้ไขข้อมูล','SP-003','ฟิลเตอร์ลมอัด','ขั้นต่ำ (Safety Stock)','5','8','ผู้ดูแลระบบ'],
     [_ago(5),'แก้ไขข้อมูล','SP-001','สายพานลำเลียง 10mm','หมวดหมู่','General','Consumable','ช่างซ่อมบำรุง (ME)'],
@@ -333,26 +341,42 @@ function _ck(v){ let s=String(v==null?'':v).trim().replace(/^'+/,''); if(/^\d+(\
 function _sameCode(a,b){ const A=String(a).split(',').map(_ck).filter(Boolean), B=String(b).split(',').map(_ck).filter(Boolean); return A.length>0 && A.join(',')===B.join(','); }
 // ข้อมูลจำลองของชีท "Full SP Analysis" (หัวคอลัมน์ในระบบจริงอ่านจากชีทตามที่ตั้งไว้)
 const _mockAnalysis = {
-  headers:['No.','Spare parts P/N (Delta)','Description','Supplier','Safety Stock','Current Internal Qty.','Current WH Qty.','Lead Time (days)'],
+  headers:['No.','Spare parts P/N (Delta)','Description','Supplier','Safety stock / 4 month','Current Internal Qty.','Current WH Qty.','SUM (WH + Internal)','Lead Time (days)'],
   rows:[
-    [1,'SP-001','สายพานลำเลียง 10mm','Supplier A',5,99,20,14],
-    [2,'SP-002','ตลับลูกปืน 6205','Supplier B',10,99,5,21],
-    [3,'SP-003','ฟิลเตอร์ลมอัด','Supplier B',4,99,0,30],
-    [4,'SP-004','มอเตอร์ไฟฟ้า 1HP','Supplier C',2,99,3,45],
-    [5,'SP-005','ซีลยางปั๊ม','Supplier A',10,99,12,14],
-    [6,'10234','ตลับลูกปืน 6204','Supplier B',5,99,8,21],
-    [7,'CH-001','น้ำยาล้างคราบ','Supplier D',6,99,30,10],
-    [8,'LC-001','น้ำยาขัดเงา','Supplier D',4,99,10,10],
-    [9,'DL-100234','Servo Drive 400W','Supplier E',1,2,1,60],
-    [10,'DL-100567','PLC Module','Supplier E',1,0,0,45],
-    [11,'DL-200111','Proximity Sensor M12','Supplier F',3,6,4,30],
-    [12,'DL-200345','Solenoid Coil 24V','Supplier F',2,1,2,30],
+    [1,'SP-001','สายพานลำเลียง 10mm','Supplier A',40,99,20,'',14],
+    [2,'SP-002','ตลับลูกปืน 6205','Supplier B',5,99,5,'',21],
+    [3,'SP-003','ฟิลเตอร์ลมอัด','Supplier B',30,99,0,'',30],
+    [4,'SP-004','มอเตอร์ไฟฟ้า 1HP','Supplier C',3,99,3,'',45],
+    [5,'SP-005','ซีลยางปั๊ม','Supplier A',50,99,12,'',14],
+    [6,'10234','ตลับลูกปืน 6204','Supplier B',30,99,8,'',21],
+    [7,'CH-001','น้ำยาล้างคราบ','Supplier D',100,99,30,'',10],
+    [8,'LC-001','น้ำยาขัดเงา','Supplier D',5,99,10,'',10],
+    [9,'DL-100234','Servo Drive 400W','Supplier E',4,2,1,'',60],
+    [10,'DL-100567','PLC Module','Supplier E',2,0,0,'',45],
+    [11,'DL-200111','Proximity Sensor M12','Supplier F',8,6,4,'',30],
+    [12,'DL-200345','Solenoid Coil 24V','Supplier F',2,1,2,'',30],
+    [13,'DL-300001','Encoder 1024 PPR','Supplier E',4,1,'No info','',50],
   ].map(r=>r.slice()),
 };
+// จำลองการ Sync ของ Backend: อัปเดต Current Internal Qty. จากคลังอะไหล่ (เฉพาะแถวที่รหัสตรงกัน) และคำนวณ SUM (WH + Internal)
+function _syncAnalysis(){
+  const A=_mockAnalysis, nh=h=>String(h).trim().toLowerCase().replace(/\s+/g,' ');
+  const ix=n=>A.headers.findIndex(h=>nh(h)===nh(n));
+  const iP=ix('Spare parts P/N (Delta)'), iI=ix('Current Internal Qty.'), iW=ix('Current WH Qty.'), iS=ix('SUM (WH + Internal)');
+  const isN=v=>v!==''&&v!=null&&isFinite(Number(v));
+  A.rows.forEach(r=>{
+    if(iP>=0&&iI>=0){
+      const toks=String(r[iP]).split(',').map(_ck).filter(Boolean);
+      const part=MOCK.parts.find(p=>String(p.code).split(',').map(_ck).some(c=>toks.indexOf(c)!==-1));
+      if(part) r[iI]=part.pending ? 'รอเช็คจำนวน' : part.stock;
+    }
+    if(iS>=0&&iI>=0&&iW>=0){ const a=isN(r[iI]), b=isN(r[iW]); r[iS]=(a||b) ? r2((a?Number(r[iI]):0)+(b?Number(r[iW]):0)) : ''; }
+  });
+}
 const _mockLine = {lowStock:true,outStock:true,expiry:true,withdraw:true,replenish:true,login:false,partAddDelete:false,partEdit:false};
 function _log(type,code,name,field,o,n,by){ MOCK.changes.push({'วันที่':new Date().toISOString(),'ประเภท':type,'รหัส':String(code),'ชื่ออะไหล่':name,'ข้อมูลที่เปลี่ยน':field,'ข้อมูลเก่า':o,'ข้อมูลใหม่':n,'โดย':by||'','หมายเหตุ':''}); }
 function _partRow(p){
-  return {'รหัส':p.code,'ชื่อ':p.name,'เครื่องจักร':p.machine||'','หมวดหมู่':p.category,'เจ้าของ':p.owner,'คงเหลือ':p.stock,'ขั้นต่ำ':p.min,'สต็อคสูงสุด':p.max==null?'':p.max,'วันหมดอายุ':p.expiry||'','หน่วยนับ':p.unit,'รูปภาพ':p.image,'lots':p.lots||[]};
+  return {'รหัส':p.code,'ชื่อ':p.name,'เครื่องจักร':p.machine||'','หมวดหมู่':p.category,'เจ้าของ':p.owner,'คงเหลือ':p.pending ? 'รอเช็คจำนวน' : p.stock,'ขั้นต่ำ':p.min,'สต็อคสูงสุด':p.max==null?'':p.max,'วันหมดอายุ':p.expiry||'','หน่วยนับ':p.unit,'รูปภาพ':p.image,'lots':p.lots||[]};
 }
 function mockApi(action, payload){
   return new Promise(resolve=>setTimeout(()=>resolve(_mockHandle(action, payload)), 150));
@@ -362,9 +386,10 @@ function _mockHandle(action, p){
     case 'login': {
       const u = MOCK.users.find(x=>x.u===p.username && x.p===p.password);
       MOCK.logins.push({'วันที่-เวลา':new Date().toISOString(),'Username':p.username,'ชื่อ-นามสกุล':u?u.n:'-','แผนก':u?u.d:'-','ตำแหน่ง':u?u.pos:'-','ผลลัพธ์':u?'สำเร็จ':'ไม่สำเร็จ'});
-      return u ? {ok:true, user:{user:u.u, name:u.n, dept:u.d, position:u.pos||''}} : {ok:false, message:'Username หรือ Password ไม่ถูกต้อง'};
+      if(u) MOCK.online[u.u] = Date.now();
+      return u ? {ok:true, user:{user:u.u, name:u.n, dept:u.d, position:u.pos||'', level:u.lv||0}} : {ok:false, message:'Username หรือ Password ไม่ถูกต้อง'};
     }
-    case 'getFullSPAnalysis': return {ok:true, headers:_mockAnalysis.headers.slice(), rows:_mockAnalysis.rows.map(r=>r.slice())};
+    case 'getFullSPAnalysis': _syncAnalysis(); return {ok:true, headers:_mockAnalysis.headers.slice(), rows:_mockAnalysis.rows.map(r=>r.slice())};
     case 'updateWhData': {
       const A=_mockAnalysis, norm=h=>String(h).trim().toLowerCase();
       const iP=A.headers.findIndex(h=>norm(h)==='spare parts p/n (delta)'), iW=A.headers.findIndex(h=>norm(h)==='current wh qty.');
@@ -372,6 +397,7 @@ function _mockHandle(action, p){
       const m=new Map(); (p.items||[]).forEach(it=>{ const k=_ck(it.material); m.set(k,r2((m.get(k)||0)+r2(it.qty))); });
       let matched=0, noInfo=0;
       A.rows.forEach(r=>{ const k=String(r[iP]).split(',').map(_ck).filter(Boolean).find(x=>m.has(x)); if(k!==undefined){ r[iW]=m.get(k); matched++; } else { r[iW]='No info'; noInfo++; } });
+      _syncAnalysis();
       _log('อัปเดต WH','-','Full SP Analysis','Current WH Qty.','-',matched+' matched / '+noInfo+' No info',p.person);
       return {ok:true, matched, noInfo, total:A.rows.length};
     }
@@ -385,11 +411,20 @@ function _mockHandle(action, p){
     case 'getPartsList': return MOCK.parts.map(_partRow);
     case 'getHistory': return MOCK.history.slice();
     case 'getChangeLog': return MOCK.changes.slice();
-    case 'getUsers': return MOCK.users.map(u=>({'Username':u.u,'ชื่อ-นามสกุล':u.n,'แผนก':u.d,'ตำแหน่ง':u.pos||''}));
+    case 'getUsers': return MOCK.users.map(u=>({'Username':u.u,'ชื่อ-นามสกุล':u.n,'แผนก':u.d,'ตำแหน่ง':u.pos||'','Level':u.lv||'','online':(Date.now()-(MOCK.online[u.u]||0))<6*60000,'lastSeen':MOCK.online[u.u]&&isFinite(MOCK.online[u.u])?new Date(MOCK.online[u.u]).toISOString():''}));
+    case 'heartbeat': MOCK.online[p.user] = Date.now(); return {ok:true};
+    case 'logout': delete MOCK.online[p.user]; return {ok:true};
+    case 'updateUserLevel': {
+      const u = MOCK.users.find(x=>x.u===p.user); if(!u) return {ok:false, message:'ไม่พบผู้ใช้นี้'};
+      const nl = Number(p.level); if(!(nl>=1 && nl<=3)) return {ok:false, message:'Level ไม่ถูกต้อง'};
+      const wasAdmin = (u.lv===3);
+      if(wasAdmin && nl<3 && MOCK.users.filter(x=>x.lv===3).length<=1) return {ok:false, message:'ต้องมีผู้ใช้ Level 3 (Admin) อย่างน้อย 1 คน'};
+      u.lv = nl; return {ok:true};
+    }
     case 'getLoginRecords': return MOCK.logins.slice();
     case 'createUser':
       if(MOCK.users.some(x=>x.u===p.user)) return {ok:false, message:'มี Username นี้อยู่แล้ว'};
-      MOCK.users.push({u:p.user, p:p.pass, n:p.name, d:p.dept, pos:p.position||''}); return {ok:true};
+      MOCK.users.push({u:p.user, p:p.pass, n:p.name, d:p.dept, pos:p.position||'', lv:Number(p.level)||1}); return {ok:true};
     case 'addPart': {
       const _tk = c=>String(c).split(',').map(_ck).filter(Boolean);
       if(MOCK.parts.some(x=>_tk(x.code).some(k=>_tk(p.code).includes(k)))) return {ok:false, message:'มีรหัสอะไหล่นี้อยู่แล้ว'};
@@ -397,6 +432,7 @@ function _mockHandle(action, p){
         image:p.imageBase64?('data:'+(p.imageMimeType||'image/jpeg')+';base64,'+p.imageBase64):''});
       _applyLots(MOCK.parts[MOCK.parts.length-1], p);
       MOCK.parts[MOCK.parts.length-1].machine = p.machine||'';
+      { const np = MOCK.parts[MOCK.parts.length-1]; if(!(np.lots && np.lots.length) && Number(p.stock)===999){ np.pending = true; np.stock = 0; } }
       _log('เพิ่มอะไหล่',p.code,p.name,'เพิ่มอะไหล่ใหม่','-','ชื่อ: '+p.name+' | หมวดหมู่: '+(p.category||'-')+' | เจ้าของ: '+(p.owner||'-')+' | คงเหลือ: '+(Number(p.stock)||0)+' '+(p.unit||'')+' | ขั้นต่ำ: '+(Number(p.min)||0),p.person);
       return {ok:true};
     }
@@ -410,6 +446,16 @@ function _mockHandle(action, p){
     case 'updatePart': {
       const x = MOCK.parts.find(y=>_sameCode(y.code,p.code));
       if(!x) return {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
+      if(p.newCode && !_sameCode(x.code, p.newCode)){ // Level 3: เปลี่ยนรหัสอะไหล่
+        const _t = c=>String(c).split(',').map(_ck).filter(Boolean);
+        if(MOCK.parts.some(y=>y!==x && _t(y.code).some(k=>_t(p.newCode).includes(k)))) return {ok:false, message:'มีรหัสอะไหล่นี้อยู่แล้ว'};
+        _log('แก้ไขข้อมูล',p.newCode,p.name,'รหัสอะไหล่',x.code,p.newCode,p.person); x.code = p.newCode;
+      }
+      if(p.stock!==undefined && p.stock!=='' && !(isChemCat(p.category) && p.lots && p.lots.length)){ // Level 3: แก้ไขจำนวนคงเหลือ
+        const ns = r2(p.stock), os = x.pending ? 'รอเช็คจำนวน' : x.stock;
+        if(String(os)!==String(ns)) _log('แก้ไขข้อมูล',x.code,p.name,'คงเหลือ',os,ns,p.person);
+        x.stock = ns; x.pending = false;
+      }
       [['ชื่อ',x.name,p.name],['หมวดหมู่',x.category,p.category||''],['เจ้าของ',x.owner,p.owner||''],['หน่วยนับ',x.unit,p.unit||''],['ขั้นต่ำ (Safety Stock)',x.min,Number(p.min)||0]]
         .forEach(d=>{ if(String(d[1]).trim()!==String(d[2]).trim()) _log('แก้ไขข้อมูล',x.code,p.name,d[0],d[1],d[2],p.person); });
       if(p.imageBase64) _log('แก้ไขข้อมูล',x.code,p.name,'รูปภาพ',x.image?'มีรูปเดิม':'ไม่มีรูป','เปลี่ยนเป็นรูปใหม่',p.person);
@@ -427,6 +473,7 @@ function _mockHandle(action, p){
     case 'recordTransaction': {
       const x = MOCK.parts.find(y=>_sameCode(y.code,p.code));
       if(!x) return {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
+      if(x.pending) return {ok:false, message:'อะไหล่นี้รอเช็คจำนวน กรุณาให้ Level 3 (Admin) ระบุจำนวนคงเหลือก่อน'};
       const q = r2(p.qty);
       if(p.type==='withdraw'){
         if(q > x.stock) return {ok:false, message:'จำนวนเบิกเกินสต็อกคงเหลือ (คงเหลือ '+x.stock+')'};
@@ -465,12 +512,12 @@ const I18N = {
     errorPrefix:'เกิดข้อผิดพลาด: ', connectFail:'เชื่อมต่อ API ไม่ได้: ',
     logout:'ออกจากระบบ', loadingData:'กำลังโหลดข้อมูล...', loadFail:'โหลดข้อมูลไม่สำเร็จ: ',
     tabDashboard:'ภาพรวม', tabParts:'คลังอะไหล่', tabWithdraw:'เบิกอะไหล่', tabReplenish:'เติมสต็อก/คืน',
-    tabHistory:'ประวัติ', tabReport:'รายงาน', tabUsers:'จัดการผู้ใช้', tabSettings:'ข้อมูล Google Sheet',
+    tabHistory:'ประวัติ', tabReport:'รายงาน', tabUsers:'จัดการผู้ใช้', tabSettings:'Setup',
     editPartTitle:'แก้ไขอะไหล่', close:'ปิด', searchPart:'ค้นหาอะไหล่', searchPlaceholder:'พิมพ์รหัสหรือชื่อเพื่อค้นหา...',
     selectPartToEdit:'เลือกอะไหล่ที่ต้องการแก้ไข', selectPartPlaceholder:'-- เลือกอะไหล่ --',
     partCode:'รหัสอะไหล่', partName:'ชื่ออะไหล่', category:'หมวดหมู่', unit:'หน่วยนับ',
     stockEditNote:'คงเหลือ (แก้ไขผ่านเบิก/เติมสต็อกเท่านั้น)', minStock:'สต็อกขั้นต่ำ', owner:'เจ้าของอะไหล่ (Owner)',
-    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', lineLastOk:'ส่งสำเร็จล่าสุด', lineLastError:'ข้อผิดพลาดล่าสุด', maxStock:'สต็อคสูงสุด', expiryDate:'วันหมดอายุ', refillQty:'ควรเติมอีก (ถึงสต็อคสูงสุด)', lotsTitle:'รายการล็อต (Lot) ของ Plating / Lap Chemical', lotsHint:'ใช้เมื่อ Part number เดียวกันมีหลายล็อตที่วันหมดอายุต่างกัน ระบบจะรวมจำนวนเป็นคงเหลือ และเบิกจากล็อตที่หมดอายุก่อน (FEFO)', lotAdd:'+ เพิ่มล็อต', lotName:'Lot / เลขล็อต', expAlertTitle:'⏰ Alert — อะไหล่ใกล้หมดอายุ (ภายใน 14 วัน) / หมดอายุแล้ว', expExpired:'หมดอายุแล้ว {n} วัน', expToday:'หมดอายุวันนี้', expIn:'อีก {n} วัน', lineEv_expiry:'แจ้งเตือนอะไหล่ก่อนหมดอายุ 14 วัน (จันทร์-ศุกร์ 08:00)', lineEv_lowStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock (จันทร์-ศุกร์ 08:00)', lineEv_outStock:'แจ้งเตือนอะไหล่หมด Stock (จันทร์-ศุกร์ 08:00)', lineEv_withdraw:'แจ้งเตือนการเบิกอะไหล่ (ทันที)', lineEv_replenish:'แจ้งเตือนการเติม/คืนอะไหล่ (ทันที)', lotId:'Lot ID', newLotId:'Lot ID ใหม่', lotPlaceholder:'เลือก Lot ID', lotNew:'+ ล็อตใหม่ (ระบุ Lot ID ใหม่)', lotNoName:'(ไม่ระบุเลขล็อต)', lotSelectPartFirst:'เลือกอะไหล่ก่อน', lotExists:'Lot ID นี้มีอยู่แล้ว กรุณาเลือกจากรายการ', exportCsv:'Export รายการอะไหล่เป็น CSV (ตามแท็บหมวดหมู่ที่เลือก)', exportEmpty:'ไม่มีอะไหล่ให้ Export ในหมวดนี้', exportDone:'Export {n} รายการ ({c}) แล้ว', codeDefaultNote:'ถ้าไม่มีรหัสอะไหล่ ให้ใช้ดังนี้: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'ยุบเมนู', sidebarExpand:'ขยายเมนู', machine:'เครื่องจักร', machineAll:'ทุกเครื่องจักร', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
+    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', statusPending:'รอเช็คจำนวน', pendingHint:'ถ้ายังไม่ทราบจำนวน ใส่ 999 = ระบบจะบันทึกเป็น "รอเช็คจำนวน"', pendingBlock:'อะไหล่นี้ "รอเช็คจำนวน" ยังเบิก/เติมไม่ได้ ให้ Level 3 (Admin) ระบุจำนวนคงเหลือในหน้าแก้ไขก่อน', codeEditNote:'Level 3: แก้ไขรหัสอะไหล่ได้ (ประวัติเดิมยังใช้รหัสเก่า)', level:'Level การเข้าถึง', level1:'Level 1 — ผู้ใช้ทั่วไป (ไม่เห็น Analysis, จัดการผู้ใช้, Setup)', level2:'Level 2 — เห็น Analysis (ไม่เห็น จัดการผู้ใช้, Setup)', level3:'Level 3 — Admin (เห็นทุกแท็บ แก้ไขรหัส/คงเหลือได้)', level1Short:'Level 1', level2Short:'Level 2', level3Short:'Level 3 (Admin)', levelSaved:'เปลี่ยน Level แล้ว', levelSelfBlock:'ไม่สามารถลด Level ของตัวเองได้', online:'ออนไลน์', offline:'ออฟไลน์', onlineNote:'ออนไลน์ = ใช้งานระบบอยู่ภายใน 6 นาทีที่ผ่านมา', lineLastOk:'ส่งสำเร็จล่าสุด', lineLastError:'ข้อผิดพลาดล่าสุด', maxStock:'สต็อคสูงสุด', expiryDate:'วันหมดอายุ', refillQty:'ควรเติมอีก (ถึงสต็อคสูงสุด)', lotsTitle:'รายการล็อต (Lot) ของ Plating / Lap Chemical', lotsHint:'ใช้เมื่อ Part number เดียวกันมีหลายล็อตที่วันหมดอายุต่างกัน ระบบจะรวมจำนวนเป็นคงเหลือ และเบิกจากล็อตที่หมดอายุก่อน (FEFO)', lotAdd:'+ เพิ่มล็อต', lotName:'Lot / เลขล็อต', expAlertTitle:'⏰ Alert — อะไหล่ใกล้หมดอายุ (ภายใน 14 วัน) / หมดอายุแล้ว', expExpired:'หมดอายุแล้ว {n} วัน', expToday:'หมดอายุวันนี้', expIn:'อีก {n} วัน', lineEv_expiry:'การ์ดสรุปประจำสัปดาห์: ส่วนก่อนหมดอายุ 14 วัน (ทุกวันจันทร์ 08:00)', lineEv_lowStock:'การ์ดสรุปประจำสัปดาห์: ส่วนต่ำกว่า Safety Stock (ทุกวันจันทร์ 08:00)', lineEv_outStock:'การ์ดสรุปประจำสัปดาห์: ส่วนหมด Stock (ทุกวันจันทร์ 08:00)', lineEv_withdraw:'แจ้งเตือนการเบิกอะไหล่ (ทันที)', lineEv_replenish:'แจ้งเตือนการเติม/คืนอะไหล่ (ทันที)', lotId:'Lot ID', newLotId:'Lot ID ใหม่', lotPlaceholder:'เลือก Lot ID', lotNew:'+ ล็อตใหม่ (ระบุ Lot ID ใหม่)', lotNoName:'(ไม่ระบุเลขล็อต)', lotSelectPartFirst:'เลือกอะไหล่ก่อน', lotExists:'Lot ID นี้มีอยู่แล้ว กรุณาเลือกจากรายการ', exportCsv:'Export รายการอะไหล่เป็น CSV (ตามแท็บหมวดหมู่ที่เลือก)', exportEmpty:'ไม่มีอะไหล่ให้ Export ในหมวดนี้', exportDone:'Export {n} รายการ ({c}) แล้ว', codeDefaultNote:'ถ้าไม่มีรหัสอะไหล่ ให้ใช้ดังนี้: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'ยุบเมนู', sidebarExpand:'ขยายเมนู', machine:'เครื่องจักร', machineAll:'ทุกเครื่องจักร', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
     selectPartFirst:'กรุณาเลือกอะไหล่ก่อนบันทึก', noPartFound:'ไม่พบอะไหล่ที่ตรงกับคำค้นหา',
     addPartTitle:'เพิ่มอะไหล่ใหม่', initialStock:'จำนวนเริ่มต้น', uploadImage:'รูปภาพอะไหล่ (อัปโหลด)',
     addPartBtn:'+ เพิ่มอะไหล่', codePlaceholder:'เช่น SP-005 หรือ SP-005,SP-006', unitPlaceholder:'ชิ้น / เส้น / กล่อง',
@@ -522,12 +569,12 @@ const I18N = {
     errorPrefix:'Error: ', connectFail:'Could not connect to API: ',
     logout:'Log out', loadingData:'Loading data...', loadFail:'Failed to load data: ',
     tabDashboard:'Overview', tabParts:'Inventory', tabWithdraw:'Withdraw', tabReplenish:'Add Stock/Return',
-    tabHistory:'History', tabReport:'Reports', tabUsers:'User Management', tabSettings:'Google Sheet Info',
+    tabHistory:'History', tabReport:'Reports', tabUsers:'User Management', tabSettings:'Setup',
     editPartTitle:'Edit Part', close:'Close', searchPart:'Search part', searchPlaceholder:'Type code or name to search...',
     selectPartToEdit:'Select part to edit', selectPartPlaceholder:'-- Select part --',
     partCode:'Part code', partName:'Part name', category:'Category', unit:'Unit',
     stockEditNote:'Stock (editable via Withdraw/Replenish only)', minStock:'Safety Stock', owner:'Owner',
-    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', lineLastOk:'Last successful send', lineLastError:'Last error', maxStock:'Max Stock', expiryDate:'Expiry date', refillQty:'To refill (up to Max Stock)', lotsTitle:'Plating / Lap Chemical lots', lotsHint:'Use when the same Part number has several lots with different expiry dates. Quantities are summed into Current Qty., and withdrawals use the earliest-expiring lot first (FEFO).', lotAdd:'+ Add lot', lotName:'Lot no.', expAlertTitle:'⏰ Alert — Parts expiring within 14 days / expired', expExpired:'Expired {n} days ago', expToday:'Expires today', expIn:'In {n} days', lineEv_expiry:'Expiry alert, 14 days ahead (Mon-Fri 08:00)', lineEv_lowStock:'Below Safety Stock alert (Mon-Fri 08:00)', lineEv_outStock:'Out of stock alert (Mon-Fri 08:00)', lineEv_withdraw:'Withdraw notification (instant)', lineEv_replenish:'Refill / return notification (instant)', lotId:'Lot ID', newLotId:'New Lot ID', lotPlaceholder:'Select Lot ID', lotNew:'+ New lot (enter new Lot ID)', lotNoName:'(no lot no.)', lotSelectPartFirst:'Select a part first', lotExists:'This Lot ID already exists. Please pick it from the list.', exportCsv:'Export parts list as CSV (current category tab)', exportEmpty:'No parts to export in this category', exportDone:'Exported {n} parts ({c})', codeDefaultNote:'If the part has no code, use: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'Collapse menu', sidebarExpand:'Expand menu', machine:'Machine', machineAll:'All machines', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
+    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', statusPending:'Pending count', pendingHint:'If the quantity is unknown, enter 999 = saved as "Pending count"', pendingBlock:'This part is "Pending count" and cannot be withdrawn/refilled yet. A Level 3 (Admin) must enter the stock in the Edit window first.', codeEditNote:'Level 3: the part code can be edited (past history keeps the old code)', level:'Access level', level1:'Level 1 — Standard user (no Analysis, User Management, Setup)', level2:'Level 2 — Can see Analysis (no User Management, Setup)', level3:'Level 3 — Admin (all tabs, can edit code/stock)', level1Short:'Level 1', level2Short:'Level 2', level3Short:'Level 3 (Admin)', levelSaved:'Level updated', levelSelfBlock:'You cannot lower your own Level', online:'Online', offline:'Offline', onlineNote:'Online = active in the last 6 minutes', lineLastOk:'Last successful send', lineLastError:'Last error', maxStock:'Max Stock', expiryDate:'Expiry date', refillQty:'To refill (up to Max Stock)', lotsTitle:'Plating / Lap Chemical lots', lotsHint:'Use when the same Part number has several lots with different expiry dates. Quantities are summed into Current Qty., and withdrawals use the earliest-expiring lot first (FEFO).', lotAdd:'+ Add lot', lotName:'Lot no.', expAlertTitle:'⏰ Alert — Parts expiring within 14 days / expired', expExpired:'Expired {n} days ago', expToday:'Expires today', expIn:'In {n} days', lineEv_expiry:'Weekly summary card: Expiring within 14 days section (every Monday 08:00)', lineEv_lowStock:'Weekly summary card: Below Safety Stock section (every Monday 08:00)', lineEv_outStock:'Weekly summary card: Out of stock section (every Monday 08:00)', lineEv_withdraw:'Withdraw notification (instant)', lineEv_replenish:'Refill / return notification (instant)', lotId:'Lot ID', newLotId:'New Lot ID', lotPlaceholder:'Select Lot ID', lotNew:'+ New lot (enter new Lot ID)', lotNoName:'(no lot no.)', lotSelectPartFirst:'Select a part first', lotExists:'This Lot ID already exists. Please pick it from the list.', exportCsv:'Export parts list as CSV (current category tab)', exportEmpty:'No parts to export in this category', exportDone:'Exported {n} parts ({c})', codeDefaultNote:'If the part has no code, use: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'Collapse menu', sidebarExpand:'Expand menu', machine:'Machine', machineAll:'All machines', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
     selectPartFirst:'Please select a part first', noPartFound:'No matching parts found',
     addPartTitle:'Add New Part', initialStock:'Initial stock', uploadImage:'Part image (upload)',
     addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005 or SP-005,SP-006', unitPlaceholder:'pcs / rolls / boxes',
@@ -744,7 +791,7 @@ function syncLotsUI(form){
   }
   const has = chem && rows.children.length > 0;
   form.elements.expiry.disabled = has;
-  if(form.id==='addPartForm') form.elements.stock.disabled = has;
+  if(form.id==='addPartForm' || (form.id==='editPartForm' && !form.elements.stock.hasAttribute('data-ro'))) form.elements.stock.disabled = has;
 }
 document.addEventListener('click', e=>{
   const add = e.target.closest && e.target.closest('.lot-add');
@@ -757,7 +804,7 @@ document.addEventListener('reset', e=>{
   const ed = e.target.querySelector && e.target.querySelector('.lots-editor');
   if(ed){ ed.hidden = true; ed.querySelector('.lot-rows').innerHTML = ''; if(e.target.elements.expiry) e.target.elements.expiry.disabled = false; if(e.target.id==='addPartForm') e.target.elements.stock.disabled = false; }
 }, true);
-function statusOf(p){ if(p.stock<=0) return 'out'; if(p.stock<p.min) return 'low'; return 'ok'; }
+function statusOf(p){ if(p.pending) return 'pending'; if(p.stock<=0) return 'out'; if(p.stock<p.min) return 'low'; return 'ok'; }
 function filteredParts(){
   return parts.filter(p=>{
     if(partFilter.search){
@@ -786,7 +833,8 @@ function mapPart(raw){
   const lots = Array.isArray(raw.lots) ? raw.lots.map(l=>({lot:str(l.lot), qty:r2(l.qty), expiry:str(l.expiry).slice(0,10)})) : [];
   return {
     code: str(raw['รหัส']), name: str(raw['ชื่อ']), machine: str(raw['เครื่องจักร']), category: (str(raw['หมวดหมู่'])==='Chemical' ? 'Plating Chemical' : str(raw['หมวดหมู่'])), owner: str(raw['เจ้าของ']),
-    stock: lots.length ? r2(lots.reduce((s,l)=>s+l.qty,0)) : r2(raw['คงเหลือ']), min: r2(raw['ขั้นต่ำ']),
+    pending: !lots.length && String(raw['คงเหลือ']).trim()===PENDING_TEXT,
+    stock: lots.length ? r2(lots.reduce((s,l)=>s+l.qty,0)) : (String(raw['คงเหลือ']).trim()===PENDING_TEXT ? 0 : r2(raw['คงเหลือ'])), min: r2(raw['ขั้นต่ำ']),
     max: (raw['สต็อคสูงสุด']===''||raw['สต็อคสูงสุด']==null) ? null : r2(raw['สต็อคสูงสุด']),
     expiry: str(raw['วันหมดอายุ']).slice(0,10), lots, unit: str(raw['หน่วยนับ']),
     image: driveImgUrl(raw['รูปภาพ'] || ''),
@@ -804,9 +852,21 @@ function mapChangeRow(raw){
     field:str(raw['ข้อมูลที่เปลี่ยน']), oldV:str(raw['ข้อมูลเก่า']), newV:str(raw['ข้อมูลใหม่']), person:str(raw['โดย']) };
 }
 function mapUser(raw){
-  return { user: str(raw['Username']), name: str(raw['ชื่อ-นามสกุล']), dept: str(raw['แผนก']), position: str(raw['ตำแหน่ง']) };
+  return { user: str(raw['Username']), name: str(raw['ชื่อ-นามสกุล']), dept: str(raw['แผนก']), position: str(raw['ตำแหน่ง']), level: Number(raw['Level'])||0, online: raw['online']===true, lastSeen: str(raw['lastSeen']) };
 }
 // ชื่อ-นามสกุล ต่อด้วยตำแหน่งในวงเล็บ
+const PENDING_TEXT = 'รอเช็คจำนวน';
+// Level การเข้าถึง: 1 = ผู้ใช้ทั่วไป, 2 = เห็นแท็บ Analysis, 3 = Admin (เห็นทุกแท็บ + แก้ไขรหัส/คงเหลือได้)
+// ผู้ใช้เดิมที่ยังไม่ได้ตั้ง Level: แผนก/ตำแหน่ง Admin = 3, ตำแหน่ง Engineer = 2, นอกนั้น = 1
+function levelOf(u){
+  if(!u) return 1;
+  const n = Number(u.level); if(n>=1 && n<=3) return n;
+  const pos = String(u.position||'').trim().toLowerCase();
+  if(String(u.dept||'')==='Admin' || pos==='admin') return 3;
+  if(pos==='engineer') return 2;
+  return 1;
+}
+function stockText(p){ return p.pending ? t('statusPending') : p.stock; }
 function userLabel(u){ u = u || {}; return (u.name || u.user || '') + (u.position ? ' (' + u.position + ')' : ''); }
 
 // ---------- Nav ----------
@@ -820,7 +880,7 @@ function allTabs(){
   return out;
 }
 function tabAllowed(tb){
-  if(tb.adminOnly && currentUser.dept!=='Admin') return false;
+  if(tb.adminOnly && levelOf(currentUser)<3) return false;
   if(tb.plugin){ try{ return !tb.plugin.visible || !!tb.plugin.visible(currentUser); }catch(e){ return false; } }
   return true;
 }
@@ -941,10 +1001,13 @@ function bootApp(){
   callApi('getOwnersConfig').then(cfg=>{
     OWNERS = cfg.owners; OWNER_LABEL = cfg.labels;
     renderApp();
+    startHeartbeat();
   }).catch(err=>{ alert(t('connectFail')+err.message); renderLogin(); });
 }
 
 function logout(){
+  if(currentUser) callApi('logout', {user:currentUser.user}).catch(()=>{});
+  stopHeartbeat();
   currentUser = null;
   try{ localStorage.removeItem('spm_user'); sessionStorage.removeItem('spm_session'); }catch(e){}
   active = 'dashboard';
@@ -1000,11 +1063,11 @@ function renderApp(){
       </div>
       <form id="editPartForm">
         <div id="editPartFields" class="hidden" style="display:contents;">
-        <div><label>${t('partCode')}</label><input name="code" disabled></div>
+        ${levelOf(currentUser)>=3 ? `<div class="full"><label>${t('partCode')}</label><input name="code" required><div class="field-hint">${t('codeEditNote')}</div></div>` : `<div><label>${t('partCode')}</label><input name="code" disabled></div>`}
         <div><label>${t('partName')}</label><input name="name" required></div>
         <div><label>${t('category')}</label><select name="category">${categoryOptionsHTML('General', false)}</select></div>
         <div><label>${t('unit')}</label><input name="unit" required></div>
-        <div><label>${t('stockEditNote')}</label><input name="stock" disabled></div>
+        ${levelOf(currentUser)>=3 ? `<div><label>${t('colStock')}</label><input name="stock" type="number" min="0" step="0.01" placeholder="${t('statusPending')}"></div>` : `<div><label>${t('stockEditNote')}</label><input name="stock" disabled data-ro="1"></div>`}
         <div><label>${t('minStock')}</label><input name="min" type="number" min="0" step="0.01" required></div>
         <div><label>${t('maxStock')}</label><input name="max" type="number" min="0" step="0.01" placeholder="-"></div>
         <div><label>${t('expiryDate')}</label><input name="expiry" type="date"></div>
@@ -1031,7 +1094,7 @@ function renderApp(){
         <div class="full"><label>${t('partName')}</label><input name="name" required></div>
         <div><label>${t('category')}</label><select name="category">${categoryOptionsHTML('General', false)}</select></div>
         <div><label>${t('unit')}</label><input name="unit" required placeholder="${t('unitPlaceholder')}"></div>
-        <div><label>${t('initialStock')}</label><input name="stock" type="number" min="0" step="0.01" value="0" required></div>
+        <div><label>${t('initialStock')}</label><input name="stock" type="number" min="0" step="0.01" value="0" required><div class="field-hint">${t('pendingHint')}</div></div>
         <div><label>${t('minStock')}</label><input name="min" type="number" min="0" step="0.01" value="0" required></div>
         <div><label>${t('maxStock')}</label><input name="max" type="number" min="0" step="0.01" placeholder="-"></div>
         <div><label>${t('expiryDate')}</label><input name="expiry" type="date"></div>
@@ -1104,7 +1167,7 @@ function populateEditFields(code){
   form.elements.category.innerHTML = categoryOptionsHTML(p.category || 'General', false);
   form.elements.category.value = p.category || 'General';
   form.elements.unit.value = p.unit;
-  form.elements.stock.value = p.stock + ' ' + p.unit;
+  form.elements.stock.value = form.elements.stock.hasAttribute('data-ro') ? (p.pending ? t('statusPending') : p.stock + ' ' + p.unit) : (p.pending ? '' : p.stock);
   form.elements.min.value = p.min;
   form.elements.max.value = p.max==null ? '' : p.max;
   form.elements.expiry.value = p.expiry || '';
@@ -1134,6 +1197,7 @@ function renderNav(){
 
 function stockBadge(p){
   const s = statusOf(p);
+  if(s==='pending') return `<span class="badge pend">${t('statusPending')}</span>`;
   if(s==='out') return `<span class="badge out">${t('statusOutShort')}</span>`;
   if(s==='low') return `<span class="badge low">${t('statusLow')}</span>`;
   return `<span class="badge ok">${t('statusOk')}</span>`;
@@ -1184,13 +1248,15 @@ function renderDashboard(){
   const total = parts.length;
   const low = parts.filter(p=>statusOf(p)==='low').length;
   const out = parts.filter(p=>statusOf(p)==='out').length;
-  const alertList = parts.filter(p=>statusOf(p)!=='ok');
+  const alertList = parts.filter(p=>{ const st = statusOf(p); return st==='low' || st==='out'; }); // รอเช็คจำนวนไม่นับเป็นต่ำกว่าขั้นต่ำ/หมด
+  const catOrder = CATEGORIES.concat([...new Set(alertList.map(p=>p.category||'').filter(c=>!CATEGORIES.includes(c)))]);
+  const alertGroups = catOrder.map(c=>({cat:c, items:alertList.filter(p=>(p.category||'')===c)})).filter(g=>g.items.length);
   return `
   ${expiryCardHTML()}
   ${alertList.length ? `
   <div class="card">
     <h2>${t('alertTitle')}</h2>
-    ${alertList.map(p=>`
+    ${alertGroups.map(g=>`<div class="alert-group-title">${escHTML(g.cat||'-')} <span class="n">(${g.items.length})</span></div>${g.items.map(p=>`
       <div class="alert-card ${statusOf(p)==='out'?'out':''}">
         <div class="row1"><span>${codeLabel(p.code)} — ${p.name}</span>${stockBadge(p)}</div>
         <div class="details">
@@ -1201,7 +1267,7 @@ function renderDashboard(){
           <span>${t('shortageLabel')}<b>${r2(Math.max(0,p.min-p.stock))} ${p.unit}</b></span>
           ${p.max>0?`<span>${t('refillQty')}: <b>${refillQty(p)} ${p.unit}</b></span>`:''}
         </div>
-      </div>`).join('')}
+      </div>`).join('')}`).join('')}
   </div>` : ''}
   <div class="card">
     <h2>${t('summaryTitle')}</h2>
@@ -1269,6 +1335,7 @@ function renderParts(){
           <option value="ok" ${partFilter.status==='ok'?'selected':''}>${t('statusOk')}</option>
           <option value="low" ${partFilter.status==='low'?'selected':''}>${t('statusLow')}</option>
           <option value="out" ${partFilter.status==='out'?'selected':''}>${t('statusOutShort')}</option>
+          <option value="pending" ${partFilter.status==='pending'?'selected':''}>${t('statusPending')}</option>
         </select>
       </div>
     </form>
@@ -1322,8 +1389,8 @@ function openPartDetail(code){
           <button type="button" id="detailCloseBtn" title="${t('close')}" style="border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);">×</button>
         </div>
       </div>
-      <div class="stock-hero ${p.stock<=0?'out':(p.stock<p.min?'warn':'')}">
-        <div><div class="stock-hero-label">${t('colStock')}</div><div class="stock-hero-num">${p.stock}<span>${escHTML(p.unit)}</span></div></div>
+      <div class="stock-hero ${p.pending ? '' : (p.stock<=0?'out':(p.stock<p.min?'warn':''))}">
+        <div><div class="stock-hero-label">${t('colStock')}</div><div class="stock-hero-num">${p.pending ? `<span style="font-size:22px;margin:0;">${t('statusPending')}</span>` : `${p.stock}<span>${escHTML(p.unit)}</span>`}</div></div>
         <div class="stock-hero-side">${stockBadge(p)}<div style="margin-top:6px;">${t('colMin')}: <b>${p.min}</b> ${escHTML(p.unit)}</div>${refill>0?`<div style="margin-top:4px;color:var(--text);">${t('refillQty')}: <b>${refill}</b> ${escHTML(p.unit)}</div>`:''}</div>
       </div>
       <div class="detail-body">
@@ -1353,7 +1420,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePartDetail()
 
 function partsTableHTML(list){
   return `<table><thead><tr><th>📌</th><th>${t('colCode')}</th><th>${t('colImage')}</th><th>${t('colName')}</th><th>${t('machine')}</th><th>${t('colCategory')}</th><th>${t('colOwner')}</th><th>${t('colStock')}</th><th>${t('colUnit')}</th><th>${t('colStatus')}</th></tr></thead><tbody>
-    ${list.map(p=>`<tr class="part-row" data-code="${p.code}"><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${codeHTML(p.code)}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.machine ? escHTML(p.machine) : '-'}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.stock}</span></td><td>${p.unit}</td><td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="10" class="empty">${t('noMatch')}</td></tr>`}
+    ${list.map(p=>`<tr class="part-row" data-code="${p.code}"><td><button class="pin-btn ${p.pinned?"pinned":""}" data-pin="${p.code}" title="${t('pinTitle')}">${p.pinned?"📌":"📍"}</button></td><td>${codeHTML(p.code)}</td><td>${partThumb(p)}</td><td>${p.name}</td><td>${p.machine ? escHTML(p.machine) : '-'}</td><td>${p.category||'-'}</td><td>${ownerBadge(p)}</td><td><span class="qty-num">${p.pending ? t('statusPending') : p.stock}</span></td><td>${p.unit}</td><td>${stockBadge(p)}</td></tr>`).join('') || `<tr><td colspan="10" class="empty">${t('noMatch')}</td></tr>`}
   </tbody></table>`;
 }
 
@@ -1405,7 +1472,7 @@ function partOptions(query, cat){
   let list = q ? parts.filter(p=>p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)) : parts;
   if(cat) list = list.filter(p=>(p.category||'')===cat);
   if(!list.length) return `<option value="" disabled>${t('noPartFound')}</option>`;
-  return list.map(p=>`<option value="${p.code}">${codeLabel(p.code)} — ${p.name} (${t('colStock')} ${p.stock} ${p.unit})</option>`).join('');
+  return list.map(p=>`<option value="${p.code}">${codeLabel(p.code)} — ${p.name} (${t('colStock')} ${p.pending ? t('statusPending') : p.stock+' '+p.unit})</option>`).join('');
 }
 
 function partPreviewHTML(code){
@@ -1417,7 +1484,7 @@ function partPreviewHTML(code){
       <div><b>${codeLabel(p.code)}</b> — ${p.name}</div>
       <div style="color:var(--muted)">${t('categoryLabel')}${p.category||'-'}</div>
       <div>${ownerBadge(p)} ${stockBadge(p)}</div>
-      <div>${t('stockLabel')}<b>${p.stock} ${p.unit}</b></div>
+      <div>${t('stockLabel')}<b>${p.pending ? t('statusPending') : p.stock+' '+p.unit}</b></div>
     </div>
   </div>`;
 }
@@ -1555,6 +1622,7 @@ function renderUsers(){
       <div><label>${t('password')}</label>${pwFieldHTML('name="pass" required')}</div>
       <div class="full"><label>${t('fullName')}</label><input name="name" required></div>
       <div class="full"><label>${t('position')}</label><input name="position" list="positionList" placeholder="${t('positionHint')}"><datalist id="positionList"><option value="Admin"><option value="Engineer"><option value="Technician"><option value="Operator"></datalist></div>
+      <div class="full"><label>${t('level')}</label><select name="level">${[1,2,3].map(n=>`<option value="${n}">${t('level'+n)}</option>`).join('')}</select></div>
       <div class="full"><label>${t('department')}</label>
         <select name="dept" required>
           <option value="Admin">Admin</option>
@@ -1570,17 +1638,40 @@ function renderUsers(){
     <div class="tbl-wrap" id="usersTableWrap"><div class="empty">${t('loading')}</div></div>
   </div>`;
 }
+let usersTimer = null;
 function loadUsersTable(){
   callApi('getUsers').then(list=>{
     USERS = list.map(mapUser);
-    document.getElementById('usersTableWrap').innerHTML =
-      `<table><thead><tr><th>${t('username')}</th><th>${t('fullName')}</th><th>${t('department')}</th></tr></thead><tbody>
-        ${USERS.map(u=>`<tr><td>${escHTML(u.user)}</td><td>${escHTML(userLabel(u))}</td><td><span class="badge owner">${u.dept}</span></td></tr>`).join('')}
-      </tbody></table>`;
+    const wrap = document.getElementById('usersTableWrap'); if(!wrap) return;
+    wrap.innerHTML =
+      `<table><thead><tr><th>${t('username')}</th><th>${t('fullName')}</th><th>${t('department')}</th><th>${t('level')}</th></tr></thead><tbody>
+        ${USERS.map(u=>{ const lv = levelOf(u); return `<tr><td><span class="led ${u.online?'on':''}" title="${u.online?t('online'):t('offline')}"></span>${escHTML(u.user)}</td><td>${escHTML(userLabel(u))}</td><td><span class="badge owner">${escHTML(u.dept)}</span></td>
+          <td><select data-level-user="${escHTML(u.user)}" style="min-width:150px;">${[1,2,3].map(n=>`<option value="${n}" ${n===lv?'selected':''}>${t('level'+n+'Short')}</option>`).join('')}</select></td></tr>`; }).join('')}
+      </tbody></table><div style="font-size:12px;color:var(--muted);margin-top:10px;"><span class="led on"></span>${t('online')} &nbsp; <span class="led"></span>${t('offline')} — ${t('onlineNote')}</div>`;
   }).catch(err=>{
-    document.getElementById('usersTableWrap').innerHTML = `<div class="empty">${t('loadFailShort')}${err.message}</div>`;
+    const wrap = document.getElementById('usersTableWrap'); if(wrap) wrap.innerHTML = `<div class="empty">${t('loadFailShort')}${err.message}</div>`;
   });
+  clearTimeout(usersTimer);
+  usersTimer = setTimeout(()=>{ if(active==='users') loadUsersTable(); }, 30000); // รีเฟรชสถานะออนไลน์ทุก 30 วินาที
 }
+document.addEventListener('change', e=>{
+  const sel = e.target.closest ? e.target.closest('[data-level-user]') : null; if(!sel) return;
+  const user = sel.dataset.levelUser, level = Number(sel.value);
+  if(currentUser && user===currentUser.user && level<3){ showToast(t('levelSelfBlock')); loadUsersTable(); return; }
+  callApi('updateUserLevel', {user, level, by:(currentUser&&currentUser.user)||''}).then(res=>{
+    if(!res.ok){ showToast(translateServerMsg(res.message)); loadUsersTable(); return; }
+    showToast(t('levelSaved')); loadUsersTable();
+  }).catch(err=>{ showToast(t('errorPrefix')+err.message); loadUsersTable(); });
+});
+// สถานะออนไลน์: ส่งสัญญาณทุก 3 นาทีขณะเปิดหน้าเว็บ (และเมื่อกลับมาที่แท็บ) ถือว่าออนไลน์ถ้าสัญญาณล่าสุดไม่เกิน 6 นาที
+let hbTimer = null;
+function stopHeartbeat(){ if(hbTimer){ clearInterval(hbTimer); hbTimer = null; } }
+function startHeartbeat(){
+  stopHeartbeat();
+  const beat = ()=>{ if(currentUser && !document.hidden) callApi('heartbeat', {user:currentUser.user}).catch(()=>{}); };
+  beat(); hbTimer = setInterval(beat, 180000);
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && currentUser && hbTimer) callApi('heartbeat', {user:currentUser.user}).catch(()=>{}); });
 
 // Export รายการอะไหล่ในหน้าคลังอะไหล่ (คอลัมน์เหมือนชีท Spare Part List ยกเว้นรูปภาพ; หัวคอลัมน์ตามภาษาหน้าเว็บ) ตามแท็บหมวดหมู่ที่เลือกอยู่
 function exportInventoryCSV(){
@@ -1588,10 +1679,10 @@ function exportInventoryCSV(){
   if(!list.length){ showToast(t('exportEmpty')); return; }
   // หัวคอลัมน์และข้อความสถานะเป็นภาษาเดียวกับหน้าเว็บ (ไทย/อังกฤษ)
   const head = [t('colCode'), t('colName'), t('machine'), t('category'), lang==='en' ? t('owner') : 'เจ้าของ', t('colStock'), t('colMin'), t('maxStock'), t('expiryDate'), t('colUnit'), t('colStatus')];
-  const stTh = p=>statusOf(p)==='out' ? t('statusOutShort') : (statusOf(p)==='low' ? t('statusLow') : t('statusOk'));
+  const stTh = p=>statusOf(p)==='pending' ? t('statusPending') : (statusOf(p)==='out' ? t('statusOutShort') : (statusOf(p)==='low' ? t('statusLow') : t('statusOk')));
   const codeCell = c=>/^[\d,\s]+$/.test(c) ? '="'+c+'"' : c; // รหัสตัวเลขล้วน: กัน Excel ตัดเลข 0 นำหน้า/แปลงเป็นตัวเลข
   const expOf = p=>p.lots && p.lots.length ? ((nextExpiry(p)||{}).expiry||'') : (p.expiry||'');
-  const lines = [head.map(csvEscape).join(',')].concat(list.map(p=>[codeCell(p.code), p.name, p.machine||'', p.category||'', p.owner||'', p.stock, p.min, p.max==null?'':p.max, expOf(p), p.unit, stTh(p)].map(csvEscape).join(',')));
+  const lines = [head.map(csvEscape).join(',')].concat(list.map(p=>[codeCell(p.code), p.name, p.machine||'', p.category||'', p.owner||'', p.pending ? t('statusPending') : p.stock, p.min, p.max==null?'':p.max, expOf(p), p.unit, stTh(p)].map(csvEscape).join(',')));
   downloadText('SparePartList_'+(invCategory||'All').replace(/\s+/g,'_')+'_'+todayStr()+'.csv', '\ufeff'+lines.join('\r\n'));
   showToast(t('exportDone').replace('{n}', list.length).replace('{c}', invCategory||t('all')));
 }
@@ -1679,7 +1770,7 @@ function loadSheetInfo(){
 }
 
 function render(){
-  if((active==='users'||active==='settings') && currentUser.dept!=='Admin') active = 'dashboard';
+  if((active==='users'||active==='settings') && levelOf(currentUser)<3) active = 'dashboard';
   let curTab = allTabs().find(x=>x.id===active);
   if(curTab && curTab.plugin && !tabAllowed(curTab)){ active = 'dashboard'; curTab = null; }
   renderNav();
@@ -1851,7 +1942,7 @@ function attachHandlers(){
     createUserForm.onsubmit = e=>{
       e.preventDefault();
       const f = new FormData(createUserForm);
-      const u = {user:f.get('user').trim(), pass:f.get('pass'), name:f.get('name').trim(), position:(f.get('position')||'').trim(), dept:f.get('dept')};
+      const u = {user:f.get('user').trim(), pass:f.get('pass'), name:f.get('name').trim(), position:(f.get('position')||'').trim(), level:Number(f.get('level'))||1, dept:f.get('dept')};
       callApi('createUser', u).then(res=>{
         if(!res.ok){ showMsg('createUserMsg', translateServerMsg(res.message), false); return; }
         showMsg('createUserMsg', t('userCreated'), true);
@@ -1872,6 +1963,10 @@ function attachHandlers(){
       const f = new FormData(editPartForm);
       const part = {code:editingCode, name:f.get('name').trim(), category:f.get('category').trim(),
         unit:f.get('unit').trim(), min:f.get('min'), max:f.get('max'), expiry:f.get('expiry')||'', lots:readLots(editPartForm), owner:f.get('owner'), machine:f.get('machine')||'', person:(currentUser && currentUser.name) || ''};
+      if(levelOf(currentUser)>=3){ // Level 3: แก้ไขรหัสอะไหล่และจำนวนคงเหลือได้
+        const nc = normalizeCodes(f.get('code')); if(!nc.ok){ showMsg('editPartMsg', nc.error, false); return; }
+        part.newCode = nc.value; if(f.has('stock')) part.stock = f.get('stock');
+      }
       const submit = ()=>{
         callApi('updatePart', part).then(res=>{
           if(!res.ok){ showMsg('editPartMsg', translateServerMsg(res.message), false); return; }
@@ -2015,6 +2110,7 @@ function attachHandlers(){
       const code = f.get('code');
       if(!code){ showMsg('withdrawMsg', t('pleaseSelectPart'), false); return; }
       const txn = {actor:(currentUser&&currentUser.name)||'', type:'withdraw', code, lot:(f.has('lot') ? (f.get('lot')==='__blank__' ? '' : f.get('lot')) : undefined), qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      { const pp = partByCode(code); if(pp && pp.pending){ showMsg('withdrawMsg', t('pendingBlock'), false); return; } }
       callApi('recordTransaction', txn).then(res=>{
         if(!res.ok){ showMsg('withdrawMsg', translateServerMsg(res.message), false); return; }
         showMsg('withdrawMsg', `${t('withdrawSuccess')}${res.newStock}`, true);
@@ -2041,6 +2137,7 @@ function attachHandlers(){
         if(pp && pp.lots.some(l=>l.lot===lotV)){ showMsg('replenishMsg', t('lotExists'), false); return; }
       } else if(lotV==='__blank__') lotV = '';
       const txn = {actor:(currentUser&&currentUser.name)||'', type:'replenish', kind:f.get('kind')||'add', code, lot:lotV, expiry:expV, qty:f.get('qty'), person:f.get('person'), note:f.get('note')};
+      { const pp = partByCode(code); if(pp && pp.pending){ showMsg('replenishMsg', t('pendingBlock'), false); return; } }
       callApi('recordTransaction', txn).then(res=>{
         if(!res.ok){ showMsg('replenishMsg', translateServerMsg(res.message), false); return; }
         showMsg('replenishMsg', `${t('replenishSuccess')}${res.newStock}`, true);
@@ -2054,7 +2151,7 @@ function attachHandlers(){
 }
 
 // ---------- ผูกฟังก์ชันของแอปหลักให้ปลั๊กอิน (SPM) ใช้ ----------
-SPM.api = { t, escHTML, callApi, splitCodes, codeKey, r2, translateServerMsg, showToast, getParts:()=>parts, getUser:()=>currentUser };
+SPM.api = { levelOf, stockText, t, escHTML, callApi, splitCodes, codeKey, r2, translateServerMsg, showToast, getParts:()=>parts, getUser:()=>currentUser };
 ['th','en'].forEach(l=>Object.assign(I18N[l], SPM.i18n[l]));
 
 // ---------- Boot ----------
