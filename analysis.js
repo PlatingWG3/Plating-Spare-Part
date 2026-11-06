@@ -1,10 +1,10 @@
-/* analysis.js v2 — แท็บ Analysis (เฉพาะตำแหน่ง Admin / Engineer)
+/* analysis.js v3 — แท็บ Analysis (เฉพาะ Level 2 ขึ้นไป)
  * ใช้คู่กับ index.html ที่มี SPM Plugin Host v1 (window.SPM) และ Backend คำสั่ง getFullSPAnalysis / updateWhData
  * อัปเดตไฟล์นี้แล้ว ให้เปลี่ยนเลขเวอร์ชันท้ายชื่อไฟล์ใน index.html (analysis.js?v=N) เพื่อล้างแคชของเบราว์เซอร์
  */
 (function () {
   'use strict';
-  var NEED_HOST = 1;
+  var NEED_HOST = 2;
   if (!window.SPM || window.SPM.apiVersion !== NEED_HOST) {
     console.error('analysis.js: ต้องใช้ index.html ที่รองรับ SPM Plugin Host v' + NEED_HOST + ' — ข้ามการโหลดแท็บ Analysis');
     return;
@@ -33,8 +33,8 @@
 .wh-status{font-size:13px;font-weight:600;}
 `);
 
-  // เมนู Analysis แสดงเฉพาะตำแหน่ง Admin และ Engineer (เทียบกับคอลัมน์ "ตำแหน่ง" ในชีท Users)
-  function canSeeAnalysis(u) { const p = String((u && u.position) || '').trim().toLowerCase(); return p === 'admin' || p === 'engineer'; }
+  // เมนู Analysis แสดงเฉพาะ Level 2 ขึ้นไป (Level 3 = Admin เห็นทุกแท็บ)
+  function canSeeAnalysis(u) { return SPM.api.levelOf(u) >= 2; }
 
 // ================= Analysis (เฉพาะตำแหน่ง Admin / Engineer) =================
 let analysisData = null;      // {headers:[...], rows:[[...]]} จากชีท Full SP Analysis
@@ -87,7 +87,7 @@ function renderAnalysisTable(){
   wrap.innerHTML = `<table><thead><tr>${H.map((h,i)=>`<th class="${(i===iSum||i===iSafe)?'hl-th':''}">${escHTML(h)}</th>`).join('')}</tr></thead><tbody>
     ${shown.map(r=>{ const p = (iInt>=0) ? live(r) : null;
       const low = iSum>=0 && iSafe>=0 && isNum(r[iSum]) && isNum(r[iSafe]) && Number(r[iSum]) < Number(r[iSafe]); // SUM น้อยกว่า Safety stock / 4 month
-      return `<tr>${H.map((h,i)=> (i===iInt && p) ? `<td><u title="${escHTML(t('colStock'))}">${p.stock}</u></td>` : (i===iSum && low) ? `<td class="cell-warn">${escHTML(r[i])}</td>` : `<td>${escHTML(r[i]==null?'':r[i])}</td>`).join('')}</tr>`; }).join('')}
+      return `<tr>${H.map((h,i)=> (i===iInt && p) ? `<td><u title="${escHTML(t('colStock'))}">${SPM.api.stockText(p)}</u></td>` : (i===iSum && low) ? `<td class="cell-warn">${escHTML(r[i])}</td>` : `<td>${escHTML(r[i]==null?'':r[i])}</td>`).join('')}</tr>`; }).join('')}
   </tbody></table>`;
   const info = document.getElementById('analysisInfo');
   if(info) info.textContent = t('analysisShowing').replace('{a}', shown.length).replace('{b}', filtered.length) + (iPN<0 ? ' · ' + t('analysisHdrMissing') : '');
