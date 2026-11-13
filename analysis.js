@@ -1,4 +1,4 @@
-/* analysis.js v3 — แท็บ Analysis (เฉพาะ Level 2 ขึ้นไป)
+/* analysis.js v4 — แท็บ Analysis (เฉพาะ Level 2 ขึ้นไป)
  * ใช้คู่กับ index.html ที่มี SPM Plugin Host v1 (window.SPM) และ Backend คำสั่ง getFullSPAnalysis / updateWhData
  * อัปเดตไฟล์นี้แล้ว ให้เปลี่ยนเลขเวอร์ชันท้ายชื่อไฟล์ใน index.html (analysis.js?v=N) เพื่อล้างแคชของเบราว์เซอร์
  */
@@ -20,8 +20,8 @@
   const translateServerMsg = m => SPM.api.translateServerMsg(m);
 
   SPM.registerI18n({
-    th: { tabAnalysis:'Analysis', position:'ตำแหน่ง', positionHint:'เช่น Admin, Engineer, Technician', analysisTitle:'Analysis — Full SP Analysis', analysisUpload:'Upload Excel', analysisUpdate:'Update WH data', whUploadOk:'Upload success!', whUploadFail:'Upload ไม่สำเร็จ: ', whNoFile:'ยังไม่ได้ Upload ไฟล์ Excel', whNoFormat:'Error: ไม่พบ Sheet ชื่อ "Format" ในไฟล์ Excel ที่ Upload', whNoHeader:'Error: ไม่พบหัวคอลัมน์ *Material และ *Stock Qty ใน Sheet "Format"', whUpdating:'กำลังอัปเดต Current WH Qty. ...', whDone:'อัปเดต Current WH Qty. แล้ว: จับคู่ได้ {m} รายการ, No info {n} รายการ', analysisSearch:'ค้นหาในตาราง', analysisLegend:'ตัวเลข Current Internal Qty. ที่ขีดเส้นใต้ = ข้อมูลล่าสุดจากคลังอะไหล่ (จับคู่รหัสได้) ส่วนที่ไม่ขีดเส้นใต้ = ค่าจากชีท Full SP Analysis · ช่อง SUM (WH + Internal) สีส้ม = น้อยกว่า Safety stock / 4 month', analysisShowing:'แสดง {a} จาก {b} รายการ', analysisEmpty:'ไม่มีข้อมูลในชีท Full SP Analysis', analysisHdrMissing:'ไม่พบหัวคอลัมน์ "Spare parts P/N (Delta)" ในชีท จึงยังเทียบกับคลังอะไหล่ไม่ได้', },
-    en: { tabAnalysis:'Analysis', position:'Position', positionHint:'e.g. Admin, Engineer, Technician', analysisTitle:'Analysis — Full SP Analysis', analysisUpload:'Upload Excel', analysisUpdate:'Update WH data', whUploadOk:'Upload success!', whUploadFail:'Upload failed: ', whNoFile:'No Excel file uploaded yet', whNoFormat:'Error: Sheet "Format" not found in the uploaded Excel file', whNoHeader:'Error: Columns *Material and *Stock Qty not found in Sheet "Format"', whUpdating:'Updating Current WH Qty. ...', whDone:'Current WH Qty. updated: {m} matched, {n} No info', analysisSearch:'Search table', analysisLegend:'Underlined Current Internal Qty. = live value from the spare part inventory (code matched). Not underlined = value from the Full SP Analysis sheet · Orange SUM (WH + Internal) = below Safety stock / 4 month', analysisShowing:'Showing {a} of {b} rows', analysisEmpty:'No data in the Full SP Analysis sheet', analysisHdrMissing:'Column "Spare parts P/N (Delta)" not found, so rows cannot be matched with the inventory', }
+    th: { tabAnalysis:'Analysis', analysisTitle:'Analysis — Full SP Analysis', analysisUpload:'Upload Excel', analysisUpdate:'Update WH data', whUploadOk:'Upload success!', whUploadFail:'Upload ไม่สำเร็จ: ', whNoFile:'ยังไม่ได้ Upload ไฟล์ Excel', whNoFormat:'Error: ไม่พบ Sheet ชื่อ "Format" ในไฟล์ Excel ที่ Upload', whNoHeader:'Error: ไม่พบหัวคอลัมน์ *Material และ *Stock Qty ใน Sheet "Format"', whUpdating:'กำลังอัปเดต Current WH Qty. ...', whDone:'อัปเดต Current WH Qty. แล้ว: จับคู่ด้วย P/N {m} รายการ, ด้วย Short Text {x} รายการ, No info {n} รายการ', whNoShortText:'หมายเหตุ: ไม่พบหัวคอลัมน์ Short Text ในไฟล์ Excel จึงเทียบด้วย P/N อย่างเดียว', whNoDesc:'หมายเหตุ: ชีทไม่มีหัวคอลัมน์ Description ( English ) ≤ 40 characters จึงเทียบด้วย P/N อย่างเดียว', whLast:'อัปเดต WH ล่าสุด', whLastNone:'ยังไม่เคยอัปเดต WH data', anBackendOld:'Backend ยังไม่ใช่เวอร์ชันล่าสุด: ให้วาง Code.gs/Analysis.gs ใหม่แล้ว Deploy New version', anSyncFail:'ซิงก์ชีทไม่สำเร็จ:', anMissingHeaders:'ไม่พบหัวคอลัมน์ในชีท:', anSyncOk:'ซิงก์ชีทแล้ว', analysisSearch:'ค้นหาในตาราง', analysisLegend:'ตัวเลข Current Internal Qty. ที่ขีดเส้นใต้ = ข้อมูลล่าสุดจากคลังอะไหล่ (จับคู่รหัสได้) ส่วนที่ไม่ขีดเส้นใต้ = ค่าจากชีท Full SP Analysis · ช่อง SUM (WH + Internal) สีส้ม = น้อยกว่า Safety stock / 4 month', analysisShowing:'แสดง {a} จาก {b} รายการ', analysisEmpty:'ไม่มีข้อมูลในชีท Full SP Analysis', analysisHdrMissing:'ไม่พบหัวคอลัมน์ "Spare parts P/N (Delta)" ในชีท จึงยังเทียบกับคลังอะไหล่ไม่ได้', },
+    en: { tabAnalysis:'Analysis', analysisTitle:'Analysis — Full SP Analysis', analysisUpload:'Upload Excel', analysisUpdate:'Update WH data', whUploadOk:'Upload success!', whUploadFail:'Upload failed: ', whNoFile:'No Excel file uploaded yet', whNoFormat:'Error: Sheet "Format" not found in the uploaded Excel file', whNoHeader:'Error: Columns *Material and *Stock Qty not found in Sheet "Format"', whUpdating:'Updating Current WH Qty. ...', whDone:'Current WH Qty. updated: {m} matched by P/N, {x} by Short Text, {n} No info', whNoShortText:'Note: column Short Text not found in the Excel file, matched by P/N only', whNoDesc:'Note: the sheet has no column Description ( English ) ≤ 40 characters, matched by P/N only', whLast:'Last WH update', whLastNone:'WH data has not been updated yet', anBackendOld:'Backend is not the latest version: paste Code.gs/Analysis.gs again and Deploy a New version', anSyncFail:'Sheet sync failed:', anMissingHeaders:'Headers not found in the sheet:', anSyncOk:'Sheet synced', analysisSearch:'Search table', analysisLegend:'Underlined Current Internal Qty. = live value from the spare part inventory (code matched). Not underlined = value from the Full SP Analysis sheet · Orange SUM (WH + Internal) = below Safety stock / 4 month', analysisShowing:'Showing {a} of {b} rows', analysisEmpty:'No data in the Full SP Analysis sheet', analysisHdrMissing:'Column "Spare parts P/N (Delta)" not found, so rows cannot be matched with the inventory', }
   });
   SPM.addStyle(`
 #analysisTableWrap{max-height:calc(100vh - 300px);overflow:auto;}
@@ -41,9 +41,12 @@ let analysisData = null;      // {headers:[...], rows:[[...]]} จากชี�
 let analysisSearch = '';
 let whWorkbook = null, whFileName = '';
 let whStatus = {text:'', ok:true};
+let whLastInfo = null;   // {atText, by, file} วันที่อัปเดต WH ล่าสุด
 const ANALYSIS_MAX_ROWS = 500;
 const WH_KEY_HEADER = 'Spare parts P/N (Delta)', WH_QTY_HEADER = 'Current WH Qty.', INTERNAL_QTY_HEADER = 'Current Internal Qty.';
-const hnorm = h => String(h==null?'':h).trim().toLowerCase().replace(/\s+/g,' ');
+const ANALYSIS_JS_VERSION = 'v4';
+const hnorm = h => String(h==null?'':h).trim().toLowerCase().replace(/\s+/g,''); // ไม่สนตัวพิมพ์เล็ก/ใหญ่และช่องว่าง
+const textKey = x => String(x==null?'':x).trim().replace(/\s+/g,' ').toLowerCase();
 const SUM_HEADER = 'SUM (WH + Internal)', SAFETY_HEADER = 'Safety stock / 4 month';
 const isNum = v => v!=='' && v!=null && isFinite(Number(v));
 function renderAnalysis(){
@@ -56,29 +59,51 @@ function renderAnalysis(){
       <input type="file" id="whFileInput" accept=".xlsx,.xlsm,.xls" hidden>
       <span id="whStatus" class="wh-status" style="color:${whStatus.ok?'var(--ok)':'var(--danger)'};">${escHTML(whStatus.text)}</span>
     </div>
+    <div id="whLast" style="font-size:13px;margin-top:10px;"></div>
     <div style="margin-top:12px;"><input id="analysisSearch" placeholder="${t('analysisSearch')}" value="${escHTML(analysisSearch)}" style="max-width:320px;"></div>
   </div>
   <div class="card">
     <div id="analysisInfo" style="font-size:12px;color:var(--muted);margin-bottom:8px;"></div>
     <div class="tbl-wrap" id="analysisTableWrap"><div class="empty">${t('loading')}</div></div>
     <div style="font-size:12px;color:var(--muted);margin-top:10px;">${t('analysisLegend')}</div>
+    <div id="analysisStatus" style="font-size:12px;margin-top:8px;word-break:break-word;"></div>
   </div>`;
 }
 function loadAnalysis(){
   callApi('getFullSPAnalysis').then(res=>{
     if(!res || res.ok===false || !res.headers) throw new Error((res && res.message) || 'Invalid response');
-    analysisData = res; renderAnalysisTable();
+    analysisData = res; renderAnalysisTable(); renderWhLast(res.whLast); renderAnalysisStatus(res);
   }).catch(err=>{
     const w = document.getElementById('analysisTableWrap');
     if(w) w.innerHTML = `<div class="empty">${t('loadFailShort')}${escHTML(translateServerMsg(err.message))}</div>`;
   });
+}
+function renderWhLast(w){
+  const el = document.getElementById('whLast'); if(!el) return;
+  if(w) whLastInfo = w;
+  const x = whLastInfo;
+  el.innerHTML = x ? `<b>${t('whLast')}:</b> ${escHTML(x.atText)}${x.by ? ' · ' + escHTML(x.by) : ''}${x.file ? ' · ' + escHTML(x.file) : ''}` : `<span style="color:var(--muted);">${t('whLastNone')}</span>`;
+}
+// บรรทัดสถานะ: เวอร์ชันไฟล์/Backend, ผลซิงก์ชีท และหัวคอลัมน์ที่ไม่พบ (ช่วยให้เห็นสาเหตุเมื่อผลลัพธ์ไม่เปลี่ยน)
+function renderAnalysisStatus(res){
+  const el = document.getElementById('analysisStatus'); if(!el) return;
+  const has = n => res.headers.some(h=>hnorm(h)===hnorm(n));
+  const miss = [WH_KEY_HEADER, INTERNAL_QTY_HEADER, WH_QTY_HEADER, SUM_HEADER, SAFETY_HEADER].filter(n=>!has(n));
+  const warns = [];
+  if(!res.backend) warns.push(t('anBackendOld'));
+  else if(res.sync && res.sync.ok === false) warns.push(t('anSyncFail') + ' ' + (res.sync.message || ''));
+  if(miss.length) warns.push(t('anMissingHeaders') + ' ' + miss.join(', '));
+  el.style.color = warns.length ? 'var(--danger)' : 'var(--muted)';
+  el.textContent = 'analysis.js ' + ANALYSIS_JS_VERSION + ' · Backend ' + (res.backend || '—') + ' · ' + (warns.length ? warns.join(' · ') : t('anSyncOk'));
 }
 function renderAnalysisTable(){
   const wrap = document.getElementById('analysisTableWrap'); if(!wrap || !analysisData) return;
   const H = analysisData.headers, R = analysisData.rows;
   if(!R.length){ wrap.innerHTML = `<div class="empty">${t('analysisEmpty')}</div>`; return; }
   const iPN = H.findIndex(h=>hnorm(h)===hnorm(WH_KEY_HEADER)), iInt = H.findIndex(h=>hnorm(h)===hnorm(INTERNAL_QTY_HEADER));
-  const iSum = H.findIndex(h=>hnorm(h)===hnorm(SUM_HEADER)), iSafe = H.findIndex(h=>hnorm(h)===hnorm(SAFETY_HEADER));
+  const iSum = H.findIndex(h=>hnorm(h)===hnorm(SUM_HEADER)), iSafe = H.findIndex(h=>hnorm(h)===hnorm(SAFETY_HEADER)), iWh = H.findIndex(h=>hnorm(h)===hnorm(WH_QTY_HEADER));
+  const asNum = v => (v===''||v==null||!isFinite(Number(v))) ? 0 : Number(v);   // No info / ว่าง / ข้อความ = 0
+  const canSum = iSum>=0 && iInt>=0 && iWh>=0;
   const idx = new Map(); SPM.api.getParts().forEach(p=>splitCodes(p.code).forEach(c=>idx.set(codeKey(c), p)));
   const live = row => { if(iPN<0) return null; for(const c of splitCodes(String(row[iPN]))){ const p = idx.get(codeKey(c)); if(p) return p; } return null; };
   const q = analysisSearch.trim().toLowerCase();
@@ -86,8 +111,9 @@ function renderAnalysisTable(){
   const shown = filtered.slice(0, ANALYSIS_MAX_ROWS);
   wrap.innerHTML = `<table><thead><tr>${H.map((h,i)=>`<th class="${(i===iSum||i===iSafe)?'hl-th':''}">${escHTML(h)}</th>`).join('')}</tr></thead><tbody>
     ${shown.map(r=>{ const p = (iInt>=0) ? live(r) : null;
-      const low = iSum>=0 && iSafe>=0 && isNum(r[iSum]) && isNum(r[iSafe]) && Number(r[iSum]) < Number(r[iSafe]); // SUM น้อยกว่า Safety stock / 4 month
-      return `<tr>${H.map((h,i)=> (i===iInt && p) ? `<td><u title="${escHTML(t('colStock'))}">${SPM.api.stockText(p)}</u></td>` : (i===iSum && low) ? `<td class="cell-warn">${escHTML(r[i])}</td>` : `<td>${escHTML(r[i]==null?'':r[i])}</td>`).join('')}</tr>`; }).join('')}
+      const sumVal = canSum ? r2(asNum(p ? (p.pending ? 0 : p.stock) : r[iInt]) + asNum(r[iWh])) : r[iSum]; // SUM = Current WH Qty. + Current Internal Qty.
+      const low = iSum>=0 && iSafe>=0 && isNum(sumVal) && isNum(r[iSafe]) && Number(sumVal) < Number(r[iSafe]); // SUM น้อยกว่า Safety stock / 4 month
+      return `<tr>${H.map((h,i)=> (i===iInt && p) ? `<td><u title="${escHTML(t('colStock'))}">${SPM.api.stockText(p)}</u></td>` : (i===iSum && canSum) ? `<td class="${low?'cell-warn':''}">${sumVal}</td>` : `<td>${escHTML(r[i]==null?'':r[i])}</td>`).join('')}</tr>`; }).join('')}
   </tbody></table>`;
   const info = document.getElementById('analysisInfo');
   if(info) info.textContent = t('analysisShowing').replace('{a}', shown.length).replace('{b}', filtered.length) + (iPN<0 ? ' · ' + t('analysisHdrMissing') : '');
@@ -118,25 +144,30 @@ function doUpdateWh(){
   const sheetName = whWorkbook.SheetNames.find(n=>hnorm(n)==='format');
   if(!sheetName){ setWhStatus(t('whNoFormat'), false); return; }
   const rows = X.utils.sheet_to_json(whWorkbook.Sheets[sheetName], {header:1, raw:true, defval:''});
-  let hr = -1, cM = -1, cQ = -1;
+  let hr = -1, cM = -1, cQ = -1, cT = -1;
   for(let i=0; i<Math.min(rows.length, 30) && hr<0; i++){
-    const m = rows[i].findIndex(c=>hnorm(c)==='*material'), q = rows[i].findIndex(c=>hnorm(c)==='*stock qty');
-    if(m>=0 && q>=0){ hr = i; cM = m; cQ = q; }
+    const m = rows[i].findIndex(c=>hnorm(c)==='*material'), q = rows[i].findIndex(c=>hnorm(c)==='*stockqty');
+    if(m>=0 && q>=0){ hr = i; cM = m; cQ = q; cT = rows[i].findIndex(c=>hnorm(c)==='shorttext'); }
   }
   if(hr<0){ setWhStatus(t('whNoHeader'), false); return; }
-  const agg = new Map(); // รวมจำนวนของ Material เดียวกันที่ซ้ำหลายแถว
+  const agg = new Map(); // รวมจำนวนของแถวที่ Material และ Short Text เหมือนกัน
   for(let i=hr+1; i<rows.length; i++){
-    const mat = String(rows[i][cM]==null?'':rows[i][cM]).trim(); if(!mat) continue;
+    const mat = String(rows[i][cM]==null?'':rows[i][cM]).trim();
+    const txt = cT>=0 ? String(rows[i][cT]==null?'':rows[i][cT]).trim() : '';
+    if(!mat && !txt) continue;
     const qty = Number(String(rows[i][cQ]).replace(/,/g,'')) || 0;
-    const k = codeKey(mat), cur = agg.get(k);
-    agg.set(k, {material: cur ? cur.material : mat, qty: r2((cur ? cur.qty : 0) + qty)});
+    const k = codeKey(mat) + '|' + textKey(txt), cur = agg.get(k);
+    agg.set(k, {material: mat, text: txt, qty: r2((cur ? cur.qty : 0) + qty)});
   }
   setWhStatus(t('whUpdating'), true);
   const btn = document.getElementById('whUpdateBtn'); if(btn) btn.disabled = true;
   callApi('updateWhData', {items:[...agg.values()], fileName:whFileName, person:(SPM.api.getUser()&&SPM.api.getUser().name)||''}).then(res=>{
     if(btn) btn.disabled = false;
     if(!res.ok){ setWhStatus(translateServerMsg(res.message), false); return; }
-    setWhStatus(t('whDone').replace('{m}', res.matched).replace('{n}', res.noInfo), true);
+    let msg = t('whDone').replace('{m}', res.matched).replace('{x}', res.matchedText||0).replace('{n}', res.noInfo);
+    if(cT<0) msg += ' · ' + t('whNoShortText'); else if(res.descFound===false) msg += ' · ' + t('whNoDesc');
+    setWhStatus(msg, true);
+    renderWhLast(res.whLast);
     loadAnalysis();
   }).catch(err=>{ if(btn) btn.disabled = false; setWhStatus(t('errorPrefix') + err.message, false); });
 }
