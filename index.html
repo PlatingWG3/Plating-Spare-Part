@@ -251,7 +251,7 @@ window.SPM = {
   addStyle: function (css) { var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); }
 };
 </script>
-<script src="analysis.js?v=3"></script>
+<script src="analysis.js?v=4"></script>
 <script>
 // ======== ตั้งค่า API / API config ========
 // วาง URL ของ Google Apps Script Web App ที่ Deploy แล้ว (ลงท้ายด้วย /exec) ตรงนี้
@@ -341,16 +341,16 @@ function _ck(v){ let s=String(v==null?'':v).trim().replace(/^'+/,''); if(/^\d+(\
 function _sameCode(a,b){ const A=String(a).split(',').map(_ck).filter(Boolean), B=String(b).split(',').map(_ck).filter(Boolean); return A.length>0 && A.join(',')===B.join(','); }
 // ข้อมูลจำลองของชีท "Full SP Analysis" (หัวคอลัมน์ในระบบจริงอ่านจากชีทตามที่ตั้งไว้)
 const _mockAnalysis = {
-  headers:['No.','Spare parts P/N (Delta)','Description','Supplier','Safety stock / 4 month','Current Internal Qty.','Current WH Qty.','SUM (WH + Internal)','Lead Time (days)'],
+  headers:['No.','Spare parts P/N (Delta)','Description ( English ) ≤ 40 characters','Supplier','Safety stock / 4 month','Current Internal Qty.','Current WH Qty.','SUM (WH + Internal)','Lead Time (days)'],
   rows:[
-    [1,'SP-001','สายพานลำเลียง 10mm','Supplier A',40,99,20,'',14],
-    [2,'SP-002','ตลับลูกปืน 6205','Supplier B',5,99,5,'',21],
-    [3,'SP-003','ฟิลเตอร์ลมอัด','Supplier B',30,99,0,'',30],
-    [4,'SP-004','มอเตอร์ไฟฟ้า 1HP','Supplier C',3,99,3,'',45],
-    [5,'SP-005','ซีลยางปั๊ม','Supplier A',50,99,12,'',14],
-    [6,'10234','ตลับลูกปืน 6204','Supplier B',30,99,8,'',21],
-    [7,'CH-001','น้ำยาล้างคราบ','Supplier D',100,99,30,'',10],
-    [8,'LC-001','น้ำยาขัดเงา','Supplier D',5,99,10,'',10],
+    [1,'SP-001','Conveyor belt 10mm','Supplier A',40,99,20,'',14],
+    [2,'SP-002','Bearing 6205','Supplier B',5,99,5,'',21],
+    [3,'SP-003','Air filter','Supplier B',30,99,0,'',30],
+    [4,'SP-004','Electric motor 1HP','Supplier C',3,99,3,'',45],
+    [5,'SP-005','Rubber pump seal','Supplier A',50,99,12,'',14],
+    [6,'10234','Bearing 6204','Supplier B',30,99,8,'',21],
+    [7,'CH-001','Cleaning agent','Supplier D',100,99,30,'',10],
+    [8,'LC-001','Polishing agent','Supplier D',5,99,10,'',10],
     [9,'DL-100234','Servo Drive 400W','Supplier E',4,2,1,'',60],
     [10,'DL-100567','PLC Module','Supplier E',2,0,0,'',45],
     [11,'DL-200111','Proximity Sensor M12','Supplier F',8,6,4,'',30],
@@ -358,19 +358,20 @@ const _mockAnalysis = {
     [13,'DL-300001','Encoder 1024 PPR','Supplier E',4,1,'No info','',50],
   ].map(r=>r.slice()),
 };
-// จำลองการ Sync ของ Backend: อัปเดต Current Internal Qty. จากคลังอะไหล่ (เฉพาะแถวที่รหัสตรงกัน) และคำนวณ SUM (WH + Internal)
+const _mockWh = {last:null};   // วันที่อัปเดต WH ล่าสุด (Backend จริงเก็บใน Script Properties)
+// จำลองการ Sync ของ Backend: อัปเดต Current Internal Qty. จากคลังอะไหล่ (เฉพาะแถวที่รหัสตรงกัน) และคำนวณ SUM (WH + Internal) (No info/ว่าง = 0)
 function _syncAnalysis(){
-  const A=_mockAnalysis, nh=h=>String(h).trim().toLowerCase().replace(/\s+/g,' ');
+  const A=_mockAnalysis, nh=h=>String(h).replace(/\s+/g,'').toLowerCase();
   const ix=n=>A.headers.findIndex(h=>nh(h)===nh(n));
   const iP=ix('Spare parts P/N (Delta)'), iI=ix('Current Internal Qty.'), iW=ix('Current WH Qty.'), iS=ix('SUM (WH + Internal)');
-  const isN=v=>v!==''&&v!=null&&isFinite(Number(v));
+  const num=v=>(v===''||v==null||!isFinite(Number(v))) ? null : Number(v);
   A.rows.forEach(r=>{
     if(iP>=0&&iI>=0){
       const toks=String(r[iP]).split(',').map(_ck).filter(Boolean);
       const part=MOCK.parts.find(p=>String(p.code).split(',').map(_ck).some(c=>toks.indexOf(c)!==-1));
       if(part) r[iI]=part.pending ? 'รอเช็คจำนวน' : part.stock;
     }
-    if(iS>=0&&iI>=0&&iW>=0){ const a=isN(r[iI]), b=isN(r[iW]); r[iS]=(a||b) ? r2((a?Number(r[iI]):0)+(b?Number(r[iW]):0)) : ''; }
+    if(iS>=0&&iI>=0&&iW>=0){ r[iS]=r2((num(r[iI])||0)+(num(r[iW])||0)); }
   });
 }
 const _mockLine = {lowStock:true,outStock:true,expiry:true,withdraw:true,replenish:true,login:false,partAddDelete:false,partEdit:false};
@@ -389,17 +390,25 @@ function _mockHandle(action, p){
       if(u) MOCK.online[u.u] = Date.now();
       return u ? {ok:true, user:{user:u.u, name:u.n, dept:u.d, position:u.pos||'', level:u.lv||0}} : {ok:false, message:'Username หรือ Password ไม่ถูกต้อง'};
     }
-    case 'getFullSPAnalysis': _syncAnalysis(); return {ok:true, headers:_mockAnalysis.headers.slice(), rows:_mockAnalysis.rows.map(r=>r.slice())};
+    case 'getFullSPAnalysis': _syncAnalysis(); return {ok:true, headers:_mockAnalysis.headers.slice(), rows:_mockAnalysis.rows.map(r=>r.slice()), backend:'mock', sync:{ok:true}, whLast:_mockWh.last};
     case 'updateWhData': {
-      const A=_mockAnalysis, norm=h=>String(h).trim().toLowerCase();
-      const iP=A.headers.findIndex(h=>norm(h)==='spare parts p/n (delta)'), iW=A.headers.findIndex(h=>norm(h)==='current wh qty.');
+      const A=_mockAnalysis, nh=h=>String(h).replace(/\s+/g,'').toLowerCase(), tk=x=>String(x==null?'':x).trim().replace(/\s+/g,' ').toLowerCase();
+      const iP=A.headers.findIndex(h=>nh(h)==='sparepartsp/n(delta)'), iW=A.headers.findIndex(h=>nh(h)==='currentwhqty.');
+      const iD=A.headers.findIndex(h=>nh(h).indexOf('description(english)')===0);
       if(iP<0||iW<0) return {ok:false, message:'ไม่พบ Header "Spare parts P/N (Delta)" หรือ "Current WH Qty." ในชีท Full SP Analysis'};
-      const m=new Map(); (p.items||[]).forEach(it=>{ const k=_ck(it.material); m.set(k,r2((m.get(k)||0)+r2(it.qty))); });
-      let matched=0, noInfo=0;
-      A.rows.forEach(r=>{ const k=String(r[iP]).split(',').map(_ck).filter(Boolean).find(x=>m.has(x)); if(k!==undefined){ r[iW]=m.get(k); matched++; } else { r[iW]='No info'; noInfo++; } });
+      const items=p.items||[];
+      // ขั้นที่ 1: เทียบ P/N (Delta) กับ *Material
+      const mat=new Map(); items.forEach(it=>{ const k=_ck(it.material); if(k) mat.set(k,r2((mat.get(k)||0)+r2(it.qty))); });
+      const used=new Set(); let matched=0, matchedText=0, noInfo=0; const rest=[];
+      A.rows.forEach(r=>{ const toks=String(r[iP]).split(',').map(_ck).filter(Boolean); const k=toks.find(x=>mat.has(x));
+        if(k!==undefined){ r[iW]=mat.get(k); used.add(k); matched++; } else rest.push(r); });
+      // ขั้นที่ 2: แถวที่ยังไม่เจอ เทียบ Description ( English ) ≤ 40 characters กับ Short Text (เฉพาะรายการ Excel ที่ยังไม่ถูกใช้ในขั้นที่ 1)
+      const txt=new Map(); items.forEach(it=>{ if(used.has(_ck(it.material))) return; const k=tk(it.text); if(k) txt.set(k,r2((txt.get(k)||0)+r2(it.qty))); });
+      rest.forEach(r=>{ const k=iD>=0 ? tk(r[iD]) : ''; if(k && txt.has(k)){ r[iW]=txt.get(k); matchedText++; } else { r[iW]='No info'; noInfo++; } });
       _syncAnalysis();
-      _log('อัปเดต WH','-','Full SP Analysis','Current WH Qty.','-',matched+' matched / '+noInfo+' No info',p.person);
-      return {ok:true, matched, noInfo, total:A.rows.length};
+      const d=new Date(), pad=n=>String(n).padStart(2,'0');
+      _mockWh.last={atText:pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes()), by:p.person||'', file:p.fileName||''};
+      return {ok:true, matched, matchedText, noInfo, total:A.rows.length, descFound:iD>=0, whLast:_mockWh.last};
     }
     case 'getLineSettings': return {settings:Object.assign({},_mockLine), configured:true};
     case 'saveLineSettings': Object.keys(p.settings||{}).forEach(k=>{ if(k in _mockLine) _mockLine[k]=!!p.settings[k]; }); return {ok:true, settings:Object.assign({},_mockLine)};
@@ -446,12 +455,7 @@ function _mockHandle(action, p){
     case 'updatePart': {
       const x = MOCK.parts.find(y=>_sameCode(y.code,p.code));
       if(!x) return {ok:false, message:'ไม่พบอะไหล่รหัสนี้'};
-      if(p.newCode && !_sameCode(x.code, p.newCode)){ // Level 3: เปลี่ยนรหัสอะไหล่
-        const _t = c=>String(c).split(',').map(_ck).filter(Boolean);
-        if(MOCK.parts.some(y=>y!==x && _t(y.code).some(k=>_t(p.newCode).includes(k)))) return {ok:false, message:'มีรหัสอะไหล่นี้อยู่แล้ว'};
-        _log('แก้ไขข้อมูล',p.newCode,p.name,'รหัสอะไหล่',x.code,p.newCode,p.person); x.code = p.newCode;
-      }
-      if(p.stock!==undefined && p.stock!=='' && !(isChemCat(p.category) && p.lots && p.lots.length)){ // Level 3: แก้ไขจำนวนคงเหลือ
+      if(p.stock!==undefined && p.stock!=='' && !(isChemCat(p.category) && p.lots && p.lots.length)){ // Level 3: แก้ไขจำนวนคงเหลือ (รหัสอะไหล่แก้ไม่ได้)
         const ns = r2(p.stock), os = x.pending ? 'รอเช็คจำนวน' : x.stock;
         if(String(os)!==String(ns)) _log('แก้ไขข้อมูล',x.code,p.name,'คงเหลือ',os,ns,p.person);
         x.stock = ns; x.pending = false;
@@ -517,7 +521,7 @@ const I18N = {
     selectPartToEdit:'เลือกอะไหล่ที่ต้องการแก้ไข', selectPartPlaceholder:'-- เลือกอะไหล่ --',
     partCode:'รหัสอะไหล่', partName:'ชื่ออะไหล่', category:'หมวดหมู่', unit:'หน่วยนับ',
     stockEditNote:'คงเหลือ (แก้ไขผ่านเบิก/เติมสต็อกเท่านั้น)', minStock:'สต็อกขั้นต่ำ', owner:'เจ้าของอะไหล่ (Owner)',
-    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', statusPending:'รอเช็คจำนวน', pendingHint:'ถ้ายังไม่ทราบจำนวน ใส่ 999 = ระบบจะบันทึกเป็น "รอเช็คจำนวน"', pendingBlock:'อะไหล่นี้ "รอเช็คจำนวน" ยังเบิก/เติมไม่ได้ ให้ Level 3 (Admin) ระบุจำนวนคงเหลือในหน้าแก้ไขก่อน', codeEditNote:'Level 3: แก้ไขรหัสอะไหล่ได้ (ประวัติเดิมยังใช้รหัสเก่า)', level:'Level การเข้าถึง', level1:'Level 1 — ผู้ใช้ทั่วไป (ไม่เห็น Analysis, จัดการผู้ใช้, Setup)', level2:'Level 2 — เห็น Analysis (ไม่เห็น จัดการผู้ใช้, Setup)', level3:'Level 3 — Admin (เห็นทุกแท็บ แก้ไขรหัส/คงเหลือได้)', level1Short:'Level 1', level2Short:'Level 2', level3Short:'Level 3 (Admin)', levelSaved:'เปลี่ยน Level แล้ว', levelSelfBlock:'ไม่สามารถลด Level ของตัวเองได้', online:'ออนไลน์', offline:'ออฟไลน์', onlineNote:'ออนไลน์ = ใช้งานระบบอยู่ภายใน 6 นาทีที่ผ่านมา', lineLastOk:'ส่งสำเร็จล่าสุด', lineLastError:'ข้อผิดพลาดล่าสุด', maxStock:'สต็อคสูงสุด', expiryDate:'วันหมดอายุ', refillQty:'ควรเติมอีก (ถึงสต็อคสูงสุด)', lotsTitle:'รายการล็อต (Lot) ของ Plating / Lap Chemical', lotsHint:'ใช้เมื่อ Part number เดียวกันมีหลายล็อตที่วันหมดอายุต่างกัน ระบบจะรวมจำนวนเป็นคงเหลือ และเบิกจากล็อตที่หมดอายุก่อน (FEFO)', lotAdd:'+ เพิ่มล็อต', lotName:'Lot / เลขล็อต', expAlertTitle:'⏰ Alert — อะไหล่ใกล้หมดอายุ (ภายใน 14 วัน) / หมดอายุแล้ว', expExpired:'หมดอายุแล้ว {n} วัน', expToday:'หมดอายุวันนี้', expIn:'อีก {n} วัน', lineEv_expiry:'การ์ดสรุปประจำสัปดาห์: ส่วนก่อนหมดอายุ 14 วัน (ทุกวันจันทร์ 08:00)', lineEv_lowStock:'การ์ดสรุปประจำสัปดาห์: ส่วนต่ำกว่า Safety Stock (ทุกวันจันทร์ 08:00)', lineEv_outStock:'การ์ดสรุปประจำสัปดาห์: ส่วนหมด Stock (ทุกวันจันทร์ 08:00)', lineEv_withdraw:'แจ้งเตือนการเบิกอะไหล่ (ทันที)', lineEv_replenish:'แจ้งเตือนการเติม/คืนอะไหล่ (ทันที)', lotId:'Lot ID', newLotId:'Lot ID ใหม่', lotPlaceholder:'เลือก Lot ID', lotNew:'+ ล็อตใหม่ (ระบุ Lot ID ใหม่)', lotNoName:'(ไม่ระบุเลขล็อต)', lotSelectPartFirst:'เลือกอะไหล่ก่อน', lotExists:'Lot ID นี้มีอยู่แล้ว กรุณาเลือกจากรายการ', exportCsv:'Export รายการอะไหล่เป็น CSV (ตามแท็บหมวดหมู่ที่เลือก)', exportEmpty:'ไม่มีอะไหล่ให้ Export ในหมวดนี้', exportDone:'Export {n} รายการ ({c}) แล้ว', codeDefaultNote:'ถ้าไม่มีรหัสอะไหล่ ให้ใช้ดังนี้: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'ยุบเมนู', sidebarExpand:'ขยายเมนู', machine:'เครื่องจักร', machineAll:'ทุกเครื่องจักร', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
+    changeImage:'เปลี่ยนรูปภาพ (ไม่บังคับ)', showPassword:'แสดง/ซ่อนรหัสผ่าน', deletePart:'ลบอะไหล่', deleteTitle:'ยืนยันการลบอะไหล่', deleteMsg:'ต้องการลบอะไหล่ <b>{name}</b> (รหัส {code}) ใช่หรือไม่?<br>การลบไม่สามารถกู้คืนได้ (ประวัติการเบิก/เติมเดิมจะยังคงอยู่)', deleteConfirm:'ลบอะไหล่', deleteDone:'ลบอะไหล่เรียบร้อยแล้ว', saveDone:'บันทึกการแก้ไขสำเร็จ', lineTitle:'แจ้งเตือนผ่าน LINE Official Account', lineConfigured:'เชื่อมต่อ LINE แล้ว (ตั้งค่า Token ใน Script Properties เรียบร้อย)', lineNotConfigured:'ยังไม่ได้ตั้งค่า LINE_CHANNEL_TOKEN ใน Apps Script (Project Settings > Script properties)', lineEv_login:'มีการ Login เข้าระบบ', lineEv_partAddDelete:'มีการเพิ่มหรือลบอะไหล่', lineEv_partEdit:'มีการเปลี่ยนแปลงข้อมูลอะไหล่', lineEv_transaction:'มีการเบิก เพิ่ม หรือคืนอะไหล่', lineEv_dailyStock:'แจ้งเตือนอะไหล่ต่ำกว่า Safety Stock / หมด Stock ทุกวัน 08:00', lineTest:'ส่งข้อความทดสอบ', lineTestOk:'ส่งข้อความทดสอบแล้ว', lineSaved:'บันทึกการตั้งค่าแล้ว', position:'ตำแหน่ง', positionHint:'เช่น Admin, Engineer, Technician', statusPending:'รอเช็คจำนวน', pendingHint:'ถ้ายังไม่ทราบจำนวน ใส่ 999 = ระบบจะบันทึกเป็น "รอเช็คจำนวน"', pendingBlock:'อะไหล่นี้ "รอเช็คจำนวน" ยังเบิก/เติมไม่ได้ ให้ Level 3 (Admin) ระบุจำนวนคงเหลือในหน้าแก้ไขก่อน', codeEditNote:'ลบและสร้างใหม่เท่านั้น ถ้าต้องการเปลี่ยน รหัสอะไหล่', level:'Level การเข้าถึง', level1:'Level 1 — ผู้ใช้ทั่วไป (ไม่เห็น Analysis, จัดการผู้ใช้, Setup)', level2:'Level 2 — เห็น Analysis (ไม่เห็น จัดการผู้ใช้, Setup)', level3:'Level 3 — Admin (เห็นทุกแท็บ แก้ไขรหัส/คงเหลือได้)', level1Short:'Level 1', level2Short:'Level 2', level3Short:'Level 3 (Admin)', levelSaved:'เปลี่ยน Level แล้ว', levelSelfBlock:'ไม่สามารถลด Level ของตัวเองได้', online:'ออนไลน์', offline:'ออฟไลน์', onlineNote:'ออนไลน์ = ใช้งานระบบอยู่ภายใน 6 นาทีที่ผ่านมา', lineLastOk:'ส่งสำเร็จล่าสุด', lineLastError:'ข้อผิดพลาดล่าสุด', maxStock:'สต็อคสูงสุด', expiryDate:'วันหมดอายุ', refillQty:'ควรเติมอีก (ถึงสต็อคสูงสุด)', lotsTitle:'รายการล็อต (Lot) ของ Plating / Lap Chemical', lotsHint:'ใช้เมื่อ Part number เดียวกันมีหลายล็อตที่วันหมดอายุต่างกัน ระบบจะรวมจำนวนเป็นคงเหลือ และเบิกจากล็อตที่หมดอายุก่อน (FEFO)', lotAdd:'+ เพิ่มล็อต', lotName:'Lot / เลขล็อต', expAlertTitle:'⏰ Alert — อะไหล่ใกล้หมดอายุ (ภายใน 14 วัน) / หมดอายุแล้ว', expExpired:'หมดอายุแล้ว {n} วัน', expToday:'หมดอายุวันนี้', expIn:'อีก {n} วัน', lineEv_expiry:'การ์ดสรุปประจำสัปดาห์: ส่วนก่อนหมดอายุ 14 วัน (ทุกวันจันทร์ 08:00)', lineEv_lowStock:'การ์ดสรุปประจำสัปดาห์: ส่วนต่ำกว่า Safety Stock (ทุกวันจันทร์ 08:00)', lineEv_outStock:'การ์ดสรุปประจำสัปดาห์: ส่วนหมด Stock (ทุกวันจันทร์ 08:00)', lineEv_withdraw:'แจ้งเตือนการเบิกอะไหล่ (ทันที)', lineEv_replenish:'แจ้งเตือนการเติม/คืนอะไหล่ (ทันที)', lotId:'Lot ID', newLotId:'Lot ID ใหม่', lotPlaceholder:'เลือก Lot ID', lotNew:'+ ล็อตใหม่ (ระบุ Lot ID ใหม่)', lotNoName:'(ไม่ระบุเลขล็อต)', lotSelectPartFirst:'เลือกอะไหล่ก่อน', lotExists:'Lot ID นี้มีอยู่แล้ว กรุณาเลือกจากรายการ', exportCsv:'Export รายการอะไหล่เป็น CSV (ตามแท็บหมวดหมู่ที่เลือก)', exportEmpty:'ไม่มีอะไหล่ให้ Export ในหมวดนี้', exportDone:'Export {n} รายการ ({c}) แล้ว', codeDefaultNote:'ถ้าไม่มีรหัสอะไหล่ ให้ใช้ดังนี้: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'ยุบเมนู', sidebarExpand:'ขยายเมนู', machine:'เครื่องจักร', machineAll:'ทุกเครื่องจักร', dropHint:'คลิกเลือกไฟล์ • ลากรูปมาวาง • หรือกด Ctrl+V เพื่อวางรูป', removeImage:'ลบรูปที่เลือก', saveEdit:'บันทึกการแก้ไข', cancel:'ยกเลิก',
     selectPartFirst:'กรุณาเลือกอะไหล่ก่อนบันทึก', noPartFound:'ไม่พบอะไหล่ที่ตรงกับคำค้นหา',
     addPartTitle:'เพิ่มอะไหล่ใหม่', initialStock:'จำนวนเริ่มต้น', uploadImage:'รูปภาพอะไหล่ (อัปโหลด)',
     addPartBtn:'+ เพิ่มอะไหล่', codePlaceholder:'เช่น SP-005 หรือ SP-005,SP-006', unitPlaceholder:'ชิ้น / เส้น / กล่อง',
@@ -574,7 +578,7 @@ const I18N = {
     selectPartToEdit:'Select part to edit', selectPartPlaceholder:'-- Select part --',
     partCode:'Part code', partName:'Part name', category:'Category', unit:'Unit',
     stockEditNote:'Stock (editable via Withdraw/Replenish only)', minStock:'Safety Stock', owner:'Owner',
-    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', statusPending:'Pending count', pendingHint:'If the quantity is unknown, enter 999 = saved as "Pending count"', pendingBlock:'This part is "Pending count" and cannot be withdrawn/refilled yet. A Level 3 (Admin) must enter the stock in the Edit window first.', codeEditNote:'Level 3: the part code can be edited (past history keeps the old code)', level:'Access level', level1:'Level 1 — Standard user (no Analysis, User Management, Setup)', level2:'Level 2 — Can see Analysis (no User Management, Setup)', level3:'Level 3 — Admin (all tabs, can edit code/stock)', level1Short:'Level 1', level2Short:'Level 2', level3Short:'Level 3 (Admin)', levelSaved:'Level updated', levelSelfBlock:'You cannot lower your own Level', online:'Online', offline:'Offline', onlineNote:'Online = active in the last 6 minutes', lineLastOk:'Last successful send', lineLastError:'Last error', maxStock:'Max Stock', expiryDate:'Expiry date', refillQty:'To refill (up to Max Stock)', lotsTitle:'Plating / Lap Chemical lots', lotsHint:'Use when the same Part number has several lots with different expiry dates. Quantities are summed into Current Qty., and withdrawals use the earliest-expiring lot first (FEFO).', lotAdd:'+ Add lot', lotName:'Lot no.', expAlertTitle:'⏰ Alert — Parts expiring within 14 days / expired', expExpired:'Expired {n} days ago', expToday:'Expires today', expIn:'In {n} days', lineEv_expiry:'Weekly summary card: Expiring within 14 days section (every Monday 08:00)', lineEv_lowStock:'Weekly summary card: Below Safety Stock section (every Monday 08:00)', lineEv_outStock:'Weekly summary card: Out of stock section (every Monday 08:00)', lineEv_withdraw:'Withdraw notification (instant)', lineEv_replenish:'Refill / return notification (instant)', lotId:'Lot ID', newLotId:'New Lot ID', lotPlaceholder:'Select Lot ID', lotNew:'+ New lot (enter new Lot ID)', lotNoName:'(no lot no.)', lotSelectPartFirst:'Select a part first', lotExists:'This Lot ID already exists. Please pick it from the list.', exportCsv:'Export parts list as CSV (current category tab)', exportEmpty:'No parts to export in this category', exportDone:'Exported {n} parts ({c})', codeDefaultNote:'If the part has no code, use: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'Collapse menu', sidebarExpand:'Expand menu', machine:'Machine', machineAll:'All machines', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
+    changeImage:'Change image (optional)', showPassword:'Show/hide password', deletePart:'Delete part', deleteTitle:'Confirm delete', deleteMsg:'Delete part <b>{name}</b> (code {code})?<br>This cannot be undone (past withdraw/refill history is kept).', deleteConfirm:'Delete part', deleteDone:'Part deleted', saveDone:'Changes saved successfully', lineTitle:'LINE Official Account notifications', lineConfigured:'LINE connected (token set in Script Properties)', lineNotConfigured:'LINE_CHANNEL_TOKEN is not set in Apps Script (Project Settings > Script properties)', lineEv_login:'User logs in', lineEv_partAddDelete:'Part added or deleted', lineEv_partEdit:'Part data changed', lineEv_transaction:'Withdraw / refill / return', lineEv_dailyStock:'Daily 08:00 alert: below Safety Stock / out of stock', lineTest:'Send test message', lineTestOk:'Test message sent', lineSaved:'Settings saved', position:'Position', positionHint:'e.g. Admin, Engineer, Technician', statusPending:'Pending count', pendingHint:'If the quantity is unknown, enter 999 = saved as "Pending count"', pendingBlock:'This part is "Pending count" and cannot be withdrawn/refilled yet. A Level 3 (Admin) must enter the stock in the Edit window first.', codeEditNote:'To change the part code, delete the part and create a new one', level:'Access level', level1:'Level 1 — Standard user (no Analysis, User Management, Setup)', level2:'Level 2 — Can see Analysis (no User Management, Setup)', level3:'Level 3 — Admin (all tabs, can edit code/stock)', level1Short:'Level 1', level2Short:'Level 2', level3Short:'Level 3 (Admin)', levelSaved:'Level updated', levelSelfBlock:'You cannot lower your own Level', online:'Online', offline:'Offline', onlineNote:'Online = active in the last 6 minutes', lineLastOk:'Last successful send', lineLastError:'Last error', maxStock:'Max Stock', expiryDate:'Expiry date', refillQty:'To refill (up to Max Stock)', lotsTitle:'Plating / Lap Chemical lots', lotsHint:'Use when the same Part number has several lots with different expiry dates. Quantities are summed into Current Qty., and withdrawals use the earliest-expiring lot first (FEFO).', lotAdd:'+ Add lot', lotName:'Lot no.', expAlertTitle:'⏰ Alert — Parts expiring within 14 days / expired', expExpired:'Expired {n} days ago', expToday:'Expires today', expIn:'In {n} days', lineEv_expiry:'Weekly summary card: Expiring within 14 days section (every Monday 08:00)', lineEv_lowStock:'Weekly summary card: Below Safety Stock section (every Monday 08:00)', lineEv_outStock:'Weekly summary card: Out of stock section (every Monday 08:00)', lineEv_withdraw:'Withdraw notification (instant)', lineEv_replenish:'Refill / return notification (instant)', lotId:'Lot ID', newLotId:'New Lot ID', lotPlaceholder:'Select Lot ID', lotNew:'+ New lot (enter new Lot ID)', lotNoName:'(no lot no.)', lotSelectPartFirst:'Select a part first', lotExists:'This Lot ID already exists. Please pick it from the list.', exportCsv:'Export parts list as CSV (current category tab)', exportEmpty:'No parts to export in this category', exportDone:'Exported {n} parts ({c})', codeDefaultNote:'If the part has no code, use: General = GN-001, Consumable = CS-001, PPE = PE-001, Stationary = ST-001, Plating Chemical = PC-001, Lap Chemical = LC-001', sidebarCollapse:'Collapse menu', sidebarExpand:'Expand menu', machine:'Machine', machineAll:'All machines', dropHint:'Click to choose • drag & drop • or press Ctrl+V to paste', removeImage:'Remove selected image', saveEdit:'Save changes', cancel:'Cancel',
     selectPartFirst:'Please select a part first', noPartFound:'No matching parts found',
     addPartTitle:'Add New Part', initialStock:'Initial stock', uploadImage:'Part image (upload)',
     addPartBtn:'+ Add Part', codePlaceholder:'e.g. SP-005 or SP-005,SP-006', unitPlaceholder:'pcs / rolls / boxes',
@@ -1063,7 +1067,7 @@ function renderApp(){
       </div>
       <form id="editPartForm">
         <div id="editPartFields" class="hidden" style="display:contents;">
-        ${levelOf(currentUser)>=3 ? `<div class="full"><label>${t('partCode')}</label><input name="code" required><div class="field-hint">${t('codeEditNote')}</div></div>` : `<div><label>${t('partCode')}</label><input name="code" disabled></div>`}
+        <div class="full"><label>${t('partCode')}</label><input name="code" disabled><div class="field-hint">${t('codeEditNote')}</div></div>
         <div><label>${t('partName')}</label><input name="name" required></div>
         <div><label>${t('category')}</label><select name="category">${categoryOptionsHTML('General', false)}</select></div>
         <div><label>${t('unit')}</label><input name="unit" required></div>
@@ -1963,10 +1967,7 @@ function attachHandlers(){
       const f = new FormData(editPartForm);
       const part = {code:editingCode, name:f.get('name').trim(), category:f.get('category').trim(),
         unit:f.get('unit').trim(), min:f.get('min'), max:f.get('max'), expiry:f.get('expiry')||'', lots:readLots(editPartForm), owner:f.get('owner'), machine:f.get('machine')||'', person:(currentUser && currentUser.name) || ''};
-      if(levelOf(currentUser)>=3){ // Level 3: แก้ไขรหัสอะไหล่และจำนวนคงเหลือได้
-        const nc = normalizeCodes(f.get('code')); if(!nc.ok){ showMsg('editPartMsg', nc.error, false); return; }
-        part.newCode = nc.value; if(f.has('stock')) part.stock = f.get('stock');
-      }
+      if(levelOf(currentUser)>=3 && f.has('stock')) part.stock = f.get('stock'); // Level 3: แก้ไขได้เฉพาะจำนวนคงเหลือ (รหัสอะไหล่แก้ไม่ได้ทุก Level)
       const submit = ()=>{
         callApi('updatePart', part).then(res=>{
           if(!res.ok){ showMsg('editPartMsg', translateServerMsg(res.message), false); return; }
