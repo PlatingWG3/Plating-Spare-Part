@@ -86,6 +86,20 @@ th{color:var(--muted);font-weight:600;font-size:12px;}
 .subtab:hover:not(.active){background:var(--card);}
 .subtab.active{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
 .subtab-n{font-size:11px;opacity:.75;}
+.dash-hero{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:20px 24px;border-radius:16px;margin-bottom:16px;color:#fff;background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#0ea5e9 100%);box-shadow:0 6px 20px rgba(37,99,235,.25);}
+.dash-hero h2{margin:2px 0 4px;font-size:22px;color:#fff;}.dh-hi{font-size:13px;opacity:.85;}.dh-date{font-size:12px;opacity:.8;}
+.dh-ring{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);padding:8px 16px 8px 10px;border-radius:14px;}
+.dh-ring b{display:block;font-size:13px;}.dh-ring span{font-size:12px;opacity:.85;}
+.dk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+.dk{position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 14px 12px;overflow:hidden;transition:transform .15s,box-shadow .15s;}
+.dk::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c);}
+.dk.clk{cursor:pointer;}.dk.clk:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.10);}
+.dk-ic{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:color-mix(in srgb,var(--c) 14%,transparent);}
+.dk-n{font-size:30px;font-weight:800;line-height:1.1;margin:8px 0 2px;color:var(--c);}.dk-l{font-size:13px;font-weight:600;}.dk-s{font-size:11px;color:var(--muted);margin-top:2px;}
+.cat-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}.cat-name{width:150px;font-size:13px;flex:none;}
+.cat-bar{flex:1;height:12px;border-radius:6px;overflow:hidden;display:flex;background:var(--bg);border:1px solid var(--border);}.cat-n{width:26px;text-align:right;font-size:12px;color:var(--muted);}
+@media(max-width:560px){.cat-name{width:110px;font-size:12px;}.dash-hero h2{font-size:18px;}}
+
 .rp-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
 .rp-seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg);}
 .rp-seg-btn{border:none;background:transparent;color:var(--text);padding:7px 14px;font-size:13px;cursor:pointer;}
@@ -96,7 +110,9 @@ th{color:var(--muted);font-weight:600;font-size:12px;}
 .kpi-l{font-size:12px;color:var(--muted);}.kpi-v{font-size:28px;font-weight:700;margin:4px 0 2px;}.kpi-s{font-size:12px;color:var(--muted);}
 .rp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;}
 .rp-grid .card{margin-bottom:16px;}
-.rp-legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:6px;}.rp-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;}
+.rp-legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:4px;}
+.rp-chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin:2px 0 8px;}
+.rp-chips .subtab{padding:2px 9px;font-size:11.5px;border-radius:12px;}.rp-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;}
 .rank-row{display:flex;gap:10px;align-items:center;padding:6px 8px;border-radius:8px;cursor:pointer;margin-bottom:2px;}
 .rank-row:hover,.rank-row.sel{background:var(--bg);}.rank-row.sel{outline:1px solid var(--accent);}
 .rank-no{width:24px;height:24px;border-radius:50%;background:var(--border);color:var(--text);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;}
@@ -698,7 +714,10 @@ try{
 }catch(e){}
 
 const CATEGORIES = ['General','Consumable','PPE','Stationary','Plating Chemical','Lap Chemical'];
-const MACHINES = ['Roller Barrel Plating Line','Centrifugal','Roller Barrel Part','Small Machine','Other']; // รายการเครื่องจักร (ใช้ทั้ง Filter และฟอร์มเพิ่ม/แก้ไข)
+const MACHINES = ['Roller Barrel Plating Line','Centrifugal','Roller Barrel Part','Small Machine','Tool','Material','Other']; // รายการเครื่องจักร (ใช้ทั้ง Filter และฟอร์มเพิ่ม/แก้ไข)
+// อะไหล่ที่ตั้งเครื่องจักรเป็น Tool และจำนวนเป็น 0 ไม่ต้องแจ้งเตือน (ยังแสดงสถานะ "หมด" ในตารางตามปกติ)
+const NO_ZERO_ALERT_MACHINES = ['Tool'];
+function isAlertStatus(p){ const st = statusOf(p); return st==='low' || (st==='out' && !NO_ZERO_ALERT_MACHINES.includes(p.machine)); }
 function machineOptsHTML(sel){ return MACHINES.map(m=>`<option value="${m}" ${sel===m?'selected':''}>${m}</option>`).join(''); }
 const CHEM_CATS = ['Plating Chemical','Lap Chemical']; // หมวดที่ใช้ระบบล็อต/วันหมดอายุ
 const isChemCat = c => CHEM_CATS.indexOf(c) !== -1;
@@ -1275,15 +1294,52 @@ function statusChart(){
 }
 
 // ---------- Views ----------
+function dashStats(){
+  const day = 86400000, now = Date.now(), w = (x,y)=>r2(tx.filter(tr=>tr.type==='withdraw' && tr.date>=new Date(now-y*day) && tr.date<new Date(now-x*day)).reduce((s,tr)=>s+tr.qty,0));
+  return {cur:w(0,7), prev:w(7,14)};
+}
+function dashTrendHTML(){
+  const day = 86400000, td = new Date(), today = new Date(td.getFullYear(), td.getMonth(), td.getDate()), loc = lang==='th' ? 'th-TH' : 'en-US', B = [];
+  for(let i=13;i>=0;i--){ const s = new Date(today.getFullYear(), today.getMonth(), today.getDate()-i), e = new Date(s.getFullYear(), s.getMonth(), s.getDate()+1); B.push({s, e, label:s.toLocaleDateString(loc,{day:'numeric', month:'short'})}); }
+  const sr = type=>B.map(b=>r2(tx.filter(tr=>tr.type===type && tr.date>=b.s && tr.date<b.e).reduce((a,tr)=>a+tr.qty,0)));
+  return rpChart(B, sr('withdraw'), sr('replenish'), 'var(--danger)', 480);
+}
 function renderDashboard(){
   const total = parts.length;
   const low = parts.filter(p=>statusOf(p)==='low').length;
-  const out = parts.filter(p=>statusOf(p)==='out').length;
-  const alertList = parts.filter(p=>{ const st = statusOf(p); return st==='low' || st==='out'; }); // รอเช็คจำนวนไม่นับเป็นต่ำกว่าขั้นต่ำ/หมด
+  const out = parts.filter(p=>statusOf(p)==='out' && isAlertStatus(p)).length;
+  const pend = parts.filter(p=>p.pending).length;
+  const okN = parts.filter(p=>statusOf(p)==='ok').length;
+  const alertList = parts.filter(isAlertStatus); // รอเช็คจำนวนไม่นับเป็นต่ำกว่าขั้นต่ำ/หมด
   const catOrder = CATEGORIES.concat([...new Set(alertList.map(p=>p.category||'').filter(c=>!CATEGORIES.includes(c)))]);
   const alertGroups = catOrder.map(c=>({cat:c, items:alertList.filter(p=>(p.category||'')===c)})).filter(g=>g.items.length);
+  const checked = total - pend, health = checked ? Math.round(okN/checked*100) : 0, C = 2*Math.PI*30;
+  const ws = dashStats(), wd = ws.prev>0 ? Math.round((ws.cur-ws.prev)/ws.prev*100) : null, expN = expiryAlerts().length;
+  const loc = lang==='th' ? 'th-TH' : 'en-US', dateTxt = new Date().toLocaleDateString(loc,{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const kpi = (go,ic,color,n,label,sub)=>`<div class="dk ${go?'clk':''}" ${go?`data-go="${go}"`:''} style="--c:${color}"><div class="dk-ic">${ic}</div><div class="dk-n">${n}</div><div class="dk-l">${label}</div><div class="dk-s">${sub||'&nbsp;'}</div></div>`;
+  const since = Date.now() - 30*86400000, use = {};
+  tx.filter(tr=>tr.type==='withdraw' && tr.date.getTime()>=since).forEach(tr=>{ const o = use[tr.code] || (use[tr.code] = {code:tr.code, name:tr.name, qty:0}); o.qty = r2(o.qty+tr.qty); });
+  const top5 = Object.values(use).sort((a,b)=>b.qty-a.qty).slice(0,5), tmax = top5.length ? top5[0].qty : 1;
+  const cover = Object.values(use).map(o=>{ const p = partByCode(o.code); return p && !p.pending ? {p, days:p.stock/(o.qty/30)} : null; }).filter(x=>x && x.days<=14).sort((a,b)=>a.days-b.days).slice(0,5);
+  const cats = CATEGORIES.concat([...new Set(parts.map(p=>p.category||'').filter(c=>c && !CATEGORIES.includes(c)))]);
+  const catRows = cats.map(cat=>{ const l = parts.filter(p=>(p.category||'')===cat); if(!l.length) return '';
+    const c = {ok:0, low:0, out:0, pending:0}; l.forEach(p=>c[statusOf(p)]++);
+    const seg = (n,col)=> n ? `<div style="width:${n/l.length*100}%;background:${col}" title="${n}"></div>` : '';
+    return `<div class="cat-row"><div class="cat-name">${CAT_ICON_D[cat]||'📦'} ${escHTML(cat)}</div><div class="cat-bar">${seg(c.ok,'var(--ok)')}${seg(c.low,'var(--warn)')}${seg(c.out,'var(--danger-dark)')}${seg(c.pending,'var(--muted)')}</div><div class="cat-n">${l.length}</div></div>`; }).join('');
   return `
-  ${expiryCardHTML()}
+  <div class="dash-hero">
+    <div><div class="dh-hi">${L('สวัสดี','Hello')}, ${escHTML((currentUser && currentUser.name) || '')} 👋</div><h2>${L('ภาพรวมคลังอะไหล่','Spare Part Inventory Overview')}</h2><div class="dh-date">${dateTxt}</div></div>
+    <div class="dh-ring"><svg viewBox="0 0 80 80" width="84" height="84"><circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="8"/><circle cx="40" cy="40" r="30" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C*health/100} ${C}" transform="rotate(-90 40 40)"/><text x="40" y="45" text-anchor="middle" font-size="17" font-weight="800" fill="#fff">${health}%</text></svg><div><b>${L('สุขภาพสต็อก','Stock health')}</b><span>${okN}/${checked} ${L('รายการปกติ','items OK')}</span></div></div>
+  </div>
+  <div class="dk-grid">
+    ${kpi('parts','📦','var(--accent)',total,t('totalParts'),L('ทุกหมวดหมู่','all categories'))}
+    ${kpi('low','⚠️','var(--warn)',low,t('lowStock'),L('ควรสั่งเติม','needs reorder'))}
+    ${kpi('out','🚫','var(--danger-dark)',out,t('outStock'),L('ต้องดำเนินการด่วน','urgent'))}
+    ${kpi('pending','⏳','var(--muted)',pend,t('statusPending'),L('รอตรวจนับ','awaiting count'))}
+    ${kpi('report','📤','#7c3aed',ws.cur,L('เบิก 7 วันล่าสุด','Withdrawn (7d)'), wd==null ? '' : `<b style="color:${wd>0?'var(--danger)':'var(--ok)'}">${wd>0?'▲':'▼'} ${Math.abs(wd)}%</b> ${L('เทียบสัปดาห์ก่อน','vs prev. week')}`)}
+    ${kpi('alerts','🧪','#0891b2',expN,L('ใกล้หมดอายุ','Expiring soon'),L('ภายใน 14 วัน','within 14 days'))}
+  </div>
+  <div id="dashAlerts">${expiryCardHTML()}
   ${alertList.length ? `
   <div class="card">
     <h2>${t('alertTitle')}</h2>
@@ -1300,38 +1356,36 @@ function renderDashboard(){
         </div>
       </div>`).join('')}`).join('')}
   </div>` : ''}
-  <div class="card">
-    <h2>${t('summaryTitle')}</h2>
-    <div class="grid">
-      <div class="stat"><div class="icon">📦</div><div class="n">${total}</div><div class="l">${t('totalParts')}</div></div>
-      <div class="stat"><div class="icon">⚠️</div><div class="n" style="color:var(--warn)">${low}</div><div class="l">${t('lowStock')}</div></div>
-      <div class="stat"><div class="icon">🚫</div><div class="n" style="color:var(--danger-dark)">${out}</div><div class="l">${t('outStock')}</div></div>
-      <div class="stat"><div class="icon">🔄</div><div class="n">${tx.length}</div><div class="l">${t('totalTx')}</div></div>
-    </div>
   </div>
-  <div class="card">
-    <h2>${t('byOwnerTitle')}</h2>
-    <div class="grid">
-      ${CATEGORIES.concat([...new Set(parts.map(p=>p.category||'').filter(c=>c && !CATEGORIES.includes(c)))]).map(cat=>{
-        const list = parts.filter(p=>(p.category||'')===cat);
-        const qty = list.reduce((s,p)=>s+p.stock,0);
-        return `<div class="stat">
-          <div class="n">${list.length} <span style="font-size:12px;font-weight:400;color:var(--muted)">${t('items')}</span></div>
-          <div class="l">${cat}</div>
-          <div class="l" style="margin-top:4px">${t('totalStockLabel')} ${qty} ${t('units')}</div>
-        </div>`;
-      }).join('')}
-    </div>
+  <div class="rp-grid">
+    <div class="card"><h2>📈 ${L('การเบิก/เติม 14 วันล่าสุด','Withdraw / replenish — last 14 days')}</h2>
+      <div class="rp-legend"><span><i style="background:var(--danger)"></i>${L('เบิกออก','Withdrawn')}</span><span><i style="background:var(--ok)"></i>${L('เติม/คืน','Added/returned')}</span></div>${dashTrendHTML()}</div>
+    <div class="card"><h2>🩺 ${t('statusChartTitle')}</h2>${statusChart()}</div>
   </div>
-  <div class="card">
-    <h2>${t('statusChartTitle')}</h2>
-    ${statusChart()}
+  <div class="rp-grid">
+    <div class="card"><h2>🏆 ${L('เบิกสูงสุด 5 อันดับ (30 วัน)','Top 5 withdrawn (30 days)')}</h2>
+      ${top5.length ? top5.map((o,i)=>`<div class="rank-row" style="cursor:default;"><div class="rank-no r${i+1}">${i+1}</div><div style="flex:1;min-width:0;"><div class="bh"><span class="rank-name">${codeLabel(o.code)} — ${escHTML(o.name)}</span><span><b>${o.qty}</b></span></div><div class="bar-track"><div class="bar-fill" style="width:${o.qty/tmax*100}%;background:var(--accent)"></div></div></div></div>`).join('') : `<div class="empty">${t('noDataPeriod')}</div>`}
+      <div class="ins-note"><a href="#" data-go="report" style="color:var(--accent);">${L('ดูรายงานฉบับเต็ม →','Full report →')}</a></div></div>
+    <div class="card"><h2>⏳ ${L('คาดว่าจะหมดใน 14 วัน','Projected to run out (≤14 days)')}</h2>
+      ${cover.length ? cover.map(c=>`<div class="ins-row"><span>${codeLabel(c.p.code)} — ${escHTML(c.p.name)}</span><span class="pill ${c.days<=7?'pill-red':'pill-amber'}">${c.days<1?'<1':Math.round(c.days)} ${L('วัน','d')}</span></div>`).join('') : `<div class="empty">${L('ไม่มีรายการเสี่ยงหมดใน 14 วัน','No part at risk within 14 days')}</div>`}
+      <div class="ins-note">${L('คำนวณจากคงเหลือ ÷ อัตราการเบิกเฉลี่ยต่อวัน (30 วัน)','Stock ÷ average daily withdrawal (30 days)')}</div></div>
   </div>
+  <div class="card"><h2>🗂️ ${L('สุขภาพสต็อกแยกตามหมวดหมู่','Stock health by category')}</h2>
+    ${catRows}
+    <div class="rp-legend" style="margin-top:10px;"><span><i style="background:var(--ok)"></i>${t('statusOk')}</span><span><i style="background:var(--warn)"></i>${t('statusLow')}</span><span><i style="background:var(--danger-dark)"></i>${t('statusOut')}</span><span><i style="background:var(--muted)"></i>${t('statusPending')}</span></div></div>
   <div class="card">
-    <h2>${t('recentTx')}</h2>
-    ${renderTxTable(tx.slice(-5).reverse())}
+    <h2>🕘 ${t('recentTx')}</h2>
+    ${renderTxTable(tx.slice(-8).reverse())}
   </div>`;
 }
+const CAT_ICON_D = {'General':'🔧','Consumable':'🧴','PPE':'🦺','Stationary':'✏️','Plating Chemical':'🧪','Lap Chemical':'⚗️'};
+document.addEventListener('click', e=>{
+  const b = e.target.closest ? e.target.closest('[data-go]') : null; if(!b || typeof active==='undefined' || active!=='dashboard') return;
+  e.preventDefault(); const g = b.dataset.go;
+  if(g==='alerts'){ const el = document.getElementById('dashAlerts'); if(el) el.scrollIntoView({behavior:'smooth'}); return; }
+  if(g==='report'){ active = 'report'; render(); return; }
+  invCategory = ''; partFilter = Object.assign({}, partFilter, {status: g==='parts' ? '' : g, search:''}); active = 'parts'; render();
+});
 
 function invSubtabsHTML(){
   const tabsList = [{v:'', label:t('all'), n:parts.length}].concat(CATEGORIES.map(c=>({v:c, label:c, n:parts.filter(p=>(p.category||'')===c).length})));
@@ -1639,21 +1693,23 @@ function rankBars(list, color){
   </div>`).join('');
 }
 // ===== รายงานการใช้อะไหล่ (Usage Report) =====
-let reportGran = 'week', reportPart = '', reportDim = 'category';
+let reportGran = 'week', reportPart = '', reportDim = 'category', reportTrend = '';
 const L = (th, en) => lang==='en' ? en : th;
 function rpBuckets(){
   const day = 86400000, now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), out = [];
   const loc = lang==='th' ? 'th-TH' : 'en-US';
   if(reportGran==='month'){
     for(let i=11;i>=0;i--){ const s = new Date(today.getFullYear(), today.getMonth()-i, 1), e = new Date(today.getFullYear(), today.getMonth()-i+1, 1); out.push({s, e, label:s.toLocaleDateString(loc,{month:'short', year:'2-digit'})}); }
+  } else if(reportGran==='week'){
+    const dm = (today.getDay()+6)%7; // เริ่มสัปดาห์วันจันทร์ (ISO week)
+    for(let i=11;i>=0;i--){ const s = new Date(today.getFullYear(), today.getMonth(), today.getDate()-dm-i*7), e = new Date(s.getFullYear(), s.getMonth(), s.getDate()+7); out.push({s, e, label:'WW'+String(isoWeek(s)).padStart(2,'0'), tip:'WW'+String(isoWeek(s)).padStart(2,'0')+' ('+s.toLocaleDateString(loc,{day:'numeric', month:'short'})+' – '+new Date(e.getTime()-day).toLocaleDateString(loc,{day:'numeric', month:'short'})+')'}); }
   } else {
-    const n = reportGran==='week' ? 12 : 30, step = reportGran==='week' ? 7 : 1;
-    for(let i=n-1;i>=0;i--){ const e = new Date(today.getTime() + day - i*step*day), s = new Date(e.getTime() - step*day); out.push({s, e, label:s.toLocaleDateString(loc,{day:'numeric', month:'short'})}); }
+    for(let i=29;i>=0;i--){ const s = new Date(today.getFullYear(), today.getMonth(), today.getDate()-i), e = new Date(s.getFullYear(), s.getMonth(), s.getDate()+1); out.push({s, e, label:s.toLocaleDateString(loc,{day:'numeric', month:'short'})}); }
   }
   return out;
 }
 function rpData(){
-  const B = rpBuckets(), start = B[0].s, end = B[B.length-1].e, span = end - start, days = Math.round(span/86400000);
+  const B = rpBuckets(), start = B[0].s, end = B[B.length-1].e, span = end - start, days = Math.max(1, Math.round((Math.min(end.getTime(), Date.now()) - start)/86400000));
   const inR = (tr,s,e)=>tr.date>=s && tr.date<e;
   const cur = tx.filter(tr=>inR(tr,start,end)), prev = tx.filter(tr=>inR(tr,new Date(start-span),start));
   const wd = cur.filter(tr=>tr.type==='withdraw'), rp = cur.filter(tr=>tr.type==='replenish');
@@ -1664,15 +1720,18 @@ function rpData(){
   const ranked = Object.values(byPart).sort((a,b)=>b.qty-a.qty);
   return {B, days, wd, rp, wSeries:series(wd), rSeries:series(rp), totalW:sum(wd), totalR:sum(rp), prevW:sum(prev.filter(tr=>tr.type==='withdraw')), byPart, ranked, series};
 }
-function rpChart(B, bars, line, color){
-  const W = 640, H = 210, pl = 34, pb = 26, pt = 10, pr = 8, iw = W-pl-pr, ih = H-pb-pt;
-  const max = Math.max(1, ...bars, ...(line||[0])), nice = Math.ceil(max/ (max>20?10:1))*(max>20?10:1), bw = iw/B.length;
-  const y = v => pt + ih - (v/nice)*ih, every = Math.ceil(B.length/8);
-  let s = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">`;
-  for(let g=0; g<=4; g++){ const v = nice*g/4, yy = y(v); s += `<line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" stroke="var(--border)"/><text x="${pl-5}" y="${yy+4}" text-anchor="end" font-size="10" fill="var(--muted)">${r2(v)}</text>`; }
-  bars.forEach((v,i)=>{ const x = pl + i*bw + bw*0.18, h = ih - (y(v)-pt); s += `<rect x="${x}" y="${y(v)}" width="${bw*0.64}" height="${Math.max(h,0)}" rx="2" fill="${color}"><title>${B[i].label}: ${v}</title></rect>`; });
-  if(line){ s += `<polyline fill="none" stroke="var(--ok)" stroke-width="2" points="${line.map((v,i)=>`${pl+i*bw+bw/2},${y(v)}`).join(' ')}"/>` + line.map((v,i)=>`<circle cx="${pl+i*bw+bw/2}" cy="${y(v)}" r="2.5" fill="var(--ok)"><title>${B[i].label}: ${v}</title></circle>`).join(''); }
-  B.forEach((b,i)=>{ if(i%every===0 || i===B.length-1) s += `<text x="${pl+i*bw+bw/2}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)">${b.label}</text>`; });
+function isoWeek(d){ const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0)/86400000 + 1)/7); }
+function rpChart(B, bars, bars2, color, W){
+  W = W || 760; const H = 178, pl = 28, pr = 6, pt = 8, pb = 22, iw = W-pl-pr, ih = H-pt-pb, bw = iw/B.length;
+  const mx = Math.max(1, ...bars, ...(bars2||[0])), pw = Math.pow(10, Math.floor(Math.log10(mx))), nice = [1,2,2.5,5,10].map(m=>m*pw).find(v=>v>=mx), y = v => pt + ih - (v/nice)*ih, every = Math.ceil(B.length/(W>600?14:8));
+  const gw = Math.min(bw*0.62, bars2 ? 30 : 20), sw = bars2 ? gw/2 - 1 : gw;
+  let s = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;font-family:inherit;">`;
+  for(let g=0; g<=4; g++){ const v = nice*g/4, yy = y(v); s += `<line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" stroke="var(--border)" stroke-width="1" ${g?'stroke-dasharray="3 3"':''}/><text x="${pl-5}" y="${yy+3}" text-anchor="end" font-size="9.5" fill="var(--muted)">${r2(v)}</text>`; }
+  const bar = (x,v,c,tip)=>`<rect x="${x}" y="${y(v)}" width="${sw}" height="${Math.max(ih-(y(v)-pt),0)}" rx="2" fill="${c}" opacity=".92"><title>${tip}</title></rect>`;
+  B.forEach((b,i)=>{ const cx = pl + i*bw + bw/2, tip = (b.tip||b.label);
+    if(bars2){ s += bar(cx-sw-1, bars[i], color, tip+' · '+L('เบิก','Out')+': '+bars[i]) + bar(cx+1, bars2[i], 'var(--ok)', tip+' · '+L('เติม/คืน','In')+': '+bars2[i]); }
+    else s += bar(cx-sw/2, bars[i], color, tip+': '+bars[i]);
+    if(i%every===0 || i===B.length-1) s += `<text x="${cx}" y="${H-7}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${b.label}</text>`; });
   return s + '</svg>';
 }
 function rpBreakdown(wd, dim){
@@ -1689,6 +1748,8 @@ function renderReport(){
   const d = rpData(), top = d.ranked.slice(0,10), maxQ = top.length ? top[0].qty : 1;
   if(!reportPart || !partByCode(reportPart)) reportPart = top.length ? top[0].code : (parts[0] ? parts[0].code : '');
   const sel = partByCode(reportPart), pSer = d.series(d.wd.filter(tr=>tr.code===reportPart)), pTot = r2(pSer.reduce((a,b)=>a+b,0)), pAvg = pTot/d.days;
+  if(reportTrend && !top.some(o=>o.code===reportTrend)) reportTrend = '';
+  const trW = reportTrend ? d.wd.filter(tr=>tr.code===reportTrend) : d.wd, trR = reportTrend ? d.rp.filter(tr=>tr.code===reportTrend) : d.rp, trPart = reportTrend ? partByCode(reportTrend) : null;
   const delta = d.prevW>0 ? Math.round((d.totalW-d.prevW)/d.prevW*100) : null;
   const gl = {day:L('รายวัน (30 วัน)','Daily (30 days)'), week:L('รายสัปดาห์ (12 สัปดาห์)','Weekly (12 weeks)'), month:L('รายเดือน (12 เดือน)','Monthly (12 months)')};
   const unit = L('ต่อวัน','day'), uTxt = reportGran==='day' ? L('วัน','day') : reportGran==='week' ? L('สัปดาห์','week') : L('เดือน','month');
@@ -1712,9 +1773,10 @@ function renderReport(){
     ${kpi('📥',L('เติมสต็อก/คืนรวม','Total added/returned'),d.totalR, L('สุทธิ ','net ') + r2(d.totalR-d.totalW), 'var(--ok)')}
   </div>
   <div class="card">
-    <h2>${L('แนวโน้มการเบิก vs การเติมสต็อก','Withdrawal vs replenishment trend')}</h2>
+    <h2>${L('แนวโน้มการเบิก vs การเติมสต็อก','Withdrawal vs replenishment trend')}${trPart ? ` <span style="font-weight:400;font-size:13px;color:var(--muted);">— ${codeLabel(trPart.code)} ${escHTML(trPart.name)}</span>` : ''}</h2>
+    <div class="rp-chips"><span style="font-size:12px;color:var(--muted);">${L('เลือกอะไหล่ (Top 10):','Part (Top 10):')}</span>${[{c:'',l:L('ทั้งหมด','All'),n:''}].concat(top.map(o=>({c:o.code,l:codeLabel(o.code),n:o.name}))).map(x=>`<button type="button" class="subtab ${reportTrend===x.c?'active':''}" data-rtrend="${escHTML(x.c)}" title="${escHTML(x.n)}">${escHTML(x.l)}</button>`).join('')}</div>
     <div class="rp-legend"><span><i style="background:var(--danger)"></i>${L('เบิกออก','Withdrawn')}</span><span><i style="background:var(--ok)"></i>${L('เติม/คืน','Added/returned')}</span></div>
-    ${rpChart(d.B, d.wSeries, d.rSeries, 'var(--danger)')}
+    ${rpChart(d.B, d.series(trW), d.series(trR), 'var(--danger)', 760)}
   </div>
   <div class="rp-grid">
     <div class="card">
@@ -1728,7 +1790,7 @@ function renderReport(){
       <h2>📈 ${L('Usage ของอะไหล่แต่ละรายการ','Usage per part')}</h2>
       <select id="rpPartSel" style="margin-bottom:10px;">${parts.slice().sort((a,b)=>((d.byPart[b.code]||{}).qty||0)-((d.byPart[a.code]||{}).qty||0)).map(p=>`<option value="${escHTML(p.code)}" ${p.code===reportPart?'selected':''}>${codeLabel(p.code)} — ${escHTML(p.name)}</option>`).join('')}</select>
       ${sel ? `<div class="mini-stats"><div><b>${pTot}</b><span>${L('เบิกรวม','Total')} (${escHTML(sel.unit||'')})</span></div><div><b>${r2(pAvg)}</b><span>${L('เฉลี่ย/'+unit,'avg/'+unit)}</span></div><div><b>${sel.pending?'-':sel.stock}</b><span>${L('คงเหลือ','In stock')}</span></div><div><b>${(!sel.pending && pAvg>0) ? Math.round(sel.stock/pAvg) : '∞'}</b><span>${L('ใช้ได้อีก (วัน)','Days of cover')}</span></div></div>` : ''}
-      ${rpChart(d.B, pSer, null, 'var(--accent)')}
+      ${rpChart(d.B, pSer, null, 'var(--accent)', 480)}
     </div>
   </div>
   <div class="rp-grid">
@@ -1751,9 +1813,9 @@ function renderReport(){
 }
 document.addEventListener('click', e=>{
   if(typeof active==='undefined' || active!=='report') return;
-  const b = e.target.closest ? e.target.closest('[data-rg],[data-rdim],[data-rpart],#rpExport') : null; if(!b) return;
+  const b = e.target.closest ? e.target.closest('[data-rg],[data-rdim],[data-rpart],[data-rtrend],#rpExport') : null; if(!b) return;
   if(b.id==='rpExport'){ downloadText('UsageReport.csv', rpCSV(rpData())); return; }
-  if(b.dataset.rg) reportGran = b.dataset.rg; else if(b.dataset.rdim) reportDim = b.dataset.rdim; else if(b.dataset.rpart) reportPart = b.dataset.rpart;
+  if(b.dataset.rg) reportGran = b.dataset.rg; else if(b.dataset.rdim) reportDim = b.dataset.rdim; else if(b.dataset.rpart){ reportPart = b.dataset.rpart; reportTrend = b.dataset.rpart; } else if(b.dataset.rtrend !== undefined) reportTrend = b.dataset.rtrend;
   render();
 });
 document.addEventListener('change', e=>{ if(e.target.id==='rpPartSel'){ reportPart = e.target.value; render(); } });
