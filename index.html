@@ -321,7 +321,7 @@ const MOCK = {
 (function seedExtras(){
   const d = n=>{ const x=new Date(); x.setDate(x.getDate()+n); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
   MOCK.parts.forEach(p=>{ p.max=null; p.expiry=''; p.lots=[]; });
-  const MCH=['Roller Barrel Plating Line','Centrifugal','Other']; MOCK.parts.forEach((p,i)=>{ p.machine = (i%5===4) ? '' : MCH[i%3]; });
+  const MCH=['Roller Barrel Plating Line','Centrifugal','Roller Barrel Part','Small Machine','Other']; MOCK.parts.forEach((p,i)=>{ p.machine = (i%5===4) ? '' : MCH[i%3]; });
   const g = c=>MOCK.parts.find(p=>String(p.code)===c);
   g('SP-001').max=40; g('SP-003').max=20; g('10234').max=30; g('SP-007').max=100; g('SP-007').expiry=d(9);
   const c1=g('CH-001'); c1.max=30; c1.lots=[{lot:'LOT-A',qty:5.5,expiry:d(10)},{lot:'LOT-B',qty:6.5,expiry:d(120)}]; c1.stock=12;
@@ -671,7 +671,7 @@ try{
 }catch(e){}
 
 const CATEGORIES = ['General','Consumable','PPE','Stationary','Plating Chemical','Lap Chemical'];
-const MACHINES = ['Roller Barrel Plating Line','Centrifugal','Other']; // รายการเครื่องจักร (ใช้ทั้ง Filter และฟอร์มเพิ่ม/แก้ไข)
+const MACHINES = ['Roller Barrel Plating Line','Centrifugal','Roller Barrel Part','Small Machine','Other']; // รายการเครื่องจักร (ใช้ทั้ง Filter และฟอร์มเพิ่ม/แก้ไข)
 function machineOptsHTML(sel){ return MACHINES.map(m=>`<option value="${m}" ${sel===m?'selected':''}>${m}</option>`).join(''); }
 const CHEM_CATS = ['Plating Chemical','Lap Chemical']; // หมวดที่ใช้ระบบล็อต/วันหมดอายุ
 const isChemCat = c => CHEM_CATS.indexOf(c) !== -1;
