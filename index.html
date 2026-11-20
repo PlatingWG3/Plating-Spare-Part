@@ -86,6 +86,29 @@ th{color:var(--muted);font-weight:600;font-size:12px;}
 .subtab:hover:not(.active){background:var(--card);}
 .subtab.active{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
 .subtab-n{font-size:11px;opacity:.75;}
+.rp-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.rp-seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg);}
+.rp-seg-btn{border:none;background:transparent;color:var(--text);padding:7px 14px;font-size:13px;cursor:pointer;}
+.rp-seg-btn.active{background:var(--accent);color:var(--accent-fg);font-weight:600;}
+.rp-export{border:1px solid var(--border);border-radius:10px;background:var(--bg);}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:12px;padding:12px 14px;}
+.kpi-l{font-size:12px;color:var(--muted);}.kpi-v{font-size:28px;font-weight:700;margin:4px 0 2px;}.kpi-s{font-size:12px;color:var(--muted);}
+.rp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;}
+.rp-grid .card{margin-bottom:16px;}
+.rp-legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:6px;}.rp-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;}
+.rank-row{display:flex;gap:10px;align-items:center;padding:6px 8px;border-radius:8px;cursor:pointer;margin-bottom:2px;}
+.rank-row:hover,.rank-row.sel{background:var(--bg);}.rank-row.sel{outline:1px solid var(--accent);}
+.rank-no{width:24px;height:24px;border-radius:50%;background:var(--border);color:var(--text);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;}
+.rank-no.r1{background:#f5b301;color:#3d2c00;}.rank-no.r2{background:#b8c0cc;color:#1f2933;}.rank-no.r3{background:#d28b57;color:#3a1d05;}
+.rank-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px;}
+.mini-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+.mini-stats div{background:var(--bg);border-radius:8px;padding:8px;text-align:center;}.mini-stats b{display:block;font-size:18px;}.mini-stats span{font-size:11px;color:var(--muted);}
+.ins-row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.pill{padding:2px 10px;border-radius:12px;background:var(--bg);font-size:12px;font-weight:600;white-space:nowrap;}
+.pill-red{background:var(--danger-bg);color:var(--danger);}.pill-amber{background:#fff3cd;color:#8a5a00;}
+.ins-note{font-size:11px;color:var(--muted);margin-top:8px;}
+
 .col-toggle{border:1px solid var(--border);background:var(--bg);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
 th.col-collapsed,td.col-collapsed{width:34px;min-width:34px;padding:8px 2px;text-align:center;}
 .qty-num{font-weight:600;}
@@ -171,6 +194,10 @@ button.submit{grid-column:1/-1;background:var(--accent);color:var(--accent-fg);b
 .stock-hero-num{font-size:34px;font-weight:800;line-height:1.1;}
 .stock-hero-num span{font-size:15px;font-weight:600;margin-left:4px;}
 .stock-hero-side{text-align:right;font-size:12px;color:var(--muted);}
+.quick-actions{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px;}
+.quick-btn{flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border-radius:10px;border:1px solid var(--accent);background:var(--card);color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;}
+.quick-btn.primary{background:var(--accent);color:var(--accent-fg);}
+.quick-btn:hover{opacity:.9;}
 .qty-num{font-size:16px;font-weight:700;}
 
 .lot-row{display:grid;grid-template-columns:1.2fr .8fr 1fr auto;gap:6px;margin-top:6px;}
@@ -1363,6 +1390,16 @@ function detailImgFailed(img){
   const p = partByCode(img.dataset.code);
   if(p) img.outerHTML = detailLetterHTML(p);
 }
+// ทางลัดจาก Pop up รายละเอียดอะไหล่ -> แท็บเบิกอะไหล่ / เติมสต็อก-คืน (เลือกอะไหล่ให้อัตโนมัติ ส่วนจำนวนให้ผู้ใช้กรอกเอง)
+function quickGo(tabId, code){
+  closePartDetail();
+  active = tabId; render();
+  const sel = document.getElementById(tabId + 'Select');
+  if(sel){ sel.value = code; if(sel.onchange) sel.onchange(); }
+  const q = document.querySelector('#' + tabId + 'Form input[name="qty"]');
+  if(q) q.focus();
+  window.scrollTo(0, 0);
+}
 function closePartDetail(){
   const m = document.getElementById('detailModal');
   if(m) m.remove();
@@ -1397,6 +1434,10 @@ function openPartDetail(code){
         <div><div class="stock-hero-label">${t('colStock')}</div><div class="stock-hero-num">${p.pending ? `<span style="font-size:22px;margin:0;">${t('statusPending')}</span>` : `${p.stock}<span>${escHTML(p.unit)}</span>`}</div></div>
         <div class="stock-hero-side">${stockBadge(p)}<div style="margin-top:6px;">${t('colMin')}: <b>${p.min}</b> ${escHTML(p.unit)}</div>${refill>0?`<div style="margin-top:4px;color:var(--text);">${t('refillQty')}: <b>${refill}</b> ${escHTML(p.unit)}</div>`:''}</div>
       </div>
+      <div class="quick-actions">
+        <button type="button" class="quick-btn primary" id="quickWithdrawBtn">📤 ${t('tabWithdraw')}</button>
+        <button type="button" class="quick-btn" id="quickReplenishBtn">📥 ${t('tabReplenish')}</button>
+      </div>
       <div class="detail-body">
         ${img}
         <div class="detail-grid">
@@ -1419,6 +1460,8 @@ function openPartDetail(code){
   document.body.appendChild(el);
   document.getElementById('detailCloseBtn').onclick = closePartDetail;
   document.getElementById('detailEditBtn').onclick = ()=>{ closePartDetail(); openEditModal(p.code); };
+  document.getElementById('quickWithdrawBtn').onclick = ()=>quickGo('withdraw', p.code);
+  document.getElementById('quickReplenishBtn').onclick = ()=>quickGo('replenish', p.code);
 }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePartDetail(); });
 
@@ -1595,27 +1638,125 @@ function rankBars(list, color){
     <div class="bar-track"><div class="bar-fill" style="width:${(i.qty/max*100)}%;background:${color}"></div></div>
   </div>`).join('');
 }
+// ===== รายงานการใช้อะไหล่ (Usage Report) =====
+let reportGran = 'week', reportPart = '', reportDim = 'category';
+const L = (th, en) => lang==='en' ? en : th;
+function rpBuckets(){
+  const day = 86400000, now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), out = [];
+  const loc = lang==='th' ? 'th-TH' : 'en-US';
+  if(reportGran==='month'){
+    for(let i=11;i>=0;i--){ const s = new Date(today.getFullYear(), today.getMonth()-i, 1), e = new Date(today.getFullYear(), today.getMonth()-i+1, 1); out.push({s, e, label:s.toLocaleDateString(loc,{month:'short', year:'2-digit'})}); }
+  } else {
+    const n = reportGran==='week' ? 12 : 30, step = reportGran==='week' ? 7 : 1;
+    for(let i=n-1;i>=0;i--){ const e = new Date(today.getTime() + day - i*step*day), s = new Date(e.getTime() - step*day); out.push({s, e, label:s.toLocaleDateString(loc,{day:'numeric', month:'short'})}); }
+  }
+  return out;
+}
+function rpData(){
+  const B = rpBuckets(), start = B[0].s, end = B[B.length-1].e, span = end - start, days = Math.round(span/86400000);
+  const inR = (tr,s,e)=>tr.date>=s && tr.date<e;
+  const cur = tx.filter(tr=>inR(tr,start,end)), prev = tx.filter(tr=>inR(tr,new Date(start-span),start));
+  const wd = cur.filter(tr=>tr.type==='withdraw'), rp = cur.filter(tr=>tr.type==='replenish');
+  const series = list=>{ const a = B.map(()=>0); list.forEach(tr=>{ const i = B.findIndex(b=>tr.date>=b.s && tr.date<b.e); if(i>=0) a[i] += tr.qty; }); return a.map(r2); };
+  const sum = list=>r2(list.reduce((s,tr)=>s+tr.qty,0));
+  const byPart = {};
+  wd.forEach(tr=>{ const o = byPart[tr.code] || (byPart[tr.code] = {code:tr.code, name:tr.name, qty:0, n:0, last:null}); o.qty = r2(o.qty+tr.qty); o.n++; if(!o.last || tr.date>o.last) o.last = tr.date; });
+  const ranked = Object.values(byPart).sort((a,b)=>b.qty-a.qty);
+  return {B, days, wd, rp, wSeries:series(wd), rSeries:series(rp), totalW:sum(wd), totalR:sum(rp), prevW:sum(prev.filter(tr=>tr.type==='withdraw')), byPart, ranked, series};
+}
+function rpChart(B, bars, line, color){
+  const W = 640, H = 210, pl = 34, pb = 26, pt = 10, pr = 8, iw = W-pl-pr, ih = H-pb-pt;
+  const max = Math.max(1, ...bars, ...(line||[0])), nice = Math.ceil(max/ (max>20?10:1))*(max>20?10:1), bw = iw/B.length;
+  const y = v => pt + ih - (v/nice)*ih, every = Math.ceil(B.length/8);
+  let s = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">`;
+  for(let g=0; g<=4; g++){ const v = nice*g/4, yy = y(v); s += `<line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" stroke="var(--border)"/><text x="${pl-5}" y="${yy+4}" text-anchor="end" font-size="10" fill="var(--muted)">${r2(v)}</text>`; }
+  bars.forEach((v,i)=>{ const x = pl + i*bw + bw*0.18, h = ih - (y(v)-pt); s += `<rect x="${x}" y="${y(v)}" width="${bw*0.64}" height="${Math.max(h,0)}" rx="2" fill="${color}"><title>${B[i].label}: ${v}</title></rect>`; });
+  if(line){ s += `<polyline fill="none" stroke="var(--ok)" stroke-width="2" points="${line.map((v,i)=>`${pl+i*bw+bw/2},${y(v)}`).join(' ')}"/>` + line.map((v,i)=>`<circle cx="${pl+i*bw+bw/2}" cy="${y(v)}" r="2.5" fill="var(--ok)"><title>${B[i].label}: ${v}</title></circle>`).join(''); }
+  B.forEach((b,i)=>{ if(i%every===0 || i===B.length-1) s += `<text x="${pl+i*bw+bw/2}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)">${b.label}</text>`; });
+  return s + '</svg>';
+}
+function rpBreakdown(wd, dim){
+  const keyOf = tr=>{ const p = partByCode(tr.code) || {}; return dim==='category' ? (p.category||'-') : dim==='machine' ? (p.machine||'-') : dim==='owner' ? (OWNER_LABEL[p.owner]||p.owner||'-') : (tr.person||'-'); };
+  const m = {}; wd.forEach(tr=>{ const k = keyOf(tr); m[k] = r2((m[k]||0)+tr.qty); });
+  return Object.entries(m).map(([name,qty])=>({name, qty})).sort((a,b)=>b.qty-a.qty).slice(0,8);
+}
+function rpCSV(d){
+  const rows = [[L('รหัส','Code'),L('ชื่อ','Name'),L('หมวดหมู่','Category'),L('จำนวนที่เบิก','Qty withdrawn'),L('ครั้งที่เบิก','Withdraw count'),L('คงเหลือ','Stock'),L('เฉลี่ย/วัน','Avg/day'),L('ใช้ได้อีก (วัน)','Days of cover')]];
+  d.ranked.forEach(o=>{ const p = partByCode(o.code) || {}, avg = o.qty/d.days; rows.push([o.code, o.name, p.category||'', o.qty, o.n, p.pending?'':p.stock, r2(avg), (!p.pending && avg>0 && p.stock!=null) ? Math.round(p.stock/avg) : '']); });
+  return rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+}
 function renderReport(){
-  const topOut = aggregateTx('withdraw');
-  const topIn = aggregateTx('replenish');
-  const label = reportPeriod==='week' ? t('weekly') : t('monthly');
+  const d = rpData(), top = d.ranked.slice(0,10), maxQ = top.length ? top[0].qty : 1;
+  if(!reportPart || !partByCode(reportPart)) reportPart = top.length ? top[0].code : (parts[0] ? parts[0].code : '');
+  const sel = partByCode(reportPart), pSer = d.series(d.wd.filter(tr=>tr.code===reportPart)), pTot = r2(pSer.reduce((a,b)=>a+b,0)), pAvg = pTot/d.days;
+  const delta = d.prevW>0 ? Math.round((d.totalW-d.prevW)/d.prevW*100) : null;
+  const gl = {day:L('รายวัน (30 วัน)','Daily (30 days)'), week:L('รายสัปดาห์ (12 สัปดาห์)','Weekly (12 weeks)'), month:L('รายเดือน (12 เดือน)','Monthly (12 months)')};
+  const unit = L('ต่อวัน','day'), uTxt = reportGran==='day' ? L('วัน','day') : reportGran==='week' ? L('สัปดาห์','week') : L('เดือน','month');
+  const cover = Object.values(d.byPart).map(o=>{ const p = partByCode(o.code); return p && !p.pending ? {p, days:(o.qty/d.days)>0 ? p.stock/(o.qty/d.days) : Infinity} : null; }).filter(x=>x && x.days<=14).sort((a,b)=>a.days-b.days).slice(0,5);
+  const dead = parts.filter(p=>!p.pending && p.stock>0 && !d.byPart[p.code]).sort((a,b)=>b.stock-a.stock);
+  const brk = rpBreakdown(d.wd, reportDim), bmax = brk.length ? brk[0].qty : 1;
+  const seg = (attr,val,label,cur)=>`<button type="button" class="rp-seg-btn ${cur===val?'active':''}" ${attr}="${val}">${label}</button>`;
+  const kpi = (ic,label,val,sub,color)=>`<div class="kpi" style="border-top-color:${color}"><div class="kpi-l">${ic} ${label}</div><div class="kpi-v">${val}</div><div class="kpi-s">${sub||'&nbsp;'}</div></div>`;
   return `
+  <div class="card rp-head">
+    <div><h2 style="margin:0;">📊 ${L('รายงานการใช้อะไหล่','Spare Part Usage Report')}</h2><div style="font-size:12px;color:var(--muted);margin-top:4px;">${gl[reportGran]}</div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <div class="rp-seg">${seg('data-rg','day',L('รายวัน','Daily'),reportGran)}${seg('data-rg','week',L('รายสัปดาห์','Weekly'),reportGran)}${seg('data-rg','month',L('รายเดือน','Monthly'),reportGran)}</div>
+      <button type="button" class="rp-seg-btn rp-export" id="rpExport">⬇ CSV</button>
+    </div>
+  </div>
+  <div class="kpi-grid">
+    ${kpi('📤',L('ปริมาณที่เบิกรวม','Total withdrawn'),d.totalW, delta==null ? '' : `<span style="color:${delta>0?'var(--danger)':'var(--ok)'};font-weight:600;">${delta>0?'▲':'▼'} ${Math.abs(delta)}%</span> ${L('เทียบช่วงก่อนหน้า','vs previous period')}`, 'var(--danger)')}
+    ${kpi('🧾',L('จำนวนครั้งที่เบิก','Withdrawals'),d.wd.length, L('เฉลี่ย ','avg ') + r2(d.wd.length/d.B.length) + L(' ครั้ง/','/') + uTxt, 'var(--accent)')}
+    ${kpi('🔩',L('อะไหล่ที่ถูกเบิก','Parts used'),d.ranked.length, L('จากทั้งหมด ','of ') + parts.length + L(' รายการ',' parts'), '#d97706')}
+    ${kpi('📥',L('เติมสต็อก/คืนรวม','Total added/returned'),d.totalR, L('สุทธิ ','net ') + r2(d.totalR-d.totalW), 'var(--ok)')}
+  </div>
   <div class="card">
-    <h2>${t('reportTitle')}${label}</h2>
-    <div style="display:flex;gap:8px;">
-      <button class="period-btn" data-period="week" style="border:1px solid var(--border);background:${reportPeriod==='week'?'var(--accent)':'var(--bg)'};color:${reportPeriod==='week'?'var(--accent-fg)':'var(--text)'};padding:6px 14px;border-radius:16px;font-size:13px;cursor:pointer;">${t('weeklyBtn')}</button>
-      <button class="period-btn" data-period="month" style="border:1px solid var(--border);background:${reportPeriod==='month'?'var(--accent)':'var(--bg)'};color:${reportPeriod==='month'?'var(--accent-fg)':'var(--text)'};padding:6px 14px;border-radius:16px;font-size:13px;cursor:pointer;">${t('monthlyBtn')}</button>
+    <h2>${L('แนวโน้มการเบิก vs การเติมสต็อก','Withdrawal vs replenishment trend')}</h2>
+    <div class="rp-legend"><span><i style="background:var(--danger)"></i>${L('เบิกออก','Withdrawn')}</span><span><i style="background:var(--ok)"></i>${L('เติม/คืน','Added/returned')}</span></div>
+    ${rpChart(d.B, d.wSeries, d.rSeries, 'var(--danger)')}
+  </div>
+  <div class="rp-grid">
+    <div class="card">
+      <h2>🏆 Top 10 ${L('อะไหล่ที่เบิกสูงสุด','most withdrawn parts')}</h2>
+      ${top.length ? top.map((o,i)=>`<div class="rank-row ${o.code===reportPart?'sel':''}" data-rpart="${escHTML(o.code)}" title="${L('คลิกเพื่อดูกราฟการใช้','Click to view usage chart')}">
+        <div class="rank-no r${i+1}">${i+1}</div>
+        <div style="flex:1;min-width:0;"><div class="bh"><span class="rank-name">${codeLabel(o.code)} — ${escHTML(o.name)}</span><span><b>${o.qty}</b> ${t('units')} · ${o.n}×</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${o.qty/maxQ*100}%;background:var(--danger)"></div></div></div></div>`).join('') : `<div class="empty">${t('noDataPeriod')}</div>`}
+    </div>
+    <div class="card">
+      <h2>📈 ${L('Usage ของอะไหล่แต่ละรายการ','Usage per part')}</h2>
+      <select id="rpPartSel" style="margin-bottom:10px;">${parts.slice().sort((a,b)=>((d.byPart[b.code]||{}).qty||0)-((d.byPart[a.code]||{}).qty||0)).map(p=>`<option value="${escHTML(p.code)}" ${p.code===reportPart?'selected':''}>${codeLabel(p.code)} — ${escHTML(p.name)}</option>`).join('')}</select>
+      ${sel ? `<div class="mini-stats"><div><b>${pTot}</b><span>${L('เบิกรวม','Total')} (${escHTML(sel.unit||'')})</span></div><div><b>${r2(pAvg)}</b><span>${L('เฉลี่ย/'+unit,'avg/'+unit)}</span></div><div><b>${sel.pending?'-':sel.stock}</b><span>${L('คงเหลือ','In stock')}</span></div><div><b>${(!sel.pending && pAvg>0) ? Math.round(sel.stock/pAvg) : '∞'}</b><span>${L('ใช้ได้อีก (วัน)','Days of cover')}</span></div></div>` : ''}
+      ${rpChart(d.B, pSer, null, 'var(--accent)')}
+    </div>
+  </div>
+  <div class="rp-grid">
+    <div class="card">
+      <h2>⏳ ${L('ใกล้หมดตามอัตราการใช้ (≤ 14 วัน)','Running out soon (≤ 14 days)')}</h2>
+      ${cover.length ? cover.map(c=>`<div class="ins-row"><span>${codeLabel(c.p.code)} — ${escHTML(c.p.name)}</span><span class="pill ${c.days<=7?'pill-red':'pill-amber'}">${c.days<1 ? '<1' : Math.round(c.days)} ${L('วัน','d')}</span></div>`).join('') : `<div class="empty">${L('ไม่มีรายการที่เสี่ยงหมดใน 14 วัน','No part is at risk within 14 days')}</div>`}
+      <div class="ins-note">${L('คำนวณจาก คงเหลือ ÷ ปริมาณเบิกเฉลี่ยต่อวันในช่วงที่เลือก','Stock ÷ average daily withdrawal in the selected range')}</div>
+    </div>
+    <div class="card">
+      <h2>💤 ${L('อะไหล่ไม่มีการเบิก (Slow-moving)','No-movement parts')} <span class="subtab-n">${dead.length}</span></h2>
+      ${dead.length ? dead.slice(0,5).map(p=>`<div class="ins-row"><span>${codeLabel(p.code)} — ${escHTML(p.name)}</span><span class="pill">${p.stock} ${escHTML(p.unit||'')}</span></div>`).join('') : `<div class="empty">${L('ทุกรายการมีการเบิก','Every part had movement')}</div>`}
+      <div class="ins-note">${L('มีของคงเหลือแต่ไม่ถูกเบิกในช่วงนี้ — พิจารณาลดขั้นต่ำ/สต็อกสูงสุด','In stock but not withdrawn in this range — consider lowering min/max levels')}</div>
     </div>
   </div>
   <div class="card">
-    <h2>${t('topWithdrawn')}</h2>
-    ${rankBars(topOut, 'var(--danger)')}
-  </div>
-  <div class="card">
-    <h2>${t('topReplenished')}</h2>
-    ${rankBars(topIn, 'var(--ok)')}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;"><h2 style="margin:0;">🧭 ${L('สัดส่วนการเบิก แยกตาม','Withdrawals by')}</h2>
+      <div class="rp-seg">${seg('data-rdim','category',L('หมวดหมู่','Category'),reportDim)}${seg('data-rdim','machine',L('เครื่องจักร','Machine'),reportDim)}${seg('data-rdim','owner',L('เจ้าของ','Owner'),reportDim)}${seg('data-rdim','person',L('ผู้เบิก','Person'),reportDim)}</div></div>
+    ${brk.length ? brk.map(b=>`<div class="bar-item"><div class="bh"><span>${escHTML(b.name)}</span><span>${b.qty} · ${Math.round(b.qty/d.totalW*100)}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${b.qty/bmax*100}%;background:var(--accent)"></div></div></div>`).join('') : `<div class="empty">${t('noDataPeriod')}</div>`}
   </div>`;
 }
+document.addEventListener('click', e=>{
+  if(typeof active==='undefined' || active!=='report') return;
+  const b = e.target.closest ? e.target.closest('[data-rg],[data-rdim],[data-rpart],#rpExport') : null; if(!b) return;
+  if(b.id==='rpExport'){ downloadText('UsageReport.csv', rpCSV(rpData())); return; }
+  if(b.dataset.rg) reportGran = b.dataset.rg; else if(b.dataset.rdim) reportDim = b.dataset.rdim; else if(b.dataset.rpart) reportPart = b.dataset.rpart;
+  render();
+});
+document.addEventListener('change', e=>{ if(e.target.id==='rpPartSel'){ reportPart = e.target.value; render(); } });
 
 function renderUsers(){
   return `
