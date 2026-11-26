@@ -86,6 +86,17 @@ th{color:var(--muted);font-weight:600;font-size:12px;}
 .subtab:hover:not(.active){background:var(--card);}
 .subtab.active{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
 .subtab-n{font-size:11px;opacity:.75;}
+.ticker-wrap{flex:1 1 140px;min-width:0;margin:0 14px;}
+.ticker{overflow:hidden;border-radius:999px;padding:5px 0;font-size:13px;font-weight:500;background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--text);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);}
+.ticker-track{display:flex;width:max-content;animation:tkr 30s linear infinite;}
+.ticker-track span{flex:none;min-width:var(--tw,300px);white-space:nowrap;padding:0 40px;box-sizing:border-box;}
+.ticker:hover .ticker-track{animation-play-state:paused;}
+@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticker-track{animation:none;}.ticker-track span:last-child{display:none;}.ticker-track span{padding:0 14px;overflow:hidden;text-overflow:ellipsis;}}
+@media(max-width:700px){.ticker-wrap{order:3;flex-basis:100%;margin:6px 0 0;}}
+
+.alert-card.clk{cursor:pointer;transition:transform .12s,box-shadow .12s;}
+.alert-card.clk:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.12);}
 .dash-hero{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:20px 24px;border-radius:16px;margin-bottom:16px;color:#fff;background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#0ea5e9 100%);box-shadow:0 6px 20px rgba(37,99,235,.25);}
 .dash-hero h2{margin:2px 0 4px;font-size:22px;color:#fff;}.dh-hi{font-size:13px;opacity:.85;}.dh-date{font-size:12px;opacity:.8;}
 .dh-ring{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);padding:8px 16px 8px 10px;border-radius:14px;}
@@ -417,6 +428,7 @@ function _syncAnalysis(){
     if(iS>=0&&iI>=0&&iW>=0){ r[iS]=r2((num(r[iI])||0)+(num(r[iW])||0)); }
   });
 }
+let _mockTicker = '📢 ยินดีต้อนรับสู่ระบบจัดการอะไหล่ WG3 Plating Line — กรุณาตรวจสอบรายการแจ้งเตือนทุกเช้า';
 const _mockLine = {lowStock:true,outStock:true,expiry:true,withdraw:true,replenish:true,login:false,partAddDelete:false,partEdit:false};
 function _log(type,code,name,field,o,n,by){ MOCK.changes.push({'วันที่':new Date().toISOString(),'ประเภท':type,'รหัส':String(code),'ชื่ออะไหล่':name,'ข้อมูลที่เปลี่ยน':field,'ข้อมูลเก่า':o,'ข้อมูลใหม่':n,'โดย':by||'','หมายเหตุ':''}); }
 function _partRow(p){
@@ -453,6 +465,8 @@ function _mockHandle(action, p){
       _mockWh.last={atText:pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes()), by:p.person||'', file:p.fileName||''};
       return {ok:true, matched, matchedText, noInfo, total:A.rows.length, descFound:iD>=0, whLast:_mockWh.last};
     }
+    case 'getTicker': return {ok:true, text:_mockTicker};
+    case 'saveTicker': _mockTicker = String((p&&p.text)||'').replace(/\s+/g,' ').trim().slice(0,300); return {ok:true, text:_mockTicker};
     case 'getLineSettings': return {settings:Object.assign({},_mockLine), configured:true};
     case 'saveLineSettings': Object.keys(p.settings||{}).forEach(k=>{ if(k in _mockLine) _mockLine[k]=!!p.settings[k]; }); return {ok:true, settings:Object.assign({},_mockLine)};
     case 'testLine': return {ok:true};
@@ -821,7 +835,7 @@ function lotsTableHTML(p){
 }
 function expiryCardHTML(){
   const a = expiryAlerts(); if(!a.length) return '';
-  return `<div class="card"><h2>${t('expAlertTitle')}</h2>${a.map(x=>`<div class="alert-card ${x.days<0?'out':''}"><div class="row1"><span>${codeLabel(x.p.code)} — ${escHTML(x.p.name)}${x.lot?' · '+escHTML(x.lot):''}</span><span class="exp-badge" style="background:${x.days<0?'var(--danger-bg)':'var(--warn-bg)'};color:${x.days<0?'var(--danger)':'var(--warn)'};">${expText(x.days)}</span></div><div class="details"><span>${t('expiryDate')}: <b>${x.expiry}</b></span><span>${t('stockLabel')}<b>${x.qty} ${escHTML(x.p.unit)}</b></span></div></div>`).join('')}</div>`;
+  return `<div class="card"><h2>${t('expAlertTitle')}</h2>${a.map(x=>`<div class="alert-card clk ${x.days<0?'out':''}" data-open-part="${escHTML(x.p.code)}"><div class="row1"><span>${codeLabel(x.p.code)} — ${escHTML(x.p.name)}${x.lot?' · '+escHTML(x.lot):''}</span><span class="exp-badge" style="background:${x.days<0?'var(--danger-bg)':'var(--warn-bg)'};color:${x.days<0?'var(--danger)':'var(--warn)'};">${expText(x.days)}</span></div><div class="details"><span>${t('expiryDate')}: <b>${x.expiry}</b></span><span>${t('stockLabel')}<b>${x.qty} ${escHTML(x.p.unit)}</b></span></div></div>`).join('')}</div>`;
 }
 function lotRowHTML(l){ l=l||{}; return `<div class="lot-row"><input class="lot-name" placeholder="${t('lotName')}" value="${escHTML(l.lot||'')}"><input class="lot-qty" type="number" min="0" step="0.01" placeholder="${t('colQty')}" value="${l.qty==null?'':l.qty}"><input class="lot-exp" type="date" value="${l.expiry||''}"><button type="button" class="lot-del" title="✕">✕</button></div>`; }
 function lotsEditorHTML(){ return `<div class="full lots-editor" hidden><label>${t('lotsTitle')}</label><div class="field-hint">${t('lotsHint')}</div><div class="lot-rows"></div><button type="button" class="lot-add">${t('lotAdd')}</button></div>`; }
@@ -1092,6 +1106,7 @@ function renderApp(){
     <div class="main-area">
       <div class="topbar">
         <div class="topbar-title" id="topbarTitle"></div>
+        <div class="ticker-wrap" id="tickerWrap"></div>
         <div class="userbox">
           <span class="who">${escHTML(userLabel(currentUser))}</span>
           ${langToggleHTML('topbar')}
@@ -1344,7 +1359,7 @@ function renderDashboard(){
   <div class="card">
     <h2>${t('alertTitle')}</h2>
     ${alertGroups.map(g=>`<div class="alert-group-title">${escHTML(g.cat||'-')} <span class="n">(${g.items.length})</span></div>${g.items.map(p=>`
-      <div class="alert-card ${statusOf(p)==='out'?'out':''}">
+      <div class="alert-card clk ${statusOf(p)==='out'?'out':''}" data-open-part="${escHTML(p.code)}" title="${L('คลิกเพื่อดูรายละเอียดอะไหล่','Click to view part details')}">
         <div class="row1"><span>${codeLabel(p.code)} — ${p.name}</span>${stockBadge(p)}</div>
         <div class="details">
           <span>${t('ownerLabel')}<b>${OWNER_LABEL[p.owner]||p.owner||'-'}</b></span>
@@ -1666,8 +1681,9 @@ function renderHistory(){
     <button type="button" class="subtab ${histTab==='moves'?'active':''}" data-htab="moves">${t('histTabMoves')}<span class="subtab-n">${tx.length}</span></button>
     <button type="button" class="subtab ${histTab==='changes'?'active':''}" data-htab="changes">${t('histTabChanges')}<span class="subtab-n">${changeLog.length}</span></button>
   </div>`;
-  if(histTab === 'changes') return `<div class="card" id="historyCard">${tabsHTML}<h2 style="margin-top:14px;">${t('histTabChanges')} (${changeLog.length})</h2>${renderChangeTable([...changeLog].reverse())}</div>`;
-  return `<div class="card" id="historyCard">${tabsHTML}<h2 style="margin-top:14px;">${t('allTxTitle')} (${tx.length})</h2>${renderTxTable([...tx].reverse())}</div>`;
+  const expBtn = `<button type="button" class="export-btn" id="histExportBtn" style="width:auto;margin:0;padding:6px 14px;">⬇ CSV</button>`;
+  if(histTab === 'changes') return `<div class="card" id="historyCard">${tabsHTML}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;"><h2 style="margin:0;">${t('histTabChanges')} (${changeLog.length})</h2>${expBtn}</div>${renderChangeTable([...changeLog].reverse())}</div>`;
+  return `<div class="card" id="historyCard">${tabsHTML}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;"><h2 style="margin:0;">${t('allTxTitle')} (${tx.length})</h2>${expBtn}</div>${renderTxTable([...tx].reverse())}</div>`;
 }
 
 function periodCutoff(){
@@ -1911,6 +1927,24 @@ function partsToCSV(){
     statusOf(p)==='out'?t('statusOutShort'):statusOf(p)==='low'?t('statusLow'):t('statusOk')]));
   return rows.map(r=>r.map(csvEscape).join(',')).join('\n');
 }
+// ปุ่ม CSV ในหน้าประวัติ: ส่งออกตามแท็บที่เปิดอยู่ (ประวัติการเบิก/เติม หรือ ประวัติการเพิ่ม/แก้ไข)
+function histToCSV(){
+  const cell = v=>csvEscape(String(v==null?'':v).replace(/<[^>]+>/g,''));
+  let rows;
+  if(histTab === 'changes'){
+    rows = [[t('colDate'),t('colType'),t('colCode'),t('colName'),t('colField'),t('colOld'),t('colNew'),t('colBy')]];
+    [...changeLog].reverse().forEach(c=>rows.push([fmtDate(c.date),chgText(c.type),c.code,c.name,chgText(c.field),chgText(c.oldV)||'',chgText(c.newV)||'',c.person]));
+  } else {
+    rows = [[t('colDate'),t('colType'),t('colCode'),t('colName'),t('colQty'),t('colBy'),t('colNote')]];
+    [...tx].reverse().forEach(tr=>rows.push([fmtDate(tr.date),typeLabel(tr),tr.code,tr.name,(tr.type==='withdraw'?'-':'+')+tr.qty,tr.person,tr.note||'']));
+  }
+  return '\ufeff' + rows.map(r=>r.map(cell).join(',')).join('\r\n');
+}
+document.addEventListener('click', e=>{
+  const el = e.target.closest ? e.target.closest('#histExportBtn,[data-open-part]') : null; if(!el) return;
+  if(el.id==='histExportBtn'){ downloadText('History_'+(histTab==='changes'?'Changes':'Movements')+'_'+todayStr()+'.csv', histToCSV()); return; }
+  openPartDetail(el.dataset.openPart);
+});
 function txToCSV(){
   const rows = [t('csvHistory')];
   tx.forEach(tr=>rows.push([tr.date.toISOString(),typeLabel(tr),tr.code,tr.name,tr.qty,tr.person,tr.note||'']));
@@ -1918,7 +1952,7 @@ function txToCSV(){
 }
 
 function renderSettings(){
-  return `
+  return tickerSettingsHTML() + `
   <div class="card">
     <h2>${t('connectedSheetTitle')}</h2>
     <p style="font-size:13px;color:var(--muted);margin-top:-4px;line-height:1.7;">${t('hostedNote')}</p>
@@ -1976,7 +2010,45 @@ function loadSheetInfo(){
   });
 }
 
+// ===== ข้อความวิ่ง (Ticker) — Admin ตั้งค่าได้ที่หน้า Setup =====
+let tickerText = '', tickerLoaded = false;
+function renderTicker(){
+  const wrap = document.getElementById('tickerWrap'); if(!wrap) return;
+  if(!tickerText){ wrap.innerHTML = ''; return; }
+  const one = `<span>📢 ${escHTML(tickerText.replace(/^📢\s*/,''))}</span>`;
+  wrap.innerHTML = `<div class="ticker"><div class="ticker-track">${one}${one}</div></div>`;
+  const tr = wrap.querySelector('.ticker-track'), w = wrap.clientWidth || 300;
+  tr.style.setProperty('--tw', Math.max(w, 120) + 'px');
+  tr.style.animationDuration = Math.max(14, Math.round((tickerText.length*9 + w)/55)) + 's';
+}
+function loadTicker(){
+  callApi('getTicker').then(r=>{ if(r && typeof r.text === 'string'){ tickerText = r.text; renderTicker(); } }).catch(()=>{});
+}
+window.addEventListener('resize', ()=>{ if(tickerText) renderTicker(); });
+function tickerSettingsHTML(){
+  return `<div class="card">
+    <h2>📢 ${L('ข้อความวิ่ง (Announcement)','Scrolling announcement')}</h2>
+    <p style="font-size:13px;color:var(--muted);margin-top:-4px;line-height:1.7;">${L('ข้อความนี้จะวิ่งอยู่บริเวณแถบด้านบนของทุกหน้า และผู้ใช้ทุกคนมองเห็น (เว้นว่างเพื่อปิดการแสดง)','The text scrolls in the top bar on every page for all users (leave empty to hide).')}</p>
+    <textarea id="tickerInput" maxlength="300" rows="3" style="width:100%;resize:vertical;" placeholder="${L('พิมพ์ข้อความประกาศ...','Type an announcement...')}">${escHTML(tickerText)}</textarea>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;"><button type="button" id="tickerSaveBtn">${L('บันทึกข้อความ','Save')}</button><button type="button" id="tickerClearBtn" class="export-btn" style="border:1px solid var(--border);background:transparent;color:var(--muted);padding:8px 14px;border-radius:8px;cursor:pointer;">${L('ล้างข้อความ','Clear')}</button><span id="tickerCount" style="font-size:12px;color:var(--muted);margin-left:auto;"></span></div>
+    <div class="msg" id="tickerMsg"></div>
+  </div>`;
+}
+function initTickerSettings(){
+  const inp = document.getElementById('tickerInput'); if(!inp) return;
+  const cnt = ()=>{ document.getElementById('tickerCount').textContent = inp.value.length + ' / 300'; }; cnt(); inp.oninput = cnt;
+  const save = text=>{
+    callApi('saveTicker', {text}).then(r=>{
+      if(r && r.ok === false){ showMsg('tickerMsg', r.message || t('loadFailShort'), false); return; }
+      tickerText = (r && typeof r.text === 'string') ? r.text : text; inp.value = tickerText; cnt(); renderTicker();
+      showMsg('tickerMsg', L('บันทึกแล้ว','Saved'), true);
+    }).catch(err=>showMsg('tickerMsg', String(err && err.message || err), false));
+  };
+  document.getElementById('tickerSaveBtn').onclick = ()=>save(inp.value);
+  document.getElementById('tickerClearBtn').onclick = ()=>{ inp.value = ''; save(''); };
+}
 function render(){
+  if(!tickerLoaded){ tickerLoaded = true; loadTicker(); setInterval(loadTicker, 300000); }
   if((active==='users'||active==='settings') && levelOf(currentUser)<3) active = 'dashboard';
   let curTab = allTabs().find(x=>x.id===active);
   if(curTab && curTab.plugin && !tabAllowed(curTab)){ active = 'dashboard'; curTab = null; }
@@ -1997,7 +2069,8 @@ function render(){
   attachHandlers();
   if(active==='users') loadUsersTable();
   if(curTab && curTab.plugin && curTab.plugin.onShow){ try{ curTab.plugin.onShow(); }catch(e){ console.error(e); } }
-  if(active==='settings') loadSheetInfo();
+  if(active==='settings'){ loadSheetInfo(); initTickerSettings(); }
+  renderTicker();
 }
 
 function showMsg(id, text, ok){
